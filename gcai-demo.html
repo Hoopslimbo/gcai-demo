@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>GCAI — Free Demo</title>
+<!-- GCAI DEMO v2 — 2026-09-22: full-color wallpaper w/ white edge fade, distinct M/F internet voices,
+     selectable aura color, both wake phrases always work, theme settings, puzzle add-ons button,
+     mic wake-word acknowledgment -->
 <!--
   GCAI DEMO (Genuinely Customizable Artificial Intelligence)
   Single-file demo. Honest engineering notes:
@@ -102,10 +105,14 @@
   .req-pill { font-size:13px; color:#c7d0e0; background:#141a26; border:1px solid #2a3140;
               padding:8px 14px; border-radius:20px; }
   .req-pill b { color:#8ab4ff; }
-  #boostBtn { margin-left:8px; font-size:12.5px; font-weight:700; letter-spacing:1px; cursor:pointer;
-              background:linear-gradient(135deg,#f59e0b,#ef4444); color:#fff; border:none;
-              padding:9px 14px; border-radius:20px; }
-  #boostBtn:disabled { opacity:.4; cursor:default; }
+  #addonBtn { margin-left:8px; width:40px; height:40px; border-radius:50%; cursor:pointer; font-size:20px;
+              background:#141a26; border:2px solid #2a3140; transition:all .2s ease; line-height:1; }
+  #addonBtn:hover { border-color:#8ab4ff; transform:scale(1.08); }
+  #addonBtn.active { border-color:#f5b04b; box-shadow:0 0 16px #f5b04b88; animation:boostPulse 1.6s ease-in-out infinite; }
+  @keyframes boostPulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.12); } }
+  #gearBtn { margin-left:8px; width:40px; height:40px; border-radius:50%; cursor:pointer; font-size:19px;
+             background:#141a26; border:2px solid #2a3140; color:#c7d0e0; transition:all .2s ease; line-height:1; }
+  #gearBtn:hover { border-color:#8ab4ff; transform:rotate(30deg); }
   #boostTimer { font-size:12px; color:#f5b04b; margin-left:8px; }
   .stage { flex:1; width:100%; display:flex; flex-direction:column; align-items:center; justify-content:center;
            position:relative; z-index:5; min-height:0; }
@@ -130,6 +137,44 @@
              background:linear-gradient(135deg,#3b82f6,#7c5cff); color:#fff; font-size:19px; }
   #sendBtn:active { transform:scale(.93); }
   #wakeHint { text-align:center; font-size:12.5px; color:#5b6472; padding-bottom:14px; z-index:5; }
+
+  /* ---------- modals (theme settings + add-ons) ---------- */
+  .modal { position:fixed; inset:0; z-index:60; display:flex; align-items:center; justify-content:center;
+           background:rgba(4,6,10,.72); backdrop-filter:blur(6px); padding:20px; }
+  .modal-card { width:100%; max-width:460px; background:#12161f; border:1px solid #2a3140; border-radius:20px;
+                padding:26px; text-align:center; animation:stepIn .35s cubic-bezier(.2,.9,.3,1.2);
+                max-height:88vh; overflow-y:auto; }
+  .modal-card h2 { font-size:22px; margin-bottom:6px; }
+  .modal-card p.sub { color:#9aa3b2; font-size:14px; margin-bottom:18px; line-height:1.5; }
+  .trow { margin-bottom:16px; }
+  .tlabel { font-size:13px; letter-spacing:2px; text-transform:uppercase; color:#8ab4ff; margin-bottom:10px; }
+  .swatches.sm .sw { width:42px; height:42px; }
+  .modal-nav { display:flex; gap:10px; margin-top:6px; }
+  .modal-nav .btn { margin:0; }
+  .addon-card { background:#0d1119; border:2px solid #2a3140; border-radius:16px; padding:18px; margin-bottom:14px;
+                transition:border-color .25s ease, box-shadow .25s ease; }
+  .addon-card.armed { border-color:#f5b04b; box-shadow:0 0 24px #f5b04b55; animation:boostPulse 1.6s ease-in-out infinite; }
+  .a-top { display:flex; gap:14px; align-items:center; text-align:left; margin-bottom:14px; }
+  .a-ico { font-size:34px; }
+  .a-name { font-size:17px; font-weight:700; letter-spacing:1px; }
+  .a-desc { font-size:13px; color:#9aa3b2; margin-top:4px; line-height:1.5; }
+  .more-note { font-size:12.5px; color:#5b6472; margin:4px 0 16px; line-height:1.5; }
+  #lbActiveBox { padding:6px 0 2px; }
+  .lb-active-label { font-size:13px; letter-spacing:4px; color:#f5b04b; font-weight:700; margin-bottom:6px;
+                     animation:blink 1.2s infinite; }
+  #lbClock { font-size:44px; font-weight:700; color:#fff; font-variant-numeric:tabular-nums; margin-bottom:10px; }
+  .lb-bar { height:10px; background:#232a38; border-radius:6px; overflow:hidden; }
+  #lbBarFill { height:100%; width:100%; border-radius:6px;
+               background:linear-gradient(90deg,#f59e0b,#ef4444); transition:width 1s linear; }
+  #shockwave { position:absolute; width:170px; height:170px; border-radius:50%; pointer-events:none;
+               border:4px solid #f5b04b; animation:shock 1.1s ease-out forwards; }
+  @keyframes shock { from { transform:scale(.35); opacity:1; } to { transform:scale(2.4); opacity:0; } }
+  /* light wallpaper: switch HUD text dark so it stays readable */
+  body.light-wall .hud-top .who { color:#161c28; }
+  body.light-wall .hud-top .who small { color:#4c566a; }
+  body.light-wall #subtitle { color:#1d2432; text-shadow:0 1px 0 #ffffff88; }
+  body.light-wall #wakeHint { color:#5a6478; }
+  body.light-wall #brainTag { color:#6a7488; }
 
   /* ---------- complete ---------- */
   #complete .panel { max-width:480px; }
@@ -175,11 +220,7 @@
       <h2>Name your AI</h2>
       <p class="hint">This is the name you'll call it by.</p>
       <input id="aiName" class="field" maxlength="20" placeholder="e.g. Nova" style="max-width:320px;margin:0 auto 20px;">
-      <p class="hint">How should it listen for its name?</p>
-      <div class="cards" id="wakeCards">
-        <div class="card-opt sel" data-wake="hey"><div class="t">"Hey ___"</div><div class="d">Say "Hey Nova" to get its attention</div></div>
-        <div class="card-opt" data-wake="bare"><div class="t">Just "___"</div><div class="d">Just say "Nova" — no "hey" needed</div></div>
-      </div>
+      <p class="hint">Call it by name any time — "Hey Nova" or just "Nova". Both always work.</p>
     </div>
 
     <div class="step" data-step="2">
@@ -215,6 +256,13 @@
       <div class="swatches" id="orbSwatches"></div>
     </div>
 
+    <div class="step" data-step="6">
+      <h2>Aura color</h2>
+      <p class="hint">The glow around your AI's orb — pick whatever you like, it doesn't have to match.</p>
+      <div class="orb-preview" id="auraPreview"></div>
+      <div class="swatches" id="auraSwatches"></div>
+    </div>
+
     <div class="wiz-nav">
       <button class="btn ghost" id="wizBack">Back</button>
       <button class="btn" id="wizNext">Next</button>
@@ -227,7 +275,7 @@
   <div class="hud-top">
     <div class="who"><span id="hudName">AI</span><small id="hudSub">GCAI demo</small></div>
     <div>
-      <span class="req-pill"><b id="reqLeft">25</b> left</span><button id="boostBtn" title="One free trial: +10 requests for 10 minutes">LIMIT BREAK</button><span id="boostTimer"></span>
+      <span class="req-pill"><b id="reqLeft">25</b> left</span><span id="boostTimer"></span><button id="addonBtn" title="Add-ons & boosts">&#129518;</button><button id="gearBtn" title="Theme settings">&#9881;</button>
     </div>
   </div>
   <div class="stage">
@@ -243,7 +291,45 @@
   <div id="wakeHint"></div>
 </div>
 
-<!-- 5. DEMO COMPLETE -->
+<!-- 5. THEME SETTINGS -->
+<div id="themeModal" class="modal hidden">
+  <div class="modal-card">
+    <h2>Theme</h2>
+    <p class="sub">Change your AI's look any time. It saves to this email.</p>
+    <div class="trow"><div class="tlabel">Wallpaper</div><div class="swatches sm" id="setWall"></div></div>
+    <div class="trow"><div class="tlabel">Orb</div><div class="swatches sm" id="setOrb"></div></div>
+    <div class="trow"><div class="tlabel">Aura</div><div class="swatches sm" id="setAura"></div></div>
+    <div class="modal-nav">
+      <button class="btn ghost" id="themeCancel">Cancel</button>
+      <button class="btn" id="themeSave">Save theme</button>
+    </div>
+  </div>
+</div>
+
+<!-- 6. ADD-ONS -->
+<div id="addonModal" class="modal hidden">
+  <div class="modal-card">
+    <h2>Add-ons</h2>
+    <p class="sub">Plug in extra power. Every boost lasts 10 minutes, then it's gone.</p>
+    <div class="addon-card" id="lbCard">
+      <div class="a-top">
+        <div class="a-ico">&#9889;</div>
+        <div><div class="a-name">LIMIT BREAK</div>
+        <div class="a-desc">+10 bonus requests, active for 10 minutes. One free trial in this demo.</div></div>
+      </div>
+      <button class="btn" id="lbActivate">Activate — free</button>
+      <div id="lbActiveBox" class="hidden">
+        <div class="lb-active-label">ACTIVE</div>
+        <div id="lbClock">10:00</div>
+        <div class="lb-bar"><div id="lbBarFill"></div></div>
+      </div>
+    </div>
+    <p class="more-note">The full GCAI product lists every add-on here.</p>
+    <button class="btn ghost" id="addonClose">Close</button>
+  </div>
+</div>
+
+<!-- 7. DEMO COMPLETE -->
 <div id="complete" class="screen hidden">
   <div class="panel fadein">
     <div class="brand">GCAI</div>
@@ -251,7 +337,7 @@
     <p class="sub">You've used your 25 demo requests. Here's your transfer code:</p>
     <div id="codeBox">GCAI-0000-0000</div>
     <ul>
-      <li>Enter this code in the full GCAI product and your AI appears exactly as you built it — same name, voice, personality, colors.</li>
+      <li>Enter this code in the full GCAI product and your AI appears exactly as you built it — same name, voice, personality, and colors (wallpaper, orb, aura).</li>
       <li>It also unlocks an <b>exclusive wallpaper + orb color set</b> only demo users get.</li>
       <li>One code per email. Keep it somewhere safe.</li>
     </ul>
@@ -275,6 +361,14 @@ function rgba(hex,a){
   return "rgba("+c.r+","+c.g+","+c.b+","+a+")";
 }
 function escRe(s){ return s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"); }
+function rainColor(n,fb){ return RAINBOW.filter(function(r){ return r.n===n; })[0]||fb; }
+function orbBg(hex){
+  return "radial-gradient(circle at 35% 30%, "+rgba(hex,0.9)+", "+hex+" 55%, "+rgba(hex,0.55)+")";
+}
+function wallLum(hex){
+  var c=hexRgb(hex);
+  return (0.299*c.r+0.587*c.g+0.114*c.b)/255;
+}
 function djb2(s){
   var h=5381;
   for(var i=0;i<s.length;i++){ h=(((h<<5)+h)+s.charCodeAt(i))>>>0; }
@@ -339,7 +433,7 @@ var RAINBOW = [
   {n:"green",c:"#34c759"},{n:"blue",c:"#0a84ff"},{n:"purple",c:"#bf5af2"},
   {n:"pink",c:"#ff375f"}
 ];
-var wiz = { step:1, name:"", wake:"hey", voice:"female", pers:"balanced", wallpaper:"blue", orb:"pink" };
+var wiz = { step:1, name:"", voice:"female", pers:"balanced", wallpaper:"blue", orb:"pink", aura:"blue" };
 var wizStarted = false;
 
 function startWizard(){
@@ -348,7 +442,7 @@ function startWizard(){
   wizStarted = true;
   // progress dots
   var p = $("progress");
-  for(var i=1;i<=5;i++){ var d=document.createElement("div"); d.className="pdot"+(i===1?" on":""); p.appendChild(d); }
+  for(var i=1;i<=6;i++){ var d=document.createElement("div"); d.className="pdot"+(i===1?" on":""); p.appendChild(d); }
   // floating particles (little animated flourishes)
   var pc = $("particles");
   for(var j=0;j<26;j++){
@@ -363,7 +457,7 @@ function startWizard(){
     pc.appendChild(s);
   }
   // swatches
-  function buildSwatches(elId, key, previewEl){
+  function buildSwatches(elId, key, onPick){
     var box = $(elId);
     RAINBOW.forEach(function(r){
       var d=document.createElement("div");
@@ -374,34 +468,35 @@ function startWizard(){
         var kids=box.children;
         for(var k=0;k<kids.length;k++) kids[k].classList.remove("sel");
         d.classList.add("sel");
-        if(previewEl) previewEl.style.background =
-          "radial-gradient(circle at 35% 30%, "+rgba(r.c,0.9)+", "+r.c+" 55%, "+rgba(r.c,0.55)+")";
+        if(onPick) onPick(r);
       };
       box.appendChild(d);
     });
   }
-  buildSwatches("wallSwatches","wallpaper",null);
-  buildSwatches("orbSwatches","orb",$("orbPreview"));
-  $("orbPreview").style.background =
-    "radial-gradient(circle at 35% 30%, "+rgba("#ff375f",0.9)+", #ff375f 55%, "+rgba("#ff375f",0.55)+")";
+  buildSwatches("wallSwatches","wallpaper");
+  buildSwatches("orbSwatches","orb",function(r){ $("orbPreview").style.background=orbBg(r.c); });
+  buildSwatches("auraSwatches","aura",function(r){
+    $("auraPreview").style.boxShadow="0 0 46px 14px "+rgba(r.c,0.55);
+  });
+  $("orbPreview").style.background=orbBg("#ff375f");
   // option cards
   function cardGroup(elId, key){
     var box=$(elId), kids=box.children;
     for(var k=0;k<kids.length;k++){
       (function(card){
-        var dataKey = key==="wake"?"wake":(key==="voice"?"voice":"pers");
         card.onclick=function(){
           for(var m=0;m<kids.length;m++) kids[m].classList.remove("sel");
           card.classList.add("sel");
-          wiz[dataKey]=card.getAttribute("data-"+dataKey);
+          wiz[key]=card.getAttribute("data-"+key);
         };
       })(kids[k]);
     }
   }
-  cardGroup("wakeCards","wake"); cardGroup("voiceCards","voice"); cardGroup("persCards","pers");
+  cardGroup("voiceCards","voice"); cardGroup("persCards","pers");
   $("voicePreview").onclick=function(){
-    speak($("aiName").value.trim() ? "Hi, I'm ready when you are." : "Hi, this is how I'll sound.",
-      voiceName(), function(){}, function(){});
+    var nm=$("aiName").value.trim();
+    speak(nm?("Hi, I'm "+nm+" — this is how I'll sound."):"Hi, this is how I'll sound.",
+      null, null, wiz.voice);
   };
   $("wizBack").onclick=function(){ if(wiz.step>1) goStep(wiz.step-1); };
   $("wizNext").onclick=function(){
@@ -411,11 +506,12 @@ function startWizard(){
       $("aiName").style.borderColor="";
       wiz.name=nm;
     }
-    if(wiz.step<5){ goStep(wiz.step+1); }
+    if(wiz.step<6){ goStep(wiz.step+1); }
     else {
-      saveSettings({name:wiz.name,wake:wiz.wake,voice:wiz.voice,pers:wiz.pers,wallpaper:wiz.wallpaper,orb:wiz.orb});
+      var done={name:wiz.name,voice:wiz.voice,pers:wiz.pers,wallpaper:wiz.wallpaper,orb:wiz.orb,aura:wiz.aura};
+      saveSettings(done);
       hide("wizard");
-      startHud({name:wiz.name,wake:wiz.wake,voice:wiz.voice,pers:wiz.pers,wallpaper:wiz.wallpaper,orb:wiz.orb});
+      startHud(done);
     }
   };
   goStep(1);
@@ -429,7 +525,14 @@ function goStep(n){
   var dots=document.querySelectorAll("#progress .pdot");
   for(var j=0;j<dots.length;j++) dots[j].classList.toggle("on", j<n);
   $("wizBack").style.visibility = n===1 ? "hidden" : "visible";
-  $("wizNext").textContent = n===5 ? "Meet my AI" : "Next";
+  $("wizNext").textContent = n===6 ? "Meet my AI" : "Next";
+  if(n===6){
+    // aura step preview: current orb body + current aura glow
+    var oc=rainColor(wiz.orb,RAINBOW[6]), ac=rainColor(wiz.aura,RAINBOW[4]);
+    var ap=$("auraPreview");
+    ap.style.background=orbBg(oc.c);
+    ap.style.boxShadow="0 0 46px 14px "+rgba(ac.c,0.55);
+  }
 }
 
 /* ================= INTERNET VOICE (TTS) =================
@@ -437,8 +540,15 @@ function goStep(n){
    pattern the family builds use. Natural voices, never device voices.
    Long replies are split into sentence chunks (one mp3 each) so nothing
    gets cut off. Falls back to device speech only if the network voice fails. */
-var NET_TL = "en-US", NET_PITCH = "0.5", NET_RATE = "0.55";
-function voiceName(){ return S.voice==="male" ? "UK English Male" : "US English Female"; }
+var NET_TL = "en-US";
+/* Distinct natural internet voices per choice — different voice, pitch and
+   rate for male vs female so the two options never sound the same. */
+var VOICES = {
+  female:{ name:"US English Female", pitch:"0.9", rate:"0.6", devPitch:1.25 },
+  male:{ name:"UK English Male", pitch:"0.1", rate:"0.5", devPitch:0.75 }
+};
+function vcfg(v){ return VOICES[v]||VOICES[S.voice]||VOICES.female; }
+function voiceName(v){ return vcfg(v).name; }
 var speakToken = 0, netAudio = null, audioUnlocked = false, ttsAudio = null;
 function stopNetAudio(){
   try{ if(netAudio){ netAudio.pause(); netAudio.removeAttribute("src"); netAudio.load(); } }catch(e){}
@@ -451,7 +561,7 @@ function unlockAudio(){
 document.addEventListener("touchstart", unlockAudio, {passive:true});
 document.addEventListener("click", unlockAudio);
 
-function speak(text, onStart, onDone){
+function speak(text, onStart, onDone, voice){
   var my = ++speakToken;
   var started=false;
   function fireStart(){ if(started||my!==speakToken) return; started=true; if(onStart){ try{onStart();}catch(e){} } }
@@ -459,9 +569,10 @@ function speak(text, onStart, onDone){
   setTimeout(fireStart, 15000); // backstop: never leave the UI hanging
   try{ if(window.speechSynthesis && (speechSynthesis.speaking||speechSynthesis.pending)) speechSynthesis.cancel(); }catch(e){}
   stopNetAudio();
-  netSpeak(text, my, fireStart, fireDone);
+  netSpeak(text, my, fireStart, fireDone, voice);
 }
-function netSpeak(text, my, onStart, onDone){
+function netSpeak(text, my, onStart, onDone, voice){
+  var cfg = vcfg(voice);
   var parts = String(text).match(/[^.!?]+[.!?]+["'")\]]?|[^.!?]+$/g) || [String(text)];
   var chunks=[], cur="";
   for(var i=0;i<parts.length;i++){
@@ -471,7 +582,7 @@ function netSpeak(text, my, onStart, onDone){
   if(cur.trim()) chunks.push(cur.trim());
   var ci=0, finished=false;
   function doneAll(){ if(finished||my!==speakToken) return; finished=true; netAudio=null; onStart(); onDone(); }
-  function fallBack(){ if(finished||my!==speakToken) return; finished=true; netAudio=null; deviceSpeak(text,onStart,onDone); }
+  function fallBack(){ if(finished||my!==speakToken) return; finished=true; netAudio=null; deviceSpeak(text,onStart,onDone,voice); }
   function playChunk(){
     if(finished||my!==speakToken) return;
     if(ci>=chunks.length){ doneAll(); return; }
@@ -482,8 +593,8 @@ function netSpeak(text, my, onStart, onDone){
     a.onplaying=function(){ onStart(); };
     a.onerror=fallBack;
     a.src="https://code.responsivevoice.org/getvoice.php?t="+encodeURIComponent(chunks[ci])+
-          "&tl="+NET_TL+"&sv=g1&vn="+encodeURIComponent(voiceName())+
-          "&pitch="+NET_PITCH+"&rate="+NET_RATE+"&vol=1";
+          "&tl="+NET_TL+"&sv=g1&vn="+encodeURIComponent(cfg.name)+
+          "&pitch="+cfg.pitch+"&rate="+cfg.rate+"&vol=1";
     try{ a.load(); }catch(e){}
     try{ var p=a.play(); if(p&&p.catch) p.catch(fallBack); }catch(e){ fallBack(); return; }
     setTimeout(function(){
@@ -494,10 +605,10 @@ function netSpeak(text, my, onStart, onDone){
   playChunk();
   setTimeout(function(){ if(!finished&&my===speakToken) doneAll(); },180000);
 }
-function deviceSpeak(text,onStart,onDone){
+function deviceSpeak(text,onStart,onDone,voice){
   // last-resort fallback only; the product voice is the internet voice above
   try{
-    var u=new SpeechSynthesisUtterance(text); u.rate=1; u.pitch=1;
+    var u=new SpeechSynthesisUtterance(text); u.rate=1; u.pitch=vcfg(voice).devPitch;
     u.onstart=onStart; u.onend=onDone; u.onerror=onDone;
     speechSynthesis.speak(u);
   }catch(e){ onStart(); onDone(); }
@@ -505,7 +616,7 @@ function deviceSpeak(text,onStart,onDone){
 
 /* ================= SPEECH RECOGNITION + WAKE WORD ================= */
 var SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
-var recog=null, micOn=false;
+var recog=null, micOn=false, ackRestart=false;
 function wakeMatch(transcript, name){
   // robust: lowercase, strip punctuation, "hey <name>" or bare "<name>",
   // any words around it, any accent (we only see the transcribed text)
@@ -521,7 +632,7 @@ function wakeMatch(transcript, name){
 function toggleMic(){
   if(!SR){ flashHint("Voice input isn't supported in this browser — type instead."); return; }
   unlockAudio();
-  if(micOn){ stopMic(); return; }
+  if(micOn){ ackRestart=false; stopMic(); return; }
   try{
     recog=new SR();
     recog.continuous=true; recog.interimResults=true; recog.lang="en-US";
@@ -537,7 +648,7 @@ function toggleMic(){
         var query=(w.hit&&w.rest)?w.rest:fin.trim();
         $("q").value="";
         if(query) sendMessage(query);
-        else pulseOrb();
+        else if(w.hit) ackWake(); // bare name: answer and stay listening
       }
     };
     recog.onend=function(){ if(micOn){ try{recog.start();}catch(e){} } };
@@ -558,18 +669,32 @@ function toggleMic(){
       /* "no-speech" and "aborted" are normal; stay listening. */
     };
     recog.start(); micOn=true; $("micBtn").classList.add("live");
-    flashHint('Listening — say "'+(S.wake==="hey"?"Hey ":"")+S.name+'" or just talk.');
+    flashHint('Listening — say "Hey '+S.name+'" or just "'+S.name+'".');
   }catch(e){ flashHint("Couldn't start the mic — type instead."); }
 }
 function stopMic(){ micOn=false; try{ if(recog) recog.stop(); }catch(e){} $("micBtn").classList.remove("live"); }
+function ackWake(){
+  // Bare name with no command: answer visibly and keep listening for the follow-up.
+  // The mic stops first so it can't hear its own "Yes?" and send it as a message,
+  // then restarts when the acknowledgment finishes (unless the user stopped it).
+  stopMic();
+  ackRestart=true;
+  pulseOrb();
+  var orb=$("orb");
+  $("subtitle").textContent="Yes?";
+  flashHint("I'm listening — go ahead.");
+  speak("Yes?",
+    function(){ orb.classList.add("talking"); },
+    function(){ orb.classList.remove("talking"); setWakeHint();
+      if(ackRestart){ ackRestart=false; toggleMic(); } });
+}
 function pulseOrb(){ var o=$("orb"); o.classList.add("talking"); setTimeout(function(){ o.classList.remove("talking"); },600); }
 var hintT=null;
 function flashHint(t){ $("wakeHint").textContent=t; clearTimeout(hintT); hintT=setTimeout(setWakeHint,4000); }
 function setWakeHint(){
   if(!S.name) return;
-  $("wakeHint").textContent = S.wake==="hey"
-    ? 'Say "Hey '+S.name+'" to get its attention — or just type below.'
-    : 'Just say "'+S.name+'" to get its attention — or just type below.';
+  // both wake phrases always work — no setup choice
+  $("wakeHint").textContent = 'Say "Hey '+S.name+'" or just "'+S.name+'" — either works. Or type below.';
 }
 
 /* ================= BRAIN CHAIN =================
@@ -678,7 +803,7 @@ function askBrain(prompt,sys){
 }
 
 /* ================= CHAT ================= */
-var S = { name:"AI", wake:"hey", voice:"female", pers:"balanced", wallpaper:"blue", orb:"pink" };
+var S = { name:"AI", wake:"hey", voice:"female", pers:"balanced", wallpaper:"blue", orb:"pink", aura:"blue" };
 var thinking=false;
 
 function sysPrompt(){
@@ -741,30 +866,95 @@ function updateCounter(){
   $("reqLeft").textContent = String(remaining());
 }
 
-/* ================= LIMIT BREAK BOOST ================= */
+/* ================= ADD-ONS (BOOSTS) =================
+   Demo ships with Limit Break only; the full product lists every add-on here. */
+function fmtClock(ms){
+  var s=Math.max(0,Math.ceil(ms/1000));
+  return Math.floor(s/60)+":"+(s%60<10?"0":"")+(s%60);
+}
 function updateBoostUI(){
-  var b=boostState(), btn=$("boostBtn"), t=$("boostTimer");
-  if(!b.used){ btn.disabled=false; btn.textContent="LIMIT BREAK"; t.textContent=""; return; }
-  btn.disabled=true; btn.textContent="LIMIT BREAK USED";
-  var left=BOOST_WINDOW_MS-(Date.now()-b.at);
-  if(left>0){
-    var m=Math.floor(left/60000), s=Math.floor((left%60000)/1000);
-    t.textContent="+"+Math.max(0,BOOST_BONUS-(used()-DEMO_LIMIT))+" bonus · "+m+":"+(s<10?"0":"")+s;
+  var b=boostState(), t=$("boostTimer"), ab=$("addonBtn");
+  var left=b.used ? BOOST_WINDOW_MS-(Date.now()-b.at) : 0;
+  var active=b.used && left>0;
+  ab.classList.toggle("active", active);
+  if(!b.used){ t.textContent=""; }
+  else if(active){
+    t.textContent="+"+Math.max(0,BOOST_BONUS-(used()-DEMO_LIMIT))+" bonus · "+fmtClock(left);
   } else t.textContent="";
+  // live state inside the add-ons panel
+  var card=$("lbCard"), actBtn=$("lbActivate"), box=$("lbActiveBox");
+  var lbl=document.querySelector("#lbActiveBox .lb-active-label");
+  if(!b.used){
+    card.classList.remove("armed"); actBtn.classList.remove("hidden"); box.classList.add("hidden");
+  } else {
+    actBtn.classList.add("hidden"); box.classList.remove("hidden");
+    card.classList.toggle("armed", active);
+    if(lbl) lbl.textContent = active ? "ACTIVE" : "EXPIRED";
+    $("lbClock").textContent=fmtClock(left);
+    $("lbBarFill").style.width=(active?(100*left/BOOST_WINDOW_MS):0)+"%";
+  }
 }
 setInterval(function(){ if($("hud").classList.contains("hidden")) return; updateBoostUI(); updateCounter(); },1000);
-$("boostBtn").onclick=function(){
+$("addonBtn").onclick=function(){ updateBoostUI(); show("addonModal"); };
+$("addonClose").onclick=function(){ hide("addonModal"); };
+$("addonModal").onclick=function(e){ if(e.target===$("addonModal")) hide("addonModal"); };
+$("lbActivate").onclick=function(){
   var b=boostState();
   if(b.used) return;
   lsSet("gcai_boost_"+emailKey, JSON.stringify({used:true, at:Date.now()}));
   updateBoostUI(); updateCounter();
+  // activation animation: a shockwave bursts out of the orb
+  var stage=document.querySelector("#hud .stage");
+  if(stage){
+    var sw=document.createElement("div"); sw.id="shockwave";
+    stage.appendChild(sw);
+    setTimeout(function(){ if(sw.parentNode) sw.parentNode.removeChild(sw); },1200);
+  }
+  pulseOrb();
   flashHint("LIMIT BREAK active — 10 bonus requests for the next 10 minutes.");
+  speak("Limit break active. Ten bonus requests for the next ten minutes.", null, null);
+};
+
+/* ================= THEME SETTINGS (post-setup) ================= */
+var themeTmp=null;
+function buildThemeSwatches(){
+  function row(elId,key){
+    var box=$(elId); box.innerHTML="";
+    RAINBOW.forEach(function(r){
+      var d=document.createElement("div");
+      d.className="sw"+(themeTmp[key]===r.n?" sel":"");
+      d.title=r.n; d.style.background=r.c;
+      d.onclick=function(){
+        themeTmp[key]=r.n;
+        var kids=box.children;
+        for(var k=0;k<kids.length;k++) kids[k].classList.remove("sel");
+        d.classList.add("sel");
+      };
+      box.appendChild(d);
+    });
+  }
+  row("setWall","wallpaper"); row("setOrb","orb"); row("setAura","aura");
+}
+$("gearBtn").onclick=function(){
+  themeTmp={wallpaper:S.wallpaper, orb:S.orb, aura:S.aura};
+  buildThemeSwatches();
+  show("themeModal");
+};
+$("themeCancel").onclick=function(){ hide("themeModal"); };
+$("themeModal").onclick=function(e){ if(e.target===$("themeModal")) hide("themeModal"); };
+$("themeSave").onclick=function(){
+  S.wallpaper=themeTmp.wallpaper; S.orb=themeTmp.orb; S.aura=themeTmp.aura;
+  saveSettings({name:S.name,voice:S.voice,pers:S.pers,
+    wallpaper:S.wallpaper,orb:S.orb,aura:S.aura});
+  applyTheme(S);
+  hide("themeModal");
+  flashHint("Theme updated.");
 };
 
 /* ================= DEMO COMPLETE + TRANSFER CODE ================= */
 function genCode(st){
   // deterministic: identical settings always yield the identical code
-  var base=[st.name,st.voice,st.pers,st.wallpaper,st.orb].join("|").toLowerCase();
+  var base=[st.name,st.voice,st.pers,st.wallpaper,st.orb,st.aura].join("|").toLowerCase();
   var A="ABCDEFGHJKMNPQRSTUVWXYZ23456789";
   function grp(seed){
     var h=djb2(seed), s="";
@@ -776,7 +966,7 @@ function genCode(st){
 function showComplete(){
   stopMic();
   hide("gate-email"); hide("wizard"); hide("hud");
-  var st=settings()||{name:"AI",voice:"female",pers:"balanced",wallpaper:"blue",orb:"pink"};
+  var st=settings()||{name:"AI",voice:"female",pers:"balanced",wallpaper:"blue",orb:"pink",aura:"blue"};
   $("codeBox").textContent=genCode(st);
   show("complete");
 }
@@ -793,25 +983,28 @@ $("copyCode").onclick=function(){
 
 /* ================= HUD INIT ================= */
 function applyTheme(st){
-  var w=RAINBOW.filter(function(r){ return r.n===st.wallpaper; })[0]||RAINBOW[4];
-  var o=RAINBOW.filter(function(r){ return r.n===st.orb; })[0]||RAINBOW[6];
+  var w=rainColor(st.wallpaper,RAINBOW[4]);
+  var o=rainColor(st.orb,RAINBOW[6]);
+  var a=rainColor(st.aura,o);
+  // the whole wallpaper is the chosen color, fading to white around the edges
   document.body.style.background =
-    "radial-gradient(1200px 700px at 50% 18%, "+rgba(w.c,0.28)+", transparent 60%),"+
-    "linear-gradient(180deg, "+rgba(w.c,0.14)+", #0a0d13 55%)";
+    "radial-gradient(125% 125% at 50% 40%, "+w.c+" 0%, "+w.c+" 58%, #ffffff 100%)";
+  // light wallpapers get dark HUD text so everything stays readable
+  document.body.classList.toggle("light-wall", wallLum(w.c)>0.6);
   var orb=$("orb");
   orb.style.background =
     "radial-gradient(circle at 35% 30%, "+rgba(o.c,0.95)+", "+o.c+" 55%, "+rgba(o.c,0.5)+")";
-  orb.style.boxShadow="0 0 40px 6px "+rgba(o.c,0.35);
-  // glow intensifies while talking
-  var style=document.createElement("style");
-  style.textContent="#orb.talking{box-shadow:0 0 90px 24px "+rgba(o.c,0.75)+" !important;}";
-  document.head.appendChild(style);
+  // the aura is its own selectable glow around the orb
+  orb.style.boxShadow="0 0 46px 12px "+rgba(a.c,0.4);
+  var gs=$("orbGlowStyle");
+  if(!gs){ gs=document.createElement("style"); gs.id="orbGlowStyle"; document.head.appendChild(gs); }
+  gs.textContent="#orb.talking{box-shadow:0 0 100px 30px "+rgba(a.c,0.8)+" !important;}";
   var op=$("orbPreview");
-  if(op) op.style.background="radial-gradient(circle at 35% 30%, "+rgba(o.c,0.9)+", "+o.c+" 55%, "+rgba(o.c,0.55)+")";
+  if(op) op.style.background=orbBg(o.c);
 }
 function startHud(st){
-  S.name=st.name; S.wake=st.wake; S.voice=st.voice; S.pers=st.pers;
-  S.wallpaper=st.wallpaper; S.orb=st.orb;
+  S.name=st.name; S.wake=st.wake||"hey"; S.voice=st.voice; S.pers=st.pers;
+  S.wallpaper=st.wallpaper; S.orb=st.orb; S.aura=st.aura||st.orb||"blue";
   applyTheme(st);
   $("hudName").textContent=st.name;
   $("hudSub").textContent="GCAI demo · "+st.pers;
