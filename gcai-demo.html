@@ -4,9 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>GCAI — Free Demo</title>
-<!-- GCAI DEMO v13 — 2026-09-22: paid AI now called "Full Genie" in gated-feature
-     messages and the brain prompt (was "full GCAI"); live weather is a demo
-     feature now (Open-Meteo, device location or "weather in <city>"), one request.
+<!-- GCAI DEMO v14 — 2026-09-22: naming finalized — the demo is "Genie Demo",
+     the paid AI is just "Genie" (gated-feature messages and brain prompt updated;
+     was "Full Genie").
+     v13 items kept: live weather is a demo feature (Open-Meteo, device location
+     or "weather in <city>"), one request.
      v12 items kept: wake follow-up window tightened to 2 seconds
      like LUNA's (ding, then ~2s where the name isn't needed).
      v11 items kept: true self-healing brain chain (blacklisted brains
@@ -381,7 +383,7 @@
     </div>
     <div id="codeBox">GCAI-0000-0000</div>
     <ul>
-      <li>Enter this code in Full Genie and your AI appears exactly as you built it — same name, voice, personality, and colors (wallpaper, orb, aura).</li>
+      <li>Enter this code in Genie and your AI appears exactly as you built it — same name, voice, personality, and colors (wallpaper, orb, aura).</li>
       <li>It also unlocks an <b>exclusive wallpaper + orb color set</b> only demo users get.</li>
       <li>One code per person. Keep it somewhere safe.</li>
     </ul>
@@ -940,7 +942,7 @@ function sysPrompt(){
     "If the prompt starts with recent conversation, use it for context on follow-ups "+
     "(yes / no / why / tell me more / what about...) — never treat a follow-up as unrelated. "+
     "The demo is chat-only: if asked for recipes, lists, images, notes, news, "+
-    "opening apps or sites, 3D models, emails, or other full-product features, say those need Full Genie. "+
+    "opening apps or sites, 3D models, emails, or other full-product features, say those need Genie. "+
     "You can also answer time/date questions from the device clock, give live weather, and look up general knowledge — those are demo features too.";
   if(S.pers==="cheerful")
     return base+" Personality: cheerful, upbeat, warm, genuinely enthusiastic. Light humor welcome.";
@@ -951,23 +953,23 @@ function sysPrompt(){
 function lockedReply(q){
   var t=q.toLowerCase();
   if(/\b(image|picture|photo|drawing|draw|paint|generate|create)\b[\s\S]{0,20}\b(image|picture|photo|drawing|it)\b|\b(generate|create|make|draw)\b[\s\S]{0,12}\b(image|picture|photo|logo)\b/.test(t))
-    return "Image generation isn't in the demo — it's waiting for you in Full Genie.";
+    return "Image generation isn't in the demo — it's waiting for you in Genie.";
   if(/\b(note|notes|notepad)\b/.test(t) || /remember this|take a note|save (this|that|it)/.test(t))
-    return "Notes aren't in the demo — Full Genie keeps notes for you.";
+    return "Notes aren't in the demo — Genie keeps notes for you.";
   /* Full-version features: the demo is chat-only. Anything the real Genie
      can do gets an upsell instead of an answer — and never eats quota. */
   if(/\b(recipe|recipes)\b|how (do|can) i (make|cook|bake|prepare)\b|ingredients for\b/.test(t))
-    return "Recipes are a full-version thing — grab Full Genie and I'll walk you through recipes step by step.";
+    return "Recipes are a full-version thing — grab Genie and I'll walk you through recipes step by step.";
   if(/\b(give|make|show|send) me\b[\s\S]{0,15}\ba list\b|\blist of\b|\blist\b[\s\S]{0,10}\b(for|things|items)\b/.test(t))
-    return "Lists are a full-version thing — Full Genie builds proper lists for you.";
+    return "Lists are a full-version thing — Genie builds proper lists for you.";
   if(/\b(write|draft|compose)\b[\s\S]{0,15}\b(essay|story|poem|email|letter|report|speech|paragraph)\b|\bsend\b[\s\S]{0,15}\b(an? )?(email|text message)\b/.test(t))
-    return "Writing and emails are a full-version thing — Full Genie has a whole writer built in.";
+    return "Writing and emails are a full-version thing — Genie has a whole writer built in.";
   if(/\bnews\b|\bheadlines\b|\bbriefing\b/.test(t))
-    return "News briefings are a full-version thing — Full Genie reads you the latest.";
+    return "News briefings are a full-version thing — Genie reads you the latest.";
   if(/^\s*(open|launch)\b|\bplay\b[\s\S]{0,20}\b(spotify|youtube|music|song)\b/.test(t))
-    return "Opening apps, sites, and music is a full-version thing — Full Genie does all of that.";
+    return "Opening apps, sites, and music is a full-version thing — Genie does all of that.";
   if(/\b3d model\b|\b3d print\b/.test(t))
-    return "3D models are a full-version thing — Full Genie builds them for you.";
+    return "3D models are a full-version thing — Genie builds them for you.";
   return null;
 }
 /* ============ LOCAL KNOWLEDGE: time, date, web lookup ============
