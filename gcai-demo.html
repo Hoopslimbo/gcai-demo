@@ -4,11 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>GCAI — Free Demo</title>
-<!-- GCAI DEMO v9 — 2026-09-22: always-on mic with required wake word (LUNA-style),
-     no spoken emojis, conversation memory (last 3 exchanges), waitlist popup
-     fires after the AI's reply (not before), voice/ding cards preview on tap,
-     customizable wake ding. v8 items kept: waitlist flow, no email gate,
-     LAUNCH_DATE buy switch, default AI name Genie, company stays GCAI. -->
+<!-- GCAI DEMO v10 — 2026-09-22: male voice pitch matched to Ace (0.5).
+     v9 items kept: always-on wake-word mic, no spoken emojis, conversation
+     memory, wake-ding picker, waitlist popup after reply, tap-to-preview
+     voice/ding cards, no email gate, LAUNCH_DATE buy switch. -->
 <!--
   GCAI DEMO (Genuinely Customizable Artificial Intelligence)
   Single-file demo. Honest engineering notes:
@@ -593,7 +592,7 @@ var NET_TL = "en-US";
    rate for male vs female so the two options never sound the same. */
 var VOICES = {
   female:{ name:"US English Female", pitch:"0.5", rate:"0.55", devPitch:1.25 },
-  male:{ name:"UK English Male", pitch:"0.25", rate:"0.5", devPitch:0.75 }
+  male:{ name:"UK English Male", pitch:"0.5", rate:"0.5", devPitch:0.75 }
 };
 function vcfg(v){ return VOICES[v]||VOICES[S.voice]||VOICES.female; }
 function voiceName(v){ return vcfg(v).name; }
