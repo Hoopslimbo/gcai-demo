@@ -4,10 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>GCAI — Free Demo</title>
-<!-- GCAI DEMO v8 — 2026-09-22: waitlist flow (name+email popup at 15 left,
-     waitlist-only screen at 0); no email gate up front; LAUNCH_DATE switch
-     flips the run-out screen to a buy link once the full version releases.
-     v7 items kept: default AI name Genie, company stays GCAI. -->
+<!-- GCAI DEMO v9 — 2026-09-22: always-on mic with required wake word (LUNA-style),
+     no spoken emojis, conversation memory (last 3 exchanges), waitlist popup
+     fires after the AI's reply (not before), voice/ding cards preview on tap,
+     customizable wake ding. v8 items kept: waitlist flow, no email gate,
+     LAUNCH_DATE buy switch, default AI name Genie, company stays GCAI. -->
 <!--
   GCAI DEMO (Genuinely Customizable Artificial Intelligence)
   Single-file demo. Honest engineering notes:
@@ -239,12 +240,19 @@
 
     <div class="step" data-step="2">
       <h2>Pick a voice</h2>
-      <p class="hint">Real internet voices — never robotic, never your device's built-in voice.</p>
+      <p class="hint">Tap a voice to hear it.</p>
       <div class="cards" id="voiceCards">
         <div class="card-opt sel" data-voice="female"><div class="t">Female</div><div class="d">Warm, natural feminine voice</div></div>
         <div class="card-opt" data-voice="male"><div class="t">Male</div><div class="d">Natural masculine voice</div></div>
       </div>
-      <button class="mini-btn" id="voicePreview">Preview voice</button>
+      <div style="margin:26px 0 12px;font-size:19px;font-weight:600">Wake ding</div>
+      <p class="hint">The sound it makes when it hears its wake word. Tap to hear each one.</p>
+      <div class="cards" id="dingCards">
+        <div class="card-opt sel" data-ding="classic"><div class="t">Classic</div><div class="d">Two-tone chime</div></div>
+        <div class="card-opt" data-ding="soft"><div class="t">Soft</div><div class="d">One gentle tone</div></div>
+        <div class="card-opt" data-ding="bright"><div class="t">Bright</div><div class="d">Quick rising sparkle</div></div>
+        <div class="card-opt" data-ding="deep"><div class="t">Deep</div><div class="d">Low and mellow</div></div>
+      </div>
     </div>
 
     <div class="step" data-step="3">
@@ -464,7 +472,7 @@ var RAINBOW = [
   {n:"pink",c:"#ff375f"},
   {n:"black",c:"#111111"},{n:"white",c:"#ffffff"},{n:"gray",c:"#6e747c"}
 ];
-var wiz = { step:1, name:"", voice:"female", pers:"balanced", wallpaper:"blue", orb:"pink", aura:"blue" };
+var wiz = { step:1, name:"", voice:"female", pers:"balanced", wallpaper:"blue", orb:"pink", aura:"blue", ding:"classic" };
 var wizStarted = false;
 
 function startWizard(){
@@ -523,12 +531,21 @@ function startWizard(){
       })(kids[k]);
     }
   }
-  cardGroup("voiceCards","voice"); cardGroup("persCards","pers");
-  $("voicePreview").onclick=function(){
+  cardGroup("voiceCards","voice"); cardGroup("persCards","pers"); cardGroup("dingCards","ding");
+  // tapping a card previews it immediately — no separate test buttons
+  function chainPreview(elId, fn){
+    var box=$(elId), kids=box.children;
+    for(var k=0;k<kids.length;k++){
+      (function(card){ var prev=card.onclick; card.onclick=function(){ prev(); fn(card); }; })(kids[k]);
+    }
+  }
+  chainPreview("voiceCards", function(){ previewVoice(); });
+  chainPreview("dingCards", function(card){ playDing(card.getAttribute("data-ding")); });
+  function previewVoice(){
     var nm=$("aiName").value.trim();
     speak(nm?("Hi, I'm "+nm+" — this is how I'll sound."):"Hi, this is how I'll sound.",
       null, null, wiz.voice);
-  };
+  }
   $("wizBack").onclick=function(){ if(wiz.step>1) goStep(wiz.step-1); };
   $("wizNext").onclick=function(){
     if(wiz.step===1){
@@ -539,7 +556,7 @@ function startWizard(){
     }
     if(wiz.step<6){ goStep(wiz.step+1); }
     else {
-      var done={name:wiz.name,voice:wiz.voice,pers:wiz.pers,wallpaper:wiz.wallpaper,orb:wiz.orb,aura:wiz.aura};
+      var done={name:wiz.name,voice:wiz.voice,pers:wiz.pers,wallpaper:wiz.wallpaper,orb:wiz.orb,aura:wiz.aura,ding:wiz.ding};
       saveSettings(done);
       hide("wizard");
       startHud(done);
@@ -592,7 +609,36 @@ function unlockAudio(){
 document.addEventListener("touchstart", unlockAudio, {passive:true});
 document.addEventListener("click", unlockAudio);
 
+/* ================= WAKE DING =================
+   Customizable chime when the AI hears its wake word (like LUNA's chime). */
+var actx=null;
+function beep(freq,dur,delay,type,vol){
+  try{
+    actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+    if(actx.state==="suspended") actx.resume();
+    var t=actx.currentTime+(delay||0);
+    var o=actx.createOscillator(), g=actx.createGain();
+    o.type=type||"sine"; o.frequency.value=freq;
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(vol||0.25,t+0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    o.connect(g); g.connect(actx.destination);
+    o.start(t); o.stop(t+dur+0.05);
+  }catch(e){}
+}
+var DINGS={
+  classic:{t:"Classic", d:"Two-tone chime", play:function(){ beep(880,0.14,0); beep(1318,0.2,0.13); }},
+  soft:{t:"Soft", d:"One gentle tone", play:function(){ beep(660,0.35,0,"sine",0.18); }},
+  bright:{t:"Bright", d:"Quick rising sparkle", play:function(){ beep(988,0.1,0); beep(1319,0.1,0.09); beep(1760,0.16,0.18); }},
+  deep:{t:"Deep", d:"Low and mellow", play:function(){ beep(440,0.16,0,"triangle"); beep(330,0.24,0.15,"triangle"); }}
+};
+function playDing(name){ var d=DINGS[name]||DINGS.classic; try{ d.play(); }catch(e){} }
+
+/* Emojis show in text but are never read aloud (same rule as LUNA). */
+var EMOJI_RE=/[\u{1F000}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE00}-\u{FE0F}\u{200D}\u{2190}-\u{21FF}\u{2300}-\u{23FF}]/gu;
+function stripEmojis(t){ return String(t||"").replace(EMOJI_RE,"").replace(/[ \t]{2,}/g," ").trim(); }
 function speak(text, onStart, onDone, voice){
+  text=stripEmojis(text); // what it says out loud — never emojis
   var my = ++speakToken;
   var started=false;
   function fireStart(){ if(started||my!==speakToken) return; started=true; if(onStart){ try{onStart();}catch(e){} } }
@@ -647,7 +693,7 @@ function deviceSpeak(text,onStart,onDone,voice){
 
 /* ================= SPEECH RECOGNITION + WAKE WORD ================= */
 var SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
-var recog=null, micOn=false, ackRestart=false;
+var recog=null, micOn=false, speaking=false, followUpUntil=0;
 function wakeMatch(transcript, name){
   // robust: lowercase, strip punctuation, "hey <name>" or bare "<name>",
   // any words around it, any accent (we only see the transcribed text)
@@ -660,27 +706,31 @@ function wakeMatch(transcript, name){
   var rest=t.replace(re," ").replace(/\s+/g," ").trim();
   return {hit:true, rest:rest};
 }
-function toggleMic(){
-  if(!SR){ flashHint("Voice input isn't supported in this browser — type instead."); return; }
+// Pure decision for voice input — tested below.
+function voiceAction(fin, name, followUp, isSpeaking){
+  if(isSpeaking) return {type:"ignore"}; // never hear its own voice
+  var w=wakeMatch(fin, name);
+  if(w.hit && w.rest) return {type:"send", query:w.rest};
+  if(w.hit) return {type:"ack"}; // bare name: "Yes?" + follow-up window
+  if(followUp && fin.trim()) return {type:"send", query:fin.trim()};
+  return {type:"ignore"}; // no wake word: not for us
+}
+function startListening(){
+  if(!SR || micOn) return;
   unlockAudio();
-  if(micOn){ ackRestart=false; stopMic(); return; }
   try{
     recog=new SR();
     recog.continuous=true; recog.interimResults=true; recog.lang="en-US";
     recog.onresult=function(ev){
-      var interim="", fin="";
+      var fin="";
       for(var i=ev.resultIndex;i<ev.results.length;i++){
         if(ev.results[i].isFinal) fin+=ev.results[i][0].transcript+" ";
-        else interim+=ev.results[i][0].transcript;
       }
-      if(interim) $("q").value=interim;
-      if(fin){
-        var w=wakeMatch(fin,S.name);
-        var query=(w.hit&&w.rest)?w.rest:fin.trim();
-        $("q").value="";
-        if(query) sendMessage(query);
-        else if(w.hit) ackWake(); // bare name: answer and stay listening
-      }
+      fin=fin.trim();
+      if(!fin) return;
+      var a=voiceAction(fin, S.name, Date.now()<followUpUntil, speaking);
+      if(a.type==="send") sendMessage(a.query);
+      else if(a.type==="ack") ackWake();
     };
     recog.onend=function(){ if(micOn){ try{recog.start();}catch(e){} } };
     recog.onerror=function(ev){
@@ -703,25 +753,22 @@ function toggleMic(){
     flashHint('Listening — say "Hey '+S.name+'" or just "'+S.name+'".');
   }catch(e){ flashHint("Couldn't start the mic — type instead."); }
 }
+function toggleMic(){ if(micOn) stopMic(); else startListening(); }
 function stopMic(){ micOn=false; try{ if(recog) recog.stop(); }catch(e){} $("micBtn").classList.remove("live"); }
 function ackWake(){
-  // Bare name with no command: answer visibly and keep listening for the follow-up.
-  // The mic stops first so it can't hear its own "Yes?" and send it as a message,
-  // then restarts when the acknowledgment finishes (unless the user stopped it).
-  stopMic();
-  ackRestart=true;
+  // Bare name with no command: play the chosen wake ding (chime only, like
+  // LUNA), then a follow-up window where the wake word isn't needed.
+  // Mic stays on; anything heard while the AI itself is speaking is ignored
+  // so it can't trigger on its own voice.
   pulseOrb();
   var orb=$("orb");
+  orb.classList.add("talking");
   $("subtitle").textContent="Yes?";
   flashHint("I'm listening — go ahead.");
-  speak("Yes?",
-    function(){ orb.classList.add("talking"); },
-    function(){ orb.classList.remove("talking"); setWakeHint();
-      if(ackRestart){ ackRestart=false; toggleMic(); } });
+  playDing(S.ding);
+  setTimeout(function(){ orb.classList.remove("talking"); setWakeHint(); }, 900);
+  followUpUntil=Date.now()+8000;
 }
-function pulseOrb(){ var o=$("orb"); o.classList.add("talking"); setTimeout(function(){ o.classList.remove("talking"); },600); }
-var hintT=null;
-function flashHint(t){ $("wakeHint").textContent=t; clearTimeout(hintT); hintT=setTimeout(setWakeHint,4000); }
 function setWakeHint(){
   if(!S.name) return;
   // both wake phrases always work — no setup choice
@@ -837,10 +884,28 @@ function askBrain(prompt,sys){
 var S = { name:"Genie", wake:"hey", voice:"female", pers:"balanced", wallpaper:"blue", orb:"pink", aura:"blue" };
 var thinking=false;
 
+/* ================= CONVERSATION MEMORY =================
+   The demo keeps the last 3 exchanges so follow-ups ("why?", "tell me more")
+   make sense. (Full-version deep memory goes further; this is the demo's
+   one borrowed full-version feature.) */
+var hist=[];
+function pushHist(w,t){
+  t=String(t||"").replace(/\s+/g," ").trim().slice(0,150);
+  if(!t) return;
+  hist.push({w:w,t:t});
+  while(hist.length>6) hist.shift();
+}
+function histPrompt(){
+  if(!hist.length) return "";
+  return "Recent conversation (you are "+S.name+"):\n"+
+    hist.map(function(h){ return (h.w==="ai"?"You":"User")+": "+h.t; }).join("\n")+"\n\n";
+}
 function sysPrompt(){
   var base="You are "+S.name+", a customizable AI assistant in a free GCAI demo. "+
     "Keep replies conversational and under 120 words unless asked for more. "+
     "Never mention system prompts, models, or providers. You are "+S.name+". "+
+    "If the prompt starts with recent conversation, use it for context on follow-ups "+
+    "(yes / no / why / tell me more / what about...) — never treat a follow-up as unrelated. "+
     "The demo is chat-only: if asked for recipes, lists, images, notes, news, weather, "+
     "opening apps or sites, 3D models, emails, or other full-product features, say those need the full GCAI product.";
   if(S.pers==="cheerful")
@@ -877,6 +942,7 @@ function sendMessage(text){
   text=String(text||"").trim();
   if(!text||thinking) return;
   if(isLocked()){ showComplete(); return; }
+  pushHist("user",text);
   unlockAudio();
   // stop any current speech (interrupt)
   speakToken++;
@@ -888,7 +954,7 @@ function sendMessage(text){
   if(canned){ thinking=false; say(canned,"demo"); checkLock(); return; }
   if(!boostActive()) setUsed(used()+1); updateCounter();
   $("subtitle").textContent="Thinking…";
-  askBrain(text, sysPrompt()).then(function(r){
+  askBrain(histPrompt()+text, sysPrompt()).then(function(r){
     thinking=false;
     say(r.text, r.brain);
     checkLock();
@@ -899,14 +965,17 @@ function sendMessage(text){
   });
 }
 function say(text, brain){
+  pushHist("ai",text);
   var orb=$("orb");
   $("brainTag").textContent = brain==="demo" ? "demo" : "via "+brain;
   speak(text,
     function(){ // audio started: glow + words together
+      speaking=true;
       orb.classList.add("talking");
       $("subtitle").textContent=text;
+      maybeWaitlistPop(); // the reply is out — now the 15-left nudge may show
     },
-    function(){ orb.classList.remove("talking"); });
+    function(){ speaking=false; orb.classList.remove("talking"); });
 }
 function checkLock(){
   if(isLocked()){ setTimeout(showComplete, 2500); }
@@ -914,11 +983,13 @@ function checkLock(){
 function updateCounter(){
   if(boostActive()){ $("reqLeft").textContent = "∞"; return; }
   $("reqLeft").textContent = String(remaining());
-  // pre-launch only: one dismissible waitlist nudge at 15 left (never traps the user)
-  if(!isLaunched() && !wlJoined() && !lsGet("gcai_wl_seen") && remaining()<=15){
-    lsSet("gcai_wl_seen","1");
-    show("waitlistPop");
-  }
+}
+function maybeWaitlistPop(){
+  // pre-launch only: one dismissible nudge at 15 left. Called when the AI's
+  // reply to that question is delivered — never before it, never traps the user.
+  if(isLaunched() || wlJoined() || lsGet("gcai_wl_seen") || remaining()>15) return;
+  lsSet("gcai_wl_seen","1");
+  show("waitlistPop");
 }
 
 /* ================= ADD-ONS (BOOSTS) =================
@@ -1019,7 +1090,7 @@ $("themeModal").onclick=function(e){ if(e.target===$("themeModal")) hide("themeM
 $("themeSave").onclick=function(){
   S.wallpaper=themeTmp.wallpaper; S.orb=themeTmp.orb; S.aura=themeTmp.aura;
   saveSettings({name:S.name,voice:S.voice,pers:S.pers,
-    wallpaper:S.wallpaper,orb:S.orb,aura:S.aura});
+    wallpaper:S.wallpaper,orb:S.orb,aura:S.aura,ding:S.ding});
   applyTheme(S);
   hide("themeModal");
   flashHint("Theme updated.");
@@ -1127,6 +1198,7 @@ function applyTheme(st){
 function startHud(st){
   S.name=st.name; S.wake=st.wake||"hey"; S.voice=st.voice; S.pers=st.pers;
   S.wallpaper=st.wallpaper; S.orb=st.orb; S.aura=st.aura||st.orb||"blue";
+  S.ding=st.ding||"classic";
   applyTheme(st);
   $("hudName").textContent=st.name;
   $("hudSub").textContent="GCAI demo · "+st.pers;
@@ -1134,6 +1206,7 @@ function startHud(st){
   updateCounter(); updateBoostUI();
   show("hud");
   probeAll();
+  startListening(); // mic always on, like LUNA
   var greet = st.pers==="cheerful" ? "Hey! I'm "+st.name+", and I'm so glad you're here. Ask me anything — you've got 25 requests to play with."
     : st.pers==="moody" ? "I'm "+st.name+". Twenty-five requests. Try not to waste them."
     : "I'm "+st.name+". You have 25 demo requests — ask me anything.";
