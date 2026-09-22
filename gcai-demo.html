@@ -4,9 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>GCAI — Free Demo</title>
-<!-- GCAI DEMO v2 — 2026-09-22: full-color wallpaper w/ white edge fade, distinct M/F internet voices,
-     selectable aura color, both wake phrases always work, theme settings, puzzle add-ons button,
-     mic wake-word acknowledgment -->
+<!-- GCAI DEMO v3 — 2026-09-22: stronger white edge fade, black/white/gray options for wallpaper+orb+aura,
+     original female voice restored, male voice de-frogged (natural pitch), v2 features kept -->
 <!--
   GCAI DEMO (Genuinely Customizable Artificial Intelligence)
   Single-file demo. Honest engineering notes:
@@ -84,6 +83,7 @@
   .card-opt .d { font-size:12.5px; color:#9aa3b2; line-height:1.45; }
   .swatches { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-bottom:24px; }
   .sw { width:56px; height:56px; border-radius:50%; cursor:pointer; border:3px solid transparent;
+        box-shadow:0 0 0 1px rgba(0,0,0,.18);
         transition:all .2s ease; }
   .sw:hover { transform:scale(1.12); }
   .sw.sel { border-color:#fff; box-shadow:0 0 16px #ffffff55; animation:pop .25s ease; }
@@ -431,7 +431,8 @@ $("emailInput").addEventListener("keydown",function(e){ if(e.key==="Enter") $("e
 var RAINBOW = [
   {n:"red",c:"#ff3b30"},{n:"orange",c:"#ff9500"},{n:"yellow",c:"#ffcc00"},
   {n:"green",c:"#34c759"},{n:"blue",c:"#0a84ff"},{n:"purple",c:"#bf5af2"},
-  {n:"pink",c:"#ff375f"}
+  {n:"pink",c:"#ff375f"},
+  {n:"black",c:"#111111"},{n:"white",c:"#ffffff"},{n:"gray",c:"#6e747c"}
 ];
 var wiz = { step:1, name:"", voice:"female", pers:"balanced", wallpaper:"blue", orb:"pink", aura:"blue" };
 var wizStarted = false;
@@ -544,8 +545,8 @@ var NET_TL = "en-US";
 /* Distinct natural internet voices per choice — different voice, pitch and
    rate for male vs female so the two options never sound the same. */
 var VOICES = {
-  female:{ name:"US English Female", pitch:"0.9", rate:"0.6", devPitch:1.25 },
-  male:{ name:"UK English Male", pitch:"0.1", rate:"0.5", devPitch:0.75 }
+  female:{ name:"US English Female", pitch:"0.5", rate:"0.55", devPitch:1.25 },
+  male:{ name:"UK English Male", pitch:"0.55", rate:"0.55", devPitch:0.75 }
 };
 function vcfg(v){ return VOICES[v]||VOICES[S.voice]||VOICES.female; }
 function voiceName(v){ return vcfg(v).name; }
@@ -988,7 +989,7 @@ function applyTheme(st){
   var a=rainColor(st.aura,o);
   // the whole wallpaper is the chosen color, fading to white around the edges
   document.body.style.background =
-    "radial-gradient(125% 125% at 50% 40%, "+w.c+" 0%, "+w.c+" 58%, #ffffff 100%)";
+    "radial-gradient(125% 125% at 50% 40%, "+w.c+" 0%, "+w.c+" 42%, #ffffff 100%)";
   // light wallpapers get dark HUD text so everything stays readable
   document.body.classList.toggle("light-wall", wallLum(w.c)>0.6);
   var orb=$("orb");
