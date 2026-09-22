@@ -4,10 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>GCAI — Free Demo</title>
-<!-- GCAI DEMO v10 — 2026-09-22: male voice pitch matched to Ace (0.5).
-     v9 items kept: always-on wake-word mic, no spoken emojis, conversation
-     memory, wake-ding picker, waitlist popup after reply, tap-to-preview
-     voice/ding cards, no email gate, LAUNCH_DATE buy switch. -->
+<!-- GCAI DEMO v11 — 2026-09-22: true self-healing brain chain (blacklisted brains
+     get retried, re-probe every 90s, probe no longer false-flags on nonce);
+     wake ding fixed (AudioContext primed on gesture, resume-then-play);
+     demo answers time/date itself and looks up general knowledge on Wikipedia
+     (brain as backup). v10 items kept: Ace-matched male voice, wake-word mic,
+     no spoken emojis, conversation memory, wake-ding picker, waitlist popup
+     after reply, no email gate, LAUNCH_DATE buy switch. -->
 <!--
   GCAI DEMO (Genuinely Customizable Artificial Intelligence)
   Single-file demo. Honest engineering notes:
@@ -604,6 +607,7 @@ function stopNetAudio(){
 function unlockAudio(){
   if(audioUnlocked) return;
   try{ ttsAudio = new Audio(); ttsAudio.volume=1; audioUnlocked=true; }catch(e){}
+  ensureCtx(); // also prime the wake-ding AudioContext on this real gesture
 }
 document.addEventListener("touchstart", unlockAudio, {passive:true});
 document.addEventListener("click", unlockAudio);
@@ -611,18 +615,35 @@ document.addEventListener("click", unlockAudio);
 /* ================= WAKE DING =================
    Customizable chime when the AI hears its wake word (like LUNA's chime). */
 var actx=null;
-function beep(freq,dur,delay,type,vol){
+function ensureCtx(){
+  // The wake ding must survive a fresh page load with no taps yet: browsers
+  // start an AudioContext suspended until a user gesture, so we prime it on
+  // the first real gesture and resume-then-play when scheduling.
   try{
     actx=actx||new (window.AudioContext||window.webkitAudioContext)();
     if(actx.state==="suspended") actx.resume();
-    var t=actx.currentTime+(delay||0);
-    var o=actx.createOscillator(), g=actx.createGain();
-    o.type=type||"sine"; o.frequency.value=freq;
-    g.gain.setValueAtTime(0.0001,t);
-    g.gain.exponentialRampToValueAtTime(vol||0.25,t+0.02);
-    g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
-    o.connect(g); g.connect(actx.destination);
-    o.start(t); o.stop(t+dur+0.05);
+  }catch(e){}
+  return actx;
+}
+document.addEventListener("pointerdown", ensureCtx);
+document.addEventListener("keydown", ensureCtx);
+function beep(freq,dur,delay,type,vol){
+  function run(ctx){
+    try{
+      var t=ctx.currentTime+(delay||0);
+      var o=ctx.createOscillator(), g=ctx.createGain();
+      o.type=type||"sine"; o.frequency.value=freq;
+      g.gain.setValueAtTime(0.0001,t);
+      g.gain.exponentialRampToValueAtTime(vol||0.25,t+0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+      o.connect(g); g.connect(actx.destination);
+      o.start(t); o.stop(t+dur+0.05);
+    }catch(e){}
+  }
+  try{
+    var ctx=ensureCtx(); if(!ctx) return;
+    if(ctx.state==="suspended"){ ctx.resume().then(function(){ run(ctx); },function(){ run(ctx); }); }
+    else run(ctx);
   }catch(e){}
 }
 var DINGS={
@@ -841,13 +862,13 @@ function callBrain(def,prompt,sys,ms){
   });
 }
 function probeBrain(def){
-  var nc="pz"+Date.now().toString(36)+Math.floor(Math.random()*1e6).toString(36);
   var t0=Date.now();
-  return callBrain(def,"What is 2+2? In your answer, include the code "+nc+" somewhere.",
-    "You are a health probe.",PROBE_TIMEOUT)
+  return callBrain(def,"Say hello.", "You are a health probe.",PROBE_TIMEOUT)
   .then(function(text){
-    var ok=text.indexOf(nc)>=0;
-    return {ok:ok, ms:Date.now()-t0, payment:false};
+    // callBrain already rejects on HTTP errors, empty replies, and payment
+    // signals — any resolved reply means the brain is genuinely reachable.
+    // (The old nonce-in-reply check false-flagged healthy brains offline.)
+    return {ok:true, ms:Date.now()-t0, payment:false};
   })
   .catch(function(e){ return {ok:false, ms:Date.now()-t0, payment:!!e.payment}; });
 }
@@ -867,12 +888,19 @@ function updateBrainTag(){
   $("brainTag").textContent = uniq.length ? "brains online: "+uniq.join(" · ") : "checking brains…";
 }
 function askBrain(prompt,sys){
-  var i=0;
+  // Self-healing: first pass skips brains the prober flagged offline (fast),
+  // but the second pass tries them anyway — a bad probe must never permanently
+  // blacklist a healthy brain for the whole session.
+  var i=0, secondPass=false;
   function next(){
-    if(i>=BRAINS.length) return Promise.reject(new Error("all brains failed"));
+    if(i>=BRAINS.length){
+      if(secondPass) return Promise.reject(new Error("all brains failed"));
+      secondPass=true; i=0; return next();
+    }
     var def=BRAINS[i++];
-    if(def.online===false) return next();
+    if(!secondPass && def.online===false) return next();
     return callBrain(def,prompt,sys,ASK_TIMEOUT).then(function(text){
+      def.online=true; updateBrainTag();
       return {text:text, brain:def.label};
     }).catch(function(){ def.online=false; updateBrainTag(); return next(); });
   }
@@ -906,7 +934,8 @@ function sysPrompt(){
     "If the prompt starts with recent conversation, use it for context on follow-ups "+
     "(yes / no / why / tell me more / what about...) — never treat a follow-up as unrelated. "+
     "The demo is chat-only: if asked for recipes, lists, images, notes, news, weather, "+
-    "opening apps or sites, 3D models, emails, or other full-product features, say those need the full GCAI product.";
+    "opening apps or sites, 3D models, emails, or other full-product features, say those need the full GCAI product. "+
+    "You can also answer time/date questions from the device clock and look up general knowledge — those are demo features too.";
   if(S.pers==="cheerful")
     return base+" Personality: cheerful, upbeat, warm, genuinely enthusiastic. Light humor welcome.";
   if(S.pers==="moody")
@@ -937,6 +966,47 @@ function lockedReply(q){
     return "3D models are a full-version thing — the full GCAI builds them for you.";
   return null;
 }
+/* ============ LOCAL KNOWLEDGE: time, date, web lookup ============
+   The demo answers the clock itself (free, no request spent) and looks up
+   general knowledge on Wikipedia (counts as one request). Anything Wikipedia
+   can't answer falls back to the brain chain. */
+function localAnswer(q){
+  var t=String(q||"").toLowerCase();
+  if(/\bwhat time is it\b|\bwhat's the time\b|\bcurrent time\b|\btell me the time\b|\btime is it\b/.test(t)){
+    return "It's "+new Date().toLocaleTimeString([], {hour:"numeric",minute:"2-digit"})+".";
+  }
+  if(/\bwhat day is (it|today)\b|\bwhat's today\b|\btoday's date\b|\bwhat (is the )?date today\b|\bday of the week is it\b/.test(t)){
+    return "Today is "+new Date().toLocaleDateString([], {weekday:"long", month:"long", day:"numeric", year:"numeric"})+".";
+  }
+  return null;
+}
+function lookupQuery(q){
+  var m=String(q||"").match(/^(?:who is|who was|what is|what was|what are|look up|search for|tell me about)\s+(.+?)[?.!]*$/i);
+  return m ? m[1].trim() : null;
+}
+function doLookup(query){
+  if(!boostActive()) setUsed(used()+1); updateCounter();
+  $("subtitle").textContent="Looking that up…";
+  function done(text){ thinking=false; say(text,"demo"); checkLock(); }
+  function brainFallback(){
+    askBrain(histPrompt(), sysPrompt()).then(function(r){
+      thinking=false; say(r.text, r.brain); checkLock();
+    }).catch(function(){
+      thinking=false;
+      if(!boostActive()) setUsed(used()-1); updateCounter();
+      say("I couldn't find that and every brain is having a moment right now. Give it a few seconds and try again.","offline");
+    });
+  }
+  withTimeout(fetch("https://en.wikipedia.org/api/rest_v1/page/summary/"+encodeURIComponent(query),
+    {headers:{"Accept":"application/json"}}).then(function(r){
+      if(!r.ok) throw new Error("no page"); return r.json();
+    }),15000).then(function(j){
+      var ex=j.extract||"";
+      if(!ex || j.type==="disambiguation") throw new Error("no page");
+      var sentences=ex.match(/[^.!?]+[.!?]+/g)||[ex];
+      done("Here's what I found on "+(j.title||query)+": "+sentences.slice(0,3).join(" ").trim());
+    }).catch(function(){ brainFallback(); });
+}
 function sendMessage(text){
   text=String(text||"").trim();
   if(!text||thinking) return;
@@ -951,9 +1021,13 @@ function sendMessage(text){
   thinking=true;
   var canned=lockedReply(text);
   if(canned){ thinking=false; say(canned,"demo"); checkLock(); return; }
+  var local=localAnswer(text);
+  if(local){ thinking=false; say(local,"demo"); checkLock(); return; } // the clock is free
+  var lq=lookupQuery(text);
+  if(lq){ doLookup(lq); return; } // Wikipedia first, brain as backup; one request
   if(!boostActive()) setUsed(used()+1); updateCounter();
   $("subtitle").textContent="Thinking…";
-  askBrain(histPrompt()+text, sysPrompt()).then(function(r){
+  askBrain(histPrompt(), sysPrompt()).then(function(r){
     thinking=false;
     say(r.text, r.brain);
     checkLock();
@@ -1020,6 +1094,9 @@ function updateBoostUI(){
   }
 }
 setInterval(function(){ if($("hud").classList.contains("hidden")) return; updateBoostUI(); updateCounter(); },1000);
+// Re-probe the brain chain every 90s so a brain that recovers comes back
+// on its own instead of staying blacklisted until reload.
+setInterval(function(){ if($("hud").classList.contains("hidden")) return; probeAll(); },90000);
 $("addonBtn").onclick=function(){ updateBoostUI(); show("addonModal"); };
 $("addonClose").onclick=function(){ hide("addonModal"); };
 $("addonModal").onclick=function(e){ if(e.target===$("addonModal")) hide("addonModal"); };
