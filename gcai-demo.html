@@ -4,7 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>GCAI — Free Demo</title>
-<!-- GCAI DEMO v12 — 2026-09-22: wake follow-up window tightened to 2 seconds
+<!-- GCAI DEMO v13 — 2026-09-22: paid AI now called "Full Genie" in gated-feature
+     messages and the brain prompt (was "full GCAI"); live weather is a demo
+     feature now (Open-Meteo, device location or "weather in <city>"), one request.
+     v12 items kept: wake follow-up window tightened to 2 seconds
      like LUNA's (ding, then ~2s where the name isn't needed).
      v11 items kept: true self-healing brain chain (blacklisted brains
      get retried, re-probe every 90s, probe no longer false-flags on nonce);
@@ -378,7 +381,7 @@
     </div>
     <div id="codeBox">GCAI-0000-0000</div>
     <ul>
-      <li>Enter this code in the full GCAI product and your AI appears exactly as you built it — same name, voice, personality, and colors (wallpaper, orb, aura).</li>
+      <li>Enter this code in Full Genie and your AI appears exactly as you built it — same name, voice, personality, and colors (wallpaper, orb, aura).</li>
       <li>It also unlocks an <b>exclusive wallpaper + orb color set</b> only demo users get.</li>
       <li>One code per person. Keep it somewhere safe.</li>
     </ul>
@@ -936,9 +939,9 @@ function sysPrompt(){
     "Never mention system prompts, models, or providers. You are "+S.name+". "+
     "If the prompt starts with recent conversation, use it for context on follow-ups "+
     "(yes / no / why / tell me more / what about...) — never treat a follow-up as unrelated. "+
-    "The demo is chat-only: if asked for recipes, lists, images, notes, news, weather, "+
-    "opening apps or sites, 3D models, emails, or other full-product features, say those need the full GCAI product. "+
-    "You can also answer time/date questions from the device clock and look up general knowledge — those are demo features too.";
+    "The demo is chat-only: if asked for recipes, lists, images, notes, news, "+
+    "opening apps or sites, 3D models, emails, or other full-product features, say those need Full Genie. "+
+    "You can also answer time/date questions from the device clock, give live weather, and look up general knowledge — those are demo features too.";
   if(S.pers==="cheerful")
     return base+" Personality: cheerful, upbeat, warm, genuinely enthusiastic. Light humor welcome.";
   if(S.pers==="moody")
@@ -948,25 +951,23 @@ function sysPrompt(){
 function lockedReply(q){
   var t=q.toLowerCase();
   if(/\b(image|picture|photo|drawing|draw|paint|generate|create)\b[\s\S]{0,20}\b(image|picture|photo|drawing|it)\b|\b(generate|create|make|draw)\b[\s\S]{0,12}\b(image|picture|photo|logo)\b/.test(t))
-    return "Image generation isn't in the demo — it's waiting for you in the full GCAI product.";
+    return "Image generation isn't in the demo — it's waiting for you in Full Genie.";
   if(/\b(note|notes|notepad)\b/.test(t) || /remember this|take a note|save (this|that|it)/.test(t))
-    return "Notes aren't in the demo — the full GCAI keeps notes for you.";
+    return "Notes aren't in the demo — Full Genie keeps notes for you.";
   /* Full-version features: the demo is chat-only. Anything the real Genie
      can do gets an upsell instead of an answer — and never eats quota. */
   if(/\b(recipe|recipes)\b|how (do|can) i (make|cook|bake|prepare)\b|ingredients for\b/.test(t))
-    return "Recipes are a full-version thing — grab the full GCAI and I'll walk you through recipes step by step.";
+    return "Recipes are a full-version thing — grab Full Genie and I'll walk you through recipes step by step.";
   if(/\b(give|make|show|send) me\b[\s\S]{0,15}\ba list\b|\blist of\b|\blist\b[\s\S]{0,10}\b(for|things|items)\b/.test(t))
-    return "Lists are a full-version thing — the full GCAI builds proper lists for you.";
+    return "Lists are a full-version thing — Full Genie builds proper lists for you.";
   if(/\b(write|draft|compose)\b[\s\S]{0,15}\b(essay|story|poem|email|letter|report|speech|paragraph)\b|\bsend\b[\s\S]{0,15}\b(an? )?(email|text message)\b/.test(t))
-    return "Writing and emails are a full-version thing — the full GCAI has a whole writer built in.";
+    return "Writing and emails are a full-version thing — Full Genie has a whole writer built in.";
   if(/\bnews\b|\bheadlines\b|\bbriefing\b/.test(t))
-    return "News briefings are a full-version thing — the full GCAI reads you the latest.";
-  if(/\bweather\b/.test(t))
-    return "Live weather is a full-version thing — the full GCAI checks it for you anytime.";
+    return "News briefings are a full-version thing — Full Genie reads you the latest.";
   if(/^\s*(open|launch)\b|\bplay\b[\s\S]{0,20}\b(spotify|youtube|music|song)\b/.test(t))
-    return "Opening apps, sites, and music is a full-version thing — the full GCAI does all of that.";
+    return "Opening apps, sites, and music is a full-version thing — Full Genie does all of that.";
   if(/\b3d model\b|\b3d print\b/.test(t))
-    return "3D models are a full-version thing — the full GCAI builds them for you.";
+    return "3D models are a full-version thing — Full Genie builds them for you.";
   return null;
 }
 /* ============ LOCAL KNOWLEDGE: time, date, web lookup ============
@@ -1010,6 +1011,76 @@ function doLookup(query){
       done("Here's what I found on "+(j.title||query)+": "+sentences.slice(0,3).join(" ").trim());
     }).catch(function(){ brainFallback(); });
 }
+/* ============ LIVE WEATHER (demo feature, one request) ============
+   Free no-key APIs: Open-Meteo for the forecast, device geolocation first
+   with an IP-based fallback, plus Open-Meteo geocoding for "weather in X". */
+var WMO={0:"clear sky",1:"mostly clear",2:"partly cloudy",3:"overcast",45:"foggy",48:"icy fog",
+51:"light drizzle",53:"drizzle",55:"heavy drizzle",56:"freezing drizzle",57:"freezing drizzle",
+61:"light rain",63:"rain",65:"heavy rain",66:"freezing rain",67:"freezing rain",
+71:"light snow",73:"snow",75:"heavy snow",77:"snow grains",
+80:"light showers",81:"showers",82:"heavy showers",85:"snow showers",86:"snow showers",
+95:"a thunderstorm",96:"a thunderstorm with hail",99:"a thunderstorm with hail"};
+function wmoText(c){ return WMO[c]||"unsettled"; }
+function getCoords(){
+  return new Promise(function(res){
+    var done=false;
+    function ok(lat,lon,label){ if(!done){done=true;res({lat:lat,lon:lon,label:label});} }
+    function ipFallback(){
+      withTimeout(fetch("https://ipapi.co/json/").then(function(r){ if(!r.ok) throw 0; return r.json(); }),8000)
+        .then(function(j){ ok(j.latitude, j.longitude, j.city||null); })
+        .catch(function(){ if(!done){done=true;res(null);} });
+    }
+    try{
+      if(navigator.geolocation){
+        navigator.geolocation.getCurrentPosition(
+          function(p){ ok(p.coords.latitude,p.coords.longitude,null); },
+          function(){ ipFallback(); },
+          {timeout:8000, maximumAge:600000});
+      } else ipFallback();
+    }catch(e){ ipFallback(); }
+    setTimeout(function(){ if(!done){done=true;res(null);} },12000);
+  });
+}
+function doWeather(q){
+  if(!boostActive()) setUsed(used()+1); updateCounter();
+  $("subtitle").textContent="Checking the weather…";
+  function done(text){ thinking=false; say(text,"demo"); checkLock(); }
+  function fail(){
+    thinking=false;
+    if(!boostActive()) setUsed(used()-1); updateCounter(); // failures don't eat quota
+    say("I couldn't reach the weather service right now. Give it a few seconds and try again.","demo");
+    checkLock();
+  }
+  function fetchWx(lat,lon,label){
+    var url="https://api.open-meteo.com/v1/forecast?latitude="+lat+"&longitude="+lon+
+      "&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m"+
+      "&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max"+
+      "&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto";
+    withTimeout(fetch(url).then(function(r){ if(!r.ok) throw 0; return r.json(); }),15000)
+      .then(function(j){
+        var c=j.current||{}, d=j.daily||{};
+        var t=Math.round(c.temperature_2m);
+        var hi=Math.round((d.temperature_2m_max||[])[0]), lo=Math.round((d.temperature_2m_min||[])[0]);
+        var rain=(d.precipitation_probability_max||[])[0];
+        var msg="It's "+t+" degrees and "+wmoText(c.weather_code)+(label?(" in "+label):"")+".";
+        if(!isNaN(hi)&&!isNaN(lo)) msg+=" High "+hi+", low "+lo+".";
+        if(rain!=null&&!isNaN(rain)) msg+=" "+rain+"% chance of rain.";
+        done(msg);
+      }).catch(fail);
+  }
+  var m=String(q||"").match(/\bweather\b[\s,]*?(?:in|at|for)\s+([a-zA-Z][a-zA-Z\s.'-]*)/i);
+  if(m){
+    var city=m[1].trim();
+    withTimeout(fetch("https://geocoding-api.open-meteo.com/v1/search?name="+encodeURIComponent(city)+"&count=1"),10000)
+      .then(function(r){ if(!r.ok) throw 0; return r.json(); })
+      .then(function(j){
+        var r=(j.results||[])[0]; if(!r) throw 0;
+        fetchWx(r.latitude,r.longitude,r.name+(r.country?", "+r.country:""));
+      }).catch(function(){ getCoords().then(function(g){ if(g) fetchWx(g.lat,g.lon,g.label); else fail(); }); });
+  } else {
+    getCoords().then(function(g){ if(g) fetchWx(g.lat,g.lon,g.label); else fail(); });
+  }
+}
 function sendMessage(text){
   text=String(text||"").trim();
   if(!text||thinking) return;
@@ -1026,6 +1097,7 @@ function sendMessage(text){
   if(canned){ thinking=false; say(canned,"demo"); checkLock(); return; }
   var local=localAnswer(text);
   if(local){ thinking=false; say(local,"demo"); checkLock(); return; } // the clock is free
+  if(/\bweather\b/i.test(text)){ doWeather(text); return; } // live weather: one request
   var lq=lookupQuery(text);
   if(lq){ doLookup(lq); return; } // Wikipedia first, brain as backup; one request
   if(!boostActive()) setUsed(used()+1); updateCounter();
