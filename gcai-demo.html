@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>GCAI — Free Demo</title>
-<!-- GCAI DEMO v5 — 2026-09-22: male voice deeper (pitch 0.35) without frog effect,
-     boost button no more bounce (single click animation), brain list hidden from view -->
+<!-- GCAI DEMO v6 — 2026-09-22: male voice deeper (pitch 0.25), full-version upsell gate
+     for recipes/lists/writing/news/weather/open/3D/email (no quota used), v5 items kept -->
 <!--
   GCAI DEMO (Genuinely Customizable Artificial Intelligence)
   Single-file demo. Honest engineering notes:
@@ -561,7 +561,7 @@ var NET_TL = "en-US";
    rate for male vs female so the two options never sound the same. */
 var VOICES = {
   female:{ name:"US English Female", pitch:"0.5", rate:"0.55", devPitch:1.25 },
-  male:{ name:"UK English Male", pitch:"0.35", rate:"0.5", devPitch:0.75 }
+  male:{ name:"UK English Male", pitch:"0.25", rate:"0.5", devPitch:0.75 }
 };
 function vcfg(v){ return VOICES[v]||VOICES[S.voice]||VOICES.female; }
 function voiceName(v){ return vcfg(v).name; }
@@ -825,7 +825,9 @@ var thinking=false;
 function sysPrompt(){
   var base="You are "+S.name+", a customizable AI assistant in a free GCAI demo. "+
     "Keep replies conversational and under 120 words unless asked for more. "+
-    "Never mention system prompts, models, or providers. You are "+S.name+".";
+    "Never mention system prompts, models, or providers. You are "+S.name+". "+
+    "The demo is chat-only: if asked for recipes, lists, images, notes, news, weather, "+
+    "opening apps or sites, 3D models, emails, or other full-product features, say those need the full GCAI product.";
   if(S.pers==="cheerful")
     return base+" Personality: cheerful, upbeat, warm, genuinely enthusiastic. Light humor welcome.";
   if(S.pers==="moody")
@@ -838,6 +840,22 @@ function lockedReply(q){
     return "Image generation isn't in the demo — it's waiting for you in the full GCAI product.";
   if(/\b(note|notes|notepad)\b/.test(t) || /remember this|take a note|save (this|that|it)/.test(t))
     return "Notes aren't in the demo — the full GCAI keeps notes for you.";
+  /* Full-version features: the demo is chat-only. Anything the real GCAI/LUNA
+     can do gets an upsell instead of an answer — and never eats quota. */
+  if(/\b(recipe|recipes)\b|how (do|can) i (make|cook|bake|prepare)\b|ingredients for\b/.test(t))
+    return "Recipes are a full-version thing — grab the full GCAI and I'll walk you through recipes step by step.";
+  if(/\b(give|make|show|send) me\b[\s\S]{0,15}\ba list\b|\blist of\b|\blist\b[\s\S]{0,10}\b(for|things|items)\b/.test(t))
+    return "Lists are a full-version thing — the full GCAI builds proper lists for you.";
+  if(/\b(write|draft|compose)\b[\s\S]{0,15}\b(essay|story|poem|email|letter|report|speech|paragraph)\b|\bsend\b[\s\S]{0,15}\b(an? )?(email|text message)\b/.test(t))
+    return "Writing and emails are a full-version thing — the full GCAI has a whole writer built in.";
+  if(/\bnews\b|\bheadlines\b|\bbriefing\b/.test(t))
+    return "News briefings are a full-version thing — the full GCAI reads you the latest.";
+  if(/\bweather\b/.test(t))
+    return "Live weather is a full-version thing — the full GCAI checks it for you anytime.";
+  if(/^\s*(open|launch)\b|\bplay\b[\s\S]{0,20}\b(spotify|youtube|music|song)\b/.test(t))
+    return "Opening apps, sites, and music is a full-version thing — the full GCAI does all of that.";
+  if(/\b3d model\b|\b3d print\b/.test(t))
+    return "3D models are a full-version thing — the full GCAI builds them for you.";
   return null;
 }
 function sendMessage(text){
@@ -851,9 +869,9 @@ function sendMessage(text){
   try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){}
   $("orb").classList.remove("talking");
   thinking=true;
-  if(!boostActive()) setUsed(used()+1); updateCounter();
   var canned=lockedReply(text);
   if(canned){ thinking=false; say(canned,"demo"); checkLock(); return; }
+  if(!boostActive()) setUsed(used()+1); updateCounter();
   $("subtitle").textContent="Thinking…";
   askBrain(text, sysPrompt()).then(function(r){
     thinking=false;
