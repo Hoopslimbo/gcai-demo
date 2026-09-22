@@ -4,8 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>GCAI — Free Demo</title>
-<!-- GCAI DEMO v7 — 2026-09-22: default AI name is now Genie (company stays GCAI);
-     v6 items kept: male voice deeper (pitch 0.25), full-version upsell gate -->
+<!-- GCAI DEMO v8 — 2026-09-22: waitlist flow (name+email popup at 15 left,
+     waitlist-only screen at 0); no email gate up front; LAUNCH_DATE switch
+     flips the run-out screen to a buy link once the full version releases.
+     v7 items kept: default AI name Genie, company stays GCAI. -->
 <!--
   GCAI DEMO (Genuinely Customizable Artificial Intelligence)
   Single-file demo. Honest engineering notes:
@@ -30,6 +32,10 @@
   }
   .screen { position:fixed; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; z-index:10; }
   .hidden { display:none !important; }
+  #waitlistPop { background:rgba(4,7,13,.72); z-index:60; }
+  #wlClose { position:absolute; top:8px; right:12px; background:none; border:none; color:#9aa3b2;
+             font-size:26px; line-height:1; cursor:pointer; padding:4px 8px; }
+  #wlClose:hover { color:#fff; }
 
   /* ---------- device gate ---------- */
   #gate-device .card { text-align:center; max-width:440px; }
@@ -214,16 +220,9 @@
 </div>
 
 <!-- 2. EMAIL GATE -->
-<div id="gate-email" class="screen hidden">
-  <div class="panel fadein">
-    <div class="brand">GCAI</div>
-    <h2>Try the demo</h2>
-    <p class="sub">25 free requests. Full customization. No card, no catch — just your email so we can count your 25.</p>
-    <input id="emailInput" class="field" type="email" placeholder="you@email.com" autocomplete="email">
-    <button id="emailBtn" class="btn">Start building my AI</button>
-    <div id="emailErr" class="err"></div>
-  </div>
-</div>
+<!-- email gate removed 2026-09-22: no email needed up front anymore.
+     The waitlist (name + email) appears at 15 requests left, and is the
+     only screen once requests run out. -->
 
 <!-- 3. SETUP WIZARD -->
 <div id="wizard" class="screen hidden">
@@ -344,19 +343,48 @@
   </div>
 </div>
 
-<!-- 7. DEMO COMPLETE -->
+<!-- 7. DEMO COMPLETE — pre-launch this is the waitlist-only screen;
+     from LAUNCH_DATE on it just points at the buy link. -->
 <div id="complete" class="screen hidden">
   <div class="panel fadein">
     <div class="brand">GCAI</div>
     <h2>Demo complete</h2>
-    <p class="sub">You've used your 25 demo requests. Here's your transfer code:</p>
+    <p class="sub">You've used your 25 demo requests.</p>
+    <div id="wlFinalWrap">
+      <p class="sub">Join the waitlist and you'll get the buy link the day before GCAI launches.</p>
+      <input id="wlName2" class="field" maxlength="40" placeholder="Full name" autocomplete="name">
+      <input id="wlEmail2" class="field" type="email" placeholder="you@email.com" autocomplete="email">
+      <button class="btn" id="wlJoin2">Join the waitlist</button>
+      <div id="wlErr2" class="err"></div>
+    </div>
+    <div id="buyWrap" class="hidden">
+      <p class="sub">The full version is out now — go grab it:</p>
+      <a id="buyBtn" class="btn" href="#" style="text-decoration:none">Get the full version</a>
+    </div>
+    <div id="wlFinalDone" class="hidden">
+      <p class="sub" style="color:#7ee2a8">&#10003; You're on the list — check your email the day before launch.</p>
+    </div>
     <div id="codeBox">GCAI-0000-0000</div>
     <ul>
       <li>Enter this code in the full GCAI product and your AI appears exactly as you built it — same name, voice, personality, and colors (wallpaper, orb, aura).</li>
       <li>It also unlocks an <b>exclusive wallpaper + orb color set</b> only demo users get.</li>
-      <li>One code per email. Keep it somewhere safe.</li>
+      <li>One code per person. Keep it somewhere safe.</li>
     </ul>
     <button class="btn" id="copyCode">Copy code</button>
+  </div>
+</div>
+
+<!-- 8. WAITLIST POPUP — pre-launch only, once, at 15 requests left. Dismissible. -->
+<div id="waitlistPop" class="screen hidden">
+  <div class="panel fadein" style="position:relative">
+    <button id="wlClose" aria-label="Close">&times;</button>
+    <div class="brand">GCAI</div>
+    <h2>Want the full version?</h2>
+    <p class="sub">15 requests left. Join the waitlist and you'll get the buy link the day before GCAI launches.</p>
+    <input id="wlName" class="field" maxlength="40" placeholder="Full name" autocomplete="name">
+    <input id="wlEmail" class="field" type="email" placeholder="you@email.com" autocomplete="email">
+    <button class="btn" id="wlJoin">Join the waitlist</button>
+    <div id="wlErr" class="err"></div>
   </div>
 </div>
 
@@ -398,20 +426,18 @@ if(isMobile){
   return;
 }
 hide("gate-device");
-show("gate-email");
 
-/* ================= EMAIL GATE + REQUEST BUDGET =================
-   Per-email enforcement lives in localStorage here. A static file cannot
-   stop someone clearing storage or using another email — the real
-   one-demo-per-person lock must live in the backend at launch. */
+/* ================= REQUEST BUDGET =================
+   No email up front — one 25-request demo per browser, enforced in
+   localStorage here. A static file cannot stop someone clearing storage;
+   the real one-demo-per-person lock must live in the backend at launch. */
 var DEMO_LIMIT = 25, BOOST_BONUS = 10, BOOST_WINDOW_MS = 10*60*1000;
-var email = "", emailKey = "";
 function lsGet(k){ try{ var v=localStorage.getItem(k); return v===null?null:v; }catch(e){ return null; } }
 function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
-function used(){ return parseInt(lsGet("gcai_used_"+emailKey)||"0",10)||0; }
-function setUsed(n){ lsSet("gcai_used_"+emailKey,String(n)); }
+function used(){ return parseInt(lsGet("gcai_used")||"0",10)||0; }
+function setUsed(n){ lsSet("gcai_used",String(n)); }
 function boostState(){
-  try{ return JSON.parse(lsGet("gcai_boost_"+emailKey)||'{"used":false,"at":0}'); }
+  try{ return JSON.parse(lsGet("gcai_boost")||'{"used":false,"at":0}'); }
   catch(e){ return {used:false,at:0}; }
 }
 function boostActive(){
@@ -426,21 +452,10 @@ function isLocked(){
   if(boostActive()) return false;
   return true;
 }
-function settings(){ try{ return JSON.parse(lsGet("gcai_settings_"+emailKey)||"null"); }catch(e){ return null; } }
-function saveSettings(s){ lsSet("gcai_settings_"+emailKey, JSON.stringify(s)); }
-
-$("emailBtn").onclick = function(){
-  var v = $("emailInput").value.trim().toLowerCase();
-  if(!/.+@.+\..+/.test(v)){ $("emailErr").textContent = "Enter a valid email to start."; return; }
-  $("emailErr").textContent = "";
-  email = v;
-  emailKey = v.replace(/[^a-z0-9]/g,"_");
-  hide("gate-email");
-  if(isLocked()){ showComplete(); return; }
-  var s = settings();
-  if(s){ startHud(s); } else { startWizard(); }
-};
-$("emailInput").addEventListener("keydown",function(e){ if(e.key==="Enter") $("emailBtn").click(); });
+function settings(){ try{ return JSON.parse(lsGet("gcai_settings")||"null"); }catch(e){ return null; } }
+function saveSettings(s){ lsSet("gcai_settings", JSON.stringify(s)); }
+// boot routing runs at the end of the script (after every definition) —
+// straight into the demo, no email gate at the start.
 
 /* ================= WIZARD ================= */
 var RAINBOW = [
@@ -899,6 +914,11 @@ function checkLock(){
 function updateCounter(){
   if(boostActive()){ $("reqLeft").textContent = "∞"; return; }
   $("reqLeft").textContent = String(remaining());
+  // pre-launch only: one dismissible waitlist nudge at 15 left (never traps the user)
+  if(!isLaunched() && !wlJoined() && !lsGet("gcai_wl_seen") && remaining()<=15){
+    lsSet("gcai_wl_seen","1");
+    show("waitlistPop");
+  }
 }
 
 /* ================= ADD-ONS (BOOSTS) =================
@@ -957,7 +977,7 @@ function electricBurst(){
 $("lbActivate").onclick=function(){
   var b=boostState();
   if(b.used) return;
-  lsSet("gcai_boost_"+emailKey, JSON.stringify({used:true, at:Date.now()}));
+  lsSet("gcai_boost", JSON.stringify({used:true, at:Date.now()}));
   updateBoostUI(); updateCounter();
   electricBurst();
   // little click animation on the puzzle button with the lightning
@@ -1017,11 +1037,59 @@ function genCode(st){
   }
   return "GCAI-"+grp(base)+"-"+grp(base+"#2");
 }
+/* ================= WAITLIST =================
+   Pre-launch: dismissible popup once at 15 requests left; when requests run
+   out, the waitlist signup is the only screen. From LAUNCH_DATE on, the
+   waitlist flow is off and the run-out screen just points at the buy link. */
+var LAUNCH_DATE = null; // "YYYY-MM-DD" — set on launch day; null = not launched yet
+var BUY_URL = "";       // full-version buy link — set at launch
+var WL_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSf6hsM_9YDXu7IPsoLi-YPE7yy3jppThHwGjI3p-pG9Cz-fRw/formResponse";
+var WL_ENTRY_NAME = "entry.2018513984"; // "Full name" question
+var WL_ENTRY_EMAIL = "entry.1933757178";
+function isLaunched(){
+  if(!LAUNCH_DATE) return false;
+  return Date.now() >= new Date(LAUNCH_DATE+"T00:00:00").getTime();
+}
+function wlJoined(){ return lsGet("gcai_wl_joined")==="1"; }
+function wlSubmit(nameId,emailId,errId,okFn){
+  var nm=$(nameId).value.trim(), em=$(emailId).value.trim().toLowerCase();
+  if(!nm){ $(errId).textContent="Enter your full name."; $(nameId).focus(); return; }
+  if(!/.+@.+\..+/.test(em)){ $(errId).textContent="Enter a valid email."; $(emailId).focus(); return; }
+  $(errId).textContent="";
+  try{
+    var p=new URLSearchParams();
+    p.append(WL_ENTRY_NAME,nm); p.append(WL_ENTRY_EMAIL,em);
+    fetch(WL_FORM_URL,{method:"POST",mode:"no-cors",
+      headers:{"Content-Type":"application/x-www-form-urlencoded"},body:p.toString()});
+  }catch(e){}
+  lsSet("gcai_wl_joined","1");
+  okFn();
+}
+$("wlClose").onclick=function(){ hide("waitlistPop"); };
+$("wlJoin").onclick=function(){
+  wlSubmit("wlName","wlEmail","wlErr",function(){
+    hide("waitlistPop");
+    flashHint("You're on the waitlist!");
+  });
+};
+$("wlJoin2").onclick=function(){
+  wlSubmit("wlName2","wlEmail2","wlErr2",function(){
+    hide("wlFinalWrap"); show("wlFinalDone");
+  });
+};
 function showComplete(){
   stopMic();
-  hide("gate-email"); hide("wizard"); hide("hud");
-  var st=settings()||{name:"AI",voice:"female",pers:"balanced",wallpaper:"blue",orb:"pink",aura:"blue"};
+  hide("wizard"); hide("hud"); hide("waitlistPop");
+  var st=settings()||{name:"Genie",voice:"female",pers:"balanced",wallpaper:"blue",orb:"pink",aura:"blue"};
   $("codeBox").textContent=genCode(st);
+  if(isLaunched()){
+    hide("wlFinalWrap"); hide("wlFinalDone"); show("buyWrap");
+    if(BUY_URL) $("buyBtn").href=BUY_URL;
+  }else{
+    hide("buyWrap");
+    if(wlJoined()){ hide("wlFinalWrap"); show("wlFinalDone"); }
+    else { show("wlFinalWrap"); hide("wlFinalDone"); }
+  }
   show("complete");
 }
 $("copyCode").onclick=function(){
@@ -1074,6 +1142,10 @@ function startHud(st){
 $("micBtn").onclick=toggleMic;
 $("sendBtn").onclick=function(){ var v=$("q").value; $("q").value=""; sendMessage(v); };
 $("q").addEventListener("keydown",function(e){ if(e.key==="Enter"){ var v=$("q").value; $("q").value=""; sendMessage(v); } });
+
+// boot: straight into the demo — no email gate at the start
+if(isLocked()){ showComplete(); }
+else { var _boot=settings(); if(_boot){ startHud(_boot); } else { startWizard(); } }
 
 })();
 </script>
