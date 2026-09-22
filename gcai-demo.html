@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GCAI — Free Demo</title>
+<!--
+  GCAI DEMO (Genuinely Customizable Artificial Intelligence)
+  Single-file demo. Honest engineering notes:
+  - Per-email 25-request limit is enforced in localStorage, keyed by email.
+    True per-email enforcement (one demo per person, no clearing tricks)
+    requires the backend; this static file does the best a static file can.
+  - Transfer codes are deterministic from settings so the same AI always
+    yields the same code; true one-time-use-per-email redemption must be
+    enforced server-side at launch.
+  - Kilo is in the brain chain but (as of 2026-09-22) sends no
+    Access-Control-Allow-Origin headers, so browsers block it via CORS.
+    The prober marks it offline in-browser and the chain skips it; it is
+    kept in the chain for server-side use / if Kilo adds CORS later.
+-->
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { height:100%; }
+  body {
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:#0a0d13; color:#eef1f6; overflow:hidden;
+    transition:background 1s ease;
+  }
+  .screen { position:fixed; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; z-index:10; }
+  .hidden { display:none !important; }
+
+  /* ---------- device gate ---------- */
+  #gate-device .card { text-align:center; max-width:440px; }
+  #gate-device h1 { font-size:28px; letter-spacing:2px; margin-bottom:14px; color:#8ab4ff; }
+  #gate-device p { color:#9aa3b2; line-height:1.6; font-size:16px; }
+  #gate-device .logo { font-size:15px; letter-spacing:6px; color:#5b6472; margin-bottom:26px; }
+
+  /* ---------- email gate ---------- */
+  .panel { width:100%; max-width:420px; text-align:center; }
+  .brand { font-size:14px; letter-spacing:8px; color:#5b6472; margin-bottom:18px; }
+  .panel h2 { font-size:26px; margin-bottom:10px; font-weight:600; }
+  .panel p.sub { color:#9aa3b2; font-size:15px; line-height:1.6; margin-bottom:24px; }
+  .field { width:100%; padding:14px 16px; font-size:16px; border-radius:12px; border:1px solid #2a3140;
+           background:#12161f; color:#eef1f6; outline:none; margin-bottom:12px; }
+  .field:focus { border-color:#8ab4ff; }
+  .btn { display:inline-block; width:100%; padding:14px; font-size:16px; font-weight:600; border:none;
+         border-radius:12px; cursor:pointer; background:linear-gradient(135deg,#3b82f6,#7c5cff);
+         color:#fff; transition:transform .15s ease, opacity .15s ease; }
+  .btn:active { transform:scale(.97); }
+  .btn:disabled { opacity:.45; cursor:default; }
+  .btn.ghost { background:transparent; border:1px solid #2a3140; color:#9aa3b2; margin-top:10px; }
+  .err { color:#ff7a7a; font-size:14px; min-height:20px; margin-top:8px; }
+
+  /* ---------- wizard ---------- */
+  #wizard { justify-content:flex-start; padding-top:8vh; }
+  .particles { position:fixed; inset:0; overflow:hidden; pointer-events:none; z-index:1; }
+  .particle { position:absolute; border-radius:50%; background:#8ab4ff; opacity:.35;
+              animation:floatUp linear infinite; }
+  @keyframes floatUp {
+    0% { transform:translateY(20vh) scale(1); opacity:0; }
+    15% { opacity:.4; }
+    85% { opacity:.25; }
+    100% { transform:translateY(-110vh) scale(.4); opacity:0; }
+  }
+  .wiz { position:relative; z-index:5; width:100%; max-width:560px; text-align:center; }
+  .progress { display:flex; gap:8px; justify-content:center; margin-bottom:28px; }
+  .pdot { width:34px; height:5px; border-radius:3px; background:#232a38; transition:background .4s ease, box-shadow .4s ease; }
+  .pdot.on { background:#8ab4ff; box-shadow:0 0 10px #8ab4ff88; }
+  .step { display:none; }
+  .step.active { display:block; animation:stepIn .45s cubic-bezier(.2,.9,.3,1.2); }
+  @keyframes stepIn { from { opacity:0; transform:translateY(26px) scale(.98); } to { opacity:1; transform:none; } }
+  .step h2 { font-size:24px; margin-bottom:8px; }
+  .step p.hint { color:#9aa3b2; font-size:14px; margin-bottom:22px; line-height:1.55; }
+  .cards { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-bottom:24px; }
+  .card-opt { flex:1 1 140px; max-width:170px; padding:20px 12px; border-radius:16px; cursor:pointer;
+              background:#12161f; border:2px solid #232a38; transition:all .2s ease; }
+  .card-opt:hover { border-color:#3d4a63; transform:translateY(-2px); }
+  .card-opt.sel { border-color:#8ab4ff; box-shadow:0 0 18px #8ab4ff44; animation:pop .25s ease; }
+  @keyframes pop { 0% { transform:scale(.94); } 60% { transform:scale(1.04); } 100% { transform:scale(1); } }
+  .card-opt .t { font-size:16px; font-weight:600; margin-bottom:6px; }
+  .card-opt .d { font-size:12.5px; color:#9aa3b2; line-height:1.45; }
+  .swatches { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-bottom:24px; }
+  .sw { width:56px; height:56px; border-radius:50%; cursor:pointer; border:3px solid transparent;
+        transition:all .2s ease; }
+  .sw:hover { transform:scale(1.12); }
+  .sw.sel { border-color:#fff; box-shadow:0 0 16px #ffffff55; animation:pop .25s ease; }
+  .wiz-nav { display:flex; gap:10px; max-width:340px; margin:0 auto; }
+  .wiz-nav .btn { margin:0; }
+  .mini-btn { margin-top:12px; background:none; border:1px solid #2a3140; color:#8ab4ff; border-radius:10px;
+              padding:9px 18px; font-size:13.5px; cursor:pointer; }
+  .mini-btn:hover { border-color:#8ab4ff; }
+  .orb-preview { width:110px; height:110px; border-radius:50%; margin:0 auto 20px;
+                 animation:orbPulse 3s ease-in-out infinite; }
+  @keyframes orbPulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.06); } }
+
+  /* ---------- HUD ---------- */
+  #hud { justify-content:flex-start; padding:0; }
+  .hud-top { width:100%; max-width:720px; display:flex; align-items:center; justify-content:space-between;
+             padding:16px 20px; z-index:5; }
+  .hud-top .who { font-size:15px; font-weight:600; letter-spacing:1px; }
+  .hud-top .who small { display:block; font-weight:400; color:#9aa3b2; font-size:12px; letter-spacing:0; margin-top:2px; }
+  .req-pill { font-size:13px; color:#c7d0e0; background:#141a26; border:1px solid #2a3140;
+              padding:8px 14px; border-radius:20px; }
+  .req-pill b { color:#8ab4ff; }
+  #boostBtn { margin-left:8px; font-size:12.5px; font-weight:700; letter-spacing:1px; cursor:pointer;
+              background:linear-gradient(135deg,#f59e0b,#ef4444); color:#fff; border:none;
+              padding:9px 14px; border-radius:20px; }
+  #boostBtn:disabled { opacity:.4; cursor:default; }
+  #boostTimer { font-size:12px; color:#f5b04b; margin-left:8px; }
+  .stage { flex:1; width:100%; display:flex; flex-direction:column; align-items:center; justify-content:center;
+           position:relative; z-index:5; min-height:0; }
+  #orb { width:170px; height:170px; border-radius:50%; position:relative;
+         animation:orbPulse 3.2s ease-in-out infinite; transition:box-shadow .3s ease; }
+  #orb.talking { animation:orbTalk .5s ease-in-out infinite; }
+  @keyframes orbTalk { 0%,100% { transform:scale(1); } 50% { transform:scale(1.09); } }
+  #subtitle { margin-top:26px; max-width:640px; padding:0 28px; text-align:center; font-size:17px;
+              line-height:1.65; min-height:60px; color:#dfe5ef; }
+  #brainTag { margin-top:10px; font-size:11.5px; letter-spacing:2px; color:#5b6472; text-transform:uppercase; min-height:16px; }
+  .typebar { width:100%; max-width:720px; display:flex; gap:10px; padding:14px 20px 22px; z-index:5; }
+  #micBtn { width:52px; height:52px; flex:0 0 52px; border-radius:50%; border:2px solid #2a3140;
+            background:#141a26; cursor:pointer; position:relative; transition:all .2s ease; }
+  #micBtn .dot { position:absolute; inset:0; margin:auto; width:16px; height:16px; border-radius:50%; background:#8ab4ff; }
+  #micBtn.live { border-color:#ff5b5b; box-shadow:0 0 16px #ff5b5b66; }
+  #micBtn.live .dot { background:#ff5b5b; animation:blink 1s infinite; }
+  @keyframes blink { 50% { opacity:.35; } }
+  #q { flex:1; padding:14px 18px; font-size:16px; border-radius:26px; border:1px solid #2a3140;
+       background:#12161f; color:#eef1f6; outline:none; }
+  #q:focus { border-color:#8ab4ff; }
+  #sendBtn { width:52px; height:52px; flex:0 0 52px; border-radius:50%; border:none; cursor:pointer;
+             background:linear-gradient(135deg,#3b82f6,#7c5cff); color:#fff; font-size:19px; }
+  #sendBtn:active { transform:scale(.93); }
+  #wakeHint { text-align:center; font-size:12.5px; color:#5b6472; padding-bottom:14px; z-index:5; }
+
+  /* ---------- complete ---------- */
+  #complete .panel { max-width:480px; }
+  #codeBox { font-family:ui-monospace,Menlo,Consolas,monospace; font-size:30px; letter-spacing:4px;
+             background:#12161f; border:1px dashed #3d4a63; border-radius:14px; padding:20px 10px;
+             margin:20px 0 8px; color:#8ab4ff; user-select:all; }
+  #complete ul { text-align:left; color:#9aa3b2; font-size:14.5px; line-height:1.9; margin:14px 0 24px;
+                 padding-left:22px; }
+  .fadein { animation:fadeUp .6s ease both; }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:none; } }
+</style>
+</head>
+<body>
+
+<!-- 1. DEVICE GATE -->
+<div id="gate-device" class="screen">
+  <div class="card">
+    <div class="logo">GCAI</div>
+    <h1>Computers only</h1>
+    <p>The GCAI demo needs a desktop or laptop computer — a bigger stage for a bigger AI.<br><br>Please come back on a computer to try it.</p>
+  </div>
+</div>
+
+<!-- 2. EMAIL GATE -->
+<div id="gate-email" class="screen hidden">
+  <div class="panel fadein">
+    <div class="brand">GCAI</div>
+    <h2>Try the demo</h2>
+    <p class="sub">25 free requests. Full customization. No card, no catch — just your email so we can count your 25.</p>
+    <input id="emailInput" class="field" type="email" placeholder="you@email.com" autocomplete="email">
+    <button id="emailBtn" class="btn">Start building my AI</button>
+    <div id="emailErr" class="err"></div>
+  </div>
+</div>
+
+<!-- 3. SETUP WIZARD -->
+<div id="wizard" class="screen hidden">
+  <div class="particles" id="particles"></div>
+  <div class="wiz">
+    <div class="progress" id="progress"></div>
+
+    <div class="step" data-step="1">
+      <h2>Name your AI</h2>
+      <p class="hint">This is the name you'll call it by.</p>
+      <input id="aiName" class="field" maxlength="20" placeholder="e.g. Nova" style="max-width:320px;margin:0 auto 20px;">
+      <p class="hint">How should it listen for its name?</p>
+      <div class="cards" id="wakeCards">
+        <div class="card-opt sel" data-wake="hey"><div class="t">"Hey ___"</div><div class="d">Say "Hey Nova" to get its attention</div></div>
+        <div class="card-opt" data-wake="bare"><div class="t">Just "___"</div><div class="d">Just say "Nova" — no "hey" needed</div></div>
+      </div>
+    </div>
+
+    <div class="step" data-step="2">
+      <h2>Pick a voice</h2>
+      <p class="hint">Real internet voices — never robotic, never your device's built-in voice.</p>
+      <div class="cards" id="voiceCards">
+        <div class="card-opt sel" data-voice="female"><div class="t">Female</div><div class="d">Warm, natural feminine voice</div></div>
+        <div class="card-opt" data-voice="male"><div class="t">Male</div><div class="d">Natural masculine voice</div></div>
+      </div>
+      <button class="mini-btn" id="voicePreview">Preview voice</button>
+    </div>
+
+    <div class="step" data-step="3">
+      <h2>Pick a personality</h2>
+      <p class="hint">How should it talk to you?</p>
+      <div class="cards" id="persCards">
+        <div class="card-opt sel" data-pers="balanced"><div class="t">Balanced</div><div class="d">Straightforward and helpful — the easy default</div></div>
+        <div class="card-opt" data-pers="cheerful"><div class="t">Cheerful</div><div class="d">Upbeat, warm, enthusiastic about everything</div></div>
+        <div class="card-opt" data-pers="moody"><div class="t">Moody</div><div class="d">Dry wit, deadpan, helpful with an edge</div></div>
+      </div>
+    </div>
+
+    <div class="step" data-step="4">
+      <h2>Wallpaper color</h2>
+      <p class="hint">The backdrop of your AI's world.</p>
+      <div class="swatches" id="wallSwatches"></div>
+    </div>
+
+    <div class="step" data-step="5">
+      <h2>Orb color</h2>
+      <p class="hint">Your AI's orb — pick whatever you like, it doesn't have to match the wallpaper.</p>
+      <div class="orb-preview" id="orbPreview"></div>
+      <div class="swatches" id="orbSwatches"></div>
+    </div>
+
+    <div class="wiz-nav">
+      <button class="btn ghost" id="wizBack">Back</button>
+      <button class="btn" id="wizNext">Next</button>
+    </div>
+  </div>
+</div>
+
+<!-- 4. MAIN HUD -->
+<div id="hud" class="screen hidden">
+  <div class="hud-top">
+    <div class="who"><span id="hudName">AI</span><small id="hudSub">GCAI demo</small></div>
+    <div>
+      <span class="req-pill"><b id="reqLeft">25</b> left</span><button id="boostBtn" title="One free trial: +10 requests for 10 minutes">LIMIT BREAK</button><span id="boostTimer"></span>
+    </div>
+  </div>
+  <div class="stage">
+    <div id="orb"></div>
+    <div id="subtitle">Tap the mic or type below to talk.</div>
+    <div id="brainTag"></div>
+  </div>
+  <div class="typebar">
+    <button id="micBtn" aria-label="microphone"><span class="dot"></span></button>
+    <input id="q" placeholder="Ask anything..." autocomplete="off">
+    <button id="sendBtn" aria-label="send">&#10148;</button>
+  </div>
+  <div id="wakeHint"></div>
+</div>
+
+<!-- 5. DEMO COMPLETE -->
+<div id="complete" class="screen hidden">
+  <div class="panel fadein">
+    <div class="brand">GCAI</div>
+    <h2>Demo complete</h2>
+    <p class="sub">You've used your 25 demo requests. Here's your transfer code:</p>
+    <div id="codeBox">GCAI-0000-0000</div>
+    <ul>
+      <li>Enter this code in the full GCAI product and your AI appears exactly as you built it — same name, voice, personality, colors.</li>
+      <li>It also unlocks an <b>exclusive wallpaper + orb color set</b> only demo users get.</li>
+      <li>One code per email. Keep it somewhere safe.</li>
+    </ul>
+    <button class="btn" id="copyCode">Copy code</button>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+/* ================= UTILITIES ================= */
+function $(id){ return document.getElementById(id); }
+function show(id){ $(id).classList.remove("hidden"); }
+function hide(id){ $(id).classList.add("hidden"); }
+function hexRgb(hex){
+  var h = hex.replace("#","");
+  return { r:parseInt(h.slice(0,2),16), g:parseInt(h.slice(2,4),16), b:parseInt(h.slice(4,6),16) };
+}
+function rgba(hex,a){
+  var c = hexRgb(hex);
+  return "rgba("+c.r+","+c.g+","+c.b+","+a+")";
+}
+function escRe(s){ return s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"); }
+function djb2(s){
+  var h=5381;
+  for(var i=0;i<s.length;i++){ h=(((h<<5)+h)+s.charCodeAt(i))>>>0; }
+  return h;
+}
+
+/* ================= DEVICE GATE ================= */
+var isMobile = /iphone|ipad|ipod|android|mobile|tablet/i.test(navigator.userAgent||"");
+if(isMobile){
+  // phones/tablets get the computers-only screen; nothing else runs
+  show("gate-device");
+  return;
+}
+hide("gate-device");
+show("gate-email");
+
+/* ================= EMAIL GATE + REQUEST BUDGET =================
+   Per-email enforcement lives in localStorage here. A static file cannot
+   stop someone clearing storage or using another email — the real
+   one-demo-per-person lock must live in the backend at launch. */
+var DEMO_LIMIT = 25, BOOST_BONUS = 10, BOOST_WINDOW_MS = 10*60*1000;
+var email = "", emailKey = "";
+function lsGet(k){ try{ var v=localStorage.getItem(k); return v===null?null:v; }catch(e){ return null; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+function used(){ return parseInt(lsGet("gcai_used_"+emailKey)||"0",10)||0; }
+function setUsed(n){ lsSet("gcai_used_"+emailKey,String(n)); }
+function boostState(){
+  try{ return JSON.parse(lsGet("gcai_boost_"+emailKey)||'{"used":false,"at":0}'); }
+  catch(e){ return {used:false,at:0}; }
+}
+function boostActive(){
+  var b = boostState();
+  return b.used && (Date.now()-b.at) < BOOST_WINDOW_MS;
+}
+function effLimit(){ return DEMO_LIMIT + (boostActive()?BOOST_BONUS:0); }
+function remaining(){ return Math.max(0, effLimit()-used()); }
+function isLocked(){
+  // locked when the base 25 are gone and no live boost bonus remains
+  if(used() < DEMO_LIMIT) return false;
+  if(boostActive() && used() < DEMO_LIMIT+BOOST_BONUS) return false;
+  return true;
+}
+function settings(){ try{ return JSON.parse(lsGet("gcai_settings_"+emailKey)||"null"); }catch(e){ return null; } }
+function saveSettings(s){ lsSet("gcai_settings_"+emailKey, JSON.stringify(s)); }
+
+$("emailBtn").onclick = function(){
+  var v = $("emailInput").value.trim().toLowerCase();
+  if(!/.+@.+\..+/.test(v)){ $("emailErr").textContent = "Enter a valid email to start."; return; }
+  $("emailErr").textContent = "";
+  email = v;
+  emailKey = v.replace(/[^a-z0-9]/g,"_");
+  hide("gate-email");
+  if(isLocked()){ showComplete(); return; }
+  var s = settings();
+  if(s){ startHud(s); } else { startWizard(); }
+};
+$("emailInput").addEventListener("keydown",function(e){ if(e.key==="Enter") $("emailBtn").click(); });
+
+/* ================= WIZARD ================= */
+var RAINBOW = [
+  {n:"red",c:"#ff3b30"},{n:"orange",c:"#ff9500"},{n:"yellow",c:"#ffcc00"},
+  {n:"green",c:"#34c759"},{n:"blue",c:"#0a84ff"},{n:"purple",c:"#bf5af2"},
+  {n:"pink",c:"#ff375f"}
+];
+var wiz = { step:1, name:"", wake:"hey", voice:"female", pers:"balanced", wallpaper:"blue", orb:"pink" };
+var wizStarted = false;
+
+function startWizard(){
+  show("wizard");
+  if(wizStarted) return;
+  wizStarted = true;
+  // progress dots
+  var p = $("progress");
+  for(var i=1;i<=5;i++){ var d=document.createElement("div"); d.className="pdot"+(i===1?" on":""); p.appendChild(d); }
+  // floating particles (little animated flourishes)
+  var pc = $("particles");
+  for(var j=0;j<26;j++){
+    var s=document.createElement("div"); s.className="particle";
+    var sz = 2+Math.random()*5;
+    s.style.width=s.style.height=sz+"px";
+    s.style.left=(Math.random()*100)+"vw";
+    s.style.bottom="-4vh";
+    s.style.animationDuration=(9+Math.random()*14)+"s";
+    s.style.animationDelay=(Math.random()*12)+"s";
+    s.style.background = RAINBOW[Math.floor(Math.random()*RAINBOW.length)].c;
+    pc.appendChild(s);
+  }
+  // swatches
+  function buildSwatches(elId, key, previewEl){
+    var box = $(elId);
+    RAINBOW.forEach(function(r){
+      var d=document.createElement("div");
+      d.className="sw"+(wiz[key]===r.n?" sel":"");
+      d.title=r.n; d.style.background=r.c; d.setAttribute("data-c",r.n);
+      d.onclick=function(){
+        wiz[key]=r.n;
+        var kids=box.children;
+        for(var k=0;k<kids.length;k++) kids[k].classList.remove("sel");
+        d.classList.add("sel");
+        if(previewEl) previewEl.style.background =
+          "radial-gradient(circle at 35% 30%, "+rgba(r.c,0.9)+", "+r.c+" 55%, "+rgba(r.c,0.55)+")";
+      };
+      box.appendChild(d);
+    });
+  }
+  buildSwatches("wallSwatches","wallpaper",null);
+  buildSwatches("orbSwatches","orb",$("orbPreview"));
+  $("orbPreview").style.background =
+    "radial-gradient(circle at 35% 30%, "+rgba("#ff375f",0.9)+", #ff375f 55%, "+rgba("#ff375f",0.55)+")";
+  // option cards
+  function cardGroup(elId, key){
+    var box=$(elId), kids=box.children;
+    for(var k=0;k<kids.length;k++){
+      (function(card){
+        var dataKey = key==="wake"?"wake":(key==="voice"?"voice":"pers");
+        card.onclick=function(){
+          for(var m=0;m<kids.length;m++) kids[m].classList.remove("sel");
+          card.classList.add("sel");
+          wiz[dataKey]=card.getAttribute("data-"+dataKey);
+        };
+      })(kids[k]);
+    }
+  }
+  cardGroup("wakeCards","wake"); cardGroup("voiceCards","voice"); cardGroup("persCards","pers");
+  $("voicePreview").onclick=function(){
+    speak($("aiName").value.trim() ? "Hi, I'm ready when you are." : "Hi, this is how I'll sound.",
+      voiceName(), function(){}, function(){});
+  };
+  $("wizBack").onclick=function(){ if(wiz.step>1) goStep(wiz.step-1); };
+  $("wizNext").onclick=function(){
+    if(wiz.step===1){
+      var nm=$("aiName").value.trim();
+      if(!nm){ $("aiName").focus(); $("aiName").style.borderColor="#ff7a7a"; return; }
+      $("aiName").style.borderColor="";
+      wiz.name=nm;
+    }
+    if(wiz.step<5){ goStep(wiz.step+1); }
+    else {
+      saveSettings({name:wiz.name,wake:wiz.wake,voice:wiz.voice,pers:wiz.pers,wallpaper:wiz.wallpaper,orb:wiz.orb});
+      hide("wizard");
+      startHud({name:wiz.name,wake:wiz.wake,voice:wiz.voice,pers:wiz.pers,wallpaper:wiz.wallpaper,orb:wiz.orb});
+    }
+  };
+  goStep(1);
+}
+function goStep(n){
+  wiz.step=n;
+  var steps=document.querySelectorAll("#wizard .step");
+  for(var i=0;i<steps.length;i++){
+    steps[i].classList.toggle("active", parseInt(steps[i].getAttribute("data-step"),10)===n);
+  }
+  var dots=document.querySelectorAll("#progress .pdot");
+  for(var j=0;j<dots.length;j++) dots[j].classList.toggle("on", j<n);
+  $("wizBack").style.visibility = n===1 ? "hidden" : "visible";
+  $("wizNext").textContent = n===5 ? "Meet my AI" : "Next";
+}
+
+/* ================= INTERNET VOICE (TTS) =================
+   Keyless internet TTS via ResponsiveVoice's getvoice endpoint — the same
+   pattern the family builds use. Natural voices, never device voices.
+   Long replies are split into sentence chunks (one mp3 each) so nothing
+   gets cut off. Falls back to device speech only if the network voice fails. */
+var NET_TL = "en-US", NET_PITCH = "0.5", NET_RATE = "0.55";
+function voiceName(){ return S.voice==="male" ? "UK English Male" : "US English Female"; }
+var speakToken = 0, netAudio = null, audioUnlocked = false, ttsAudio = null;
+function stopNetAudio(){
+  try{ if(netAudio){ netAudio.pause(); netAudio.removeAttribute("src"); netAudio.load(); } }catch(e){}
+  netAudio = null;
+}
+function unlockAudio(){
+  if(audioUnlocked) return;
+  try{ ttsAudio = new Audio(); ttsAudio.volume=1; audioUnlocked=true; }catch(e){}
+}
+document.addEventListener("touchstart", unlockAudio, {passive:true});
+document.addEventListener("click", unlockAudio);
+
+function speak(text, onStart, onDone){
+  var my = ++speakToken;
+  var started=false;
+  function fireStart(){ if(started||my!==speakToken) return; started=true; if(onStart){ try{onStart();}catch(e){} } }
+  function fireDone(){ if(my!==speakToken) return; if(onDone){ try{onDone();}catch(e){} } }
+  setTimeout(fireStart, 15000); // backstop: never leave the UI hanging
+  try{ if(window.speechSynthesis && (speechSynthesis.speaking||speechSynthesis.pending)) speechSynthesis.cancel(); }catch(e){}
+  stopNetAudio();
+  netSpeak(text, my, fireStart, fireDone);
+}
+function netSpeak(text, my, onStart, onDone){
+  var parts = String(text).match(/[^.!?]+[.!?]+["'")\]]?|[^.!?]+$/g) || [String(text)];
+  var chunks=[], cur="";
+  for(var i=0;i<parts.length;i++){
+    if((cur.length+parts[i].length)>700){ if(cur.trim()) chunks.push(cur.trim()); cur=parts[i]; }
+    else cur = cur ? cur+" "+parts[i] : parts[i];
+  }
+  if(cur.trim()) chunks.push(cur.trim());
+  var ci=0, finished=false;
+  function doneAll(){ if(finished||my!==speakToken) return; finished=true; netAudio=null; onStart(); onDone(); }
+  function fallBack(){ if(finished||my!==speakToken) return; finished=true; netAudio=null; deviceSpeak(text,onStart,onDone); }
+  function playChunk(){
+    if(finished||my!==speakToken) return;
+    if(ci>=chunks.length){ doneAll(); return; }
+    var a = (audioUnlocked&&ttsAudio) ? ttsAudio : new Audio();
+    try{ a.pause(); }catch(e){}
+    netAudio=a;
+    a.onended=function(){ if(finished||my!==speakToken) return; ci++; playChunk(); };
+    a.onplaying=function(){ onStart(); };
+    a.onerror=fallBack;
+    a.src="https://code.responsivevoice.org/getvoice.php?t="+encodeURIComponent(chunks[ci])+
+          "&tl="+NET_TL+"&sv=g1&vn="+encodeURIComponent(voiceName())+
+          "&pitch="+NET_PITCH+"&rate="+NET_RATE+"&vol=1";
+    try{ a.load(); }catch(e){}
+    try{ var p=a.play(); if(p&&p.catch) p.catch(fallBack); }catch(e){ fallBack(); return; }
+    setTimeout(function(){
+      if(!finished&&my===speakToken&&(a.paused||a.currentTime===0)) fallBack();
+    },10000);
+  }
+  if(!chunks.length){ doneAll(); return; }
+  playChunk();
+  setTimeout(function(){ if(!finished&&my===speakToken) doneAll(); },180000);
+}
+function deviceSpeak(text,onStart,onDone){
+  // last-resort fallback only; the product voice is the internet voice above
+  try{
+    var u=new SpeechSynthesisUtterance(text); u.rate=1; u.pitch=1;
+    u.onstart=onStart; u.onend=onDone; u.onerror=onDone;
+    speechSynthesis.speak(u);
+  }catch(e){ onStart(); onDone(); }
+}
+
+/* ================= SPEECH RECOGNITION + WAKE WORD ================= */
+var SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+var recog=null, micOn=false;
+function wakeMatch(transcript, name){
+  // robust: lowercase, strip punctuation, "hey <name>" or bare "<name>",
+  // any words around it, any accent (we only see the transcribed text)
+  var t=" "+transcript.toLowerCase().replace(/[^a-z0-9\s]/g," ")+" ";
+  var nm=name.toLowerCase().trim().replace(/[^a-z0-9\s]/g," ").replace(/\s+/g," ").trim();
+  if(!nm) return {hit:false, rest:transcript};
+  var re=new RegExp("(^|\\s)(hey\\s+)?"+escRe(nm)+"(\\s|$|[,.!?])");
+  var m=t.match(re);
+  if(!m) return {hit:false, rest:transcript};
+  var rest=t.replace(re," ").replace(/\s+/g," ").trim();
+  return {hit:true, rest:rest};
+}
+function toggleMic(){
+  if(!SR){ flashHint("Voice input isn't supported in this browser — type instead."); return; }
+  unlockAudio();
+  if(micOn){ stopMic(); return; }
+  try{
+    recog=new SR();
+    recog.continuous=true; recog.interimResults=true; recog.lang="en-US";
+    recog.onresult=function(ev){
+      var interim="", fin="";
+      for(var i=ev.resultIndex;i<ev.results.length;i++){
+        if(ev.results[i].isFinal) fin+=ev.results[i][0].transcript+" ";
+        else interim+=ev.results[i][0].transcript;
+      }
+      if(interim) $("q").value=interim;
+      if(fin){
+        var w=wakeMatch(fin,S.name);
+        var query=(w.hit&&w.rest)?w.rest:fin.trim();
+        $("q").value="";
+        if(query) sendMessage(query);
+        else pulseOrb();
+      }
+    };
+    recog.onend=function(){ if(micOn){ try{recog.start();}catch(e){} } };
+    recog.onerror=function(ev){
+      var err=(ev&&ev.error)||"unknown";
+      // Windows: "audio-capture" usually means the OS blocked Chrome's mic
+      // (Settings > Privacy & security > Microphone > "Let desktop apps
+      // access your microphone" must be ON) or no mic is plugged in.
+      if(err==="audio-capture"){
+        stopMic();
+        flashHint("No mic signal — on Windows check Settings > Privacy > Microphone and turn on mic access for desktop apps.");
+      }else if(err==="not-allowed"||err==="service-not-allowed"){
+        stopMic();
+        flashHint("Mic was blocked — click the mic icon in the address bar, allow it, then tap the mic button again.");
+      }else if(err==="network"){
+        flashHint("Mic needs internet for speech recognition — check your connection.");
+      }
+      /* "no-speech" and "aborted" are normal; stay listening. */
+    };
+    recog.start(); micOn=true; $("micBtn").classList.add("live");
+    flashHint('Listening — say "'+(S.wake==="hey"?"Hey ":"")+S.name+'" or just talk.');
+  }catch(e){ flashHint("Couldn't start the mic — type instead."); }
+}
+function stopMic(){ micOn=false; try{ if(recog) recog.stop(); }catch(e){} $("micBtn").classList.remove("live"); }
+function pulseOrb(){ var o=$("orb"); o.classList.add("talking"); setTimeout(function(){ o.classList.remove("talking"); },600); }
+var hintT=null;
+function flashHint(t){ $("wakeHint").textContent=t; clearTimeout(hintT); hintT=setTimeout(setWakeHint,4000); }
+function setWakeHint(){
+  if(!S.name) return;
+  $("wakeHint").textContent = S.wake==="hey"
+    ? 'Say "Hey '+S.name+'" to get its attention — or just type below.'
+    : 'Just say "'+S.name+'" to get its attention — or just type below.';
+}
+
+/* ================= BRAIN CHAIN =================
+   Ordered failover, adapted from brain-chain.js, plus Kilo.
+   Nonce-verified health probe at startup; ask() walks top-down. */
+var ASK_TIMEOUT=18000, PROBE_TIMEOUT=12000;
+var BRAINS=[
+  {id:"llm7-code", label:"LLM7", kind:"openai",
+   url:"https://api.llm7.io/v1/chat/completions", model:"codestral-latest", online:null},
+  {id:"llm7-nemo", label:"LLM7", kind:"openai",
+   url:"https://api.llm7.io/v1/chat/completions", model:"mistral-Nemo-Instruct-2407", online:null},
+  {id:"pol-post", label:"Pollinations", kind:"openai",
+   url:"https://text.pollinations.ai/openai", model:"openai", online:null},
+  {id:"pol-get", label:"Pollinations", kind:"pollinations",
+   url:"https://text.pollinations.ai/", online:null},
+  /* Kilo: no ACAO headers as of 2026-09-22, so browsers block it via CORS.
+     Kept in the chain for server-side use; the prober marks it offline
+     in-browser and ask() skips it. */
+  {id:"kilo", label:"Kilo", kind:"openai",
+   url:"https://api.kilo.ai/api/gateway/v1/chat/completions", model:"kilo-auto/free", online:null}
+];
+function withTimeout(p,ms){
+  return Promise.race([p,new Promise(function(_,rej){
+    setTimeout(function(){ rej(new Error("timeout")); },ms); })]);
+}
+function paySignal(status,text){
+  if(status===401||status===402||status===403) return true;
+  if(text&&/pay|billing|quota|subscribe|upgrade|api[_ -]?key|unauthorized/i.test(text)) return true;
+  return false;
+}
+function callOpenAI(def,prompt,sys,ms){
+  var ctrl=new AbortController();
+  var to=setTimeout(function(){ ctrl.abort(); },ms);
+  return fetch(def.url,{method:"POST",signal:ctrl.signal,
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({model:def.model,
+      messages:[{role:"system",content:sys||"You are a helpful assistant."},
+                {role:"user",content:String(prompt).slice(0,1400)}]})})
+  .then(function(r){ clearTimeout(to);
+    return r.text().then(function(t){ return {status:r.status,text:t}; });
+  },function(e){ clearTimeout(to); throw e; });
+}
+function callPolGet(def,prompt,sys,ms){
+  var ctrl=new AbortController();
+  var to=setTimeout(function(){ ctrl.abort(); },ms);
+  var url=def.url+encodeURIComponent(String(prompt).slice(0,1400))+"?system="+encodeURIComponent(sys||"");
+  return fetch(url,{signal:ctrl.signal})
+  .then(function(r){ clearTimeout(to);
+    return r.text().then(function(t){ return {status:r.status,text:t}; });
+  },function(e){ clearTimeout(to); throw e; });
+}
+function callBrain(def,prompt,sys,ms){
+  var p = def.kind==="pollinations" ? callPolGet(def,prompt,sys,ms) : callOpenAI(def,prompt,sys,ms);
+  return withTimeout(p,ms).then(function(res){
+    if(res.status!==200){
+      var err=new Error("http "+res.status);
+      err.payment=paySignal(res.status,res.text); err.status=res.status; throw err;
+    }
+    var text=res.text||"";
+    try{ var j=JSON.parse(text);
+      if(j&&j.choices&&j.choices[0]&&j.choices[0].message) text=j.choices[0].message.content||"";
+    }catch(e){}
+    text=String(text).trim();
+    if(paySignal(200,text)){ var e2=new Error("payment required"); e2.payment=true; throw e2; }
+    if(!text) throw new Error("empty reply");
+    return text;
+  });
+}
+function probeBrain(def){
+  var nc="pz"+Date.now().toString(36)+Math.floor(Math.random()*1e6).toString(36);
+  var t0=Date.now();
+  return callBrain(def,"What is 2+2? In your answer, include the code "+nc+" somewhere.",
+    "You are a health probe.",PROBE_TIMEOUT)
+  .then(function(text){
+    var ok=text.indexOf(nc)>=0;
+    return {ok:ok, ms:Date.now()-t0, payment:false};
+  })
+  .catch(function(e){ return {ok:false, ms:Date.now()-t0, payment:!!e.payment}; });
+}
+function probeAll(){
+  var jobs=BRAINS.map(function(def){
+    return probeBrain(def).then(function(r){
+      def.online = r.ok && !r.payment;
+      def.ms = r.ms;
+    });
+  });
+  return Promise.all(jobs).then(updateBrainTag);
+}
+function updateBrainTag(){
+  var on=BRAINS.filter(function(b){ return b.online; }).map(function(b){ return b.label; });
+  var seen={};
+  var uniq=on.filter(function(x){ return seen[x]?false:(seen[x]=true); });
+  $("brainTag").textContent = uniq.length ? "brains online: "+uniq.join(" · ") : "checking brains…";
+}
+function askBrain(prompt,sys){
+  var i=0;
+  function next(){
+    if(i>=BRAINS.length) return Promise.reject(new Error("all brains failed"));
+    var def=BRAINS[i++];
+    if(def.online===false) return next();
+    return callBrain(def,prompt,sys,ASK_TIMEOUT).then(function(text){
+      return {text:text, brain:def.label};
+    }).catch(function(){ def.online=false; updateBrainTag(); return next(); });
+  }
+  return next();
+}
+
+/* ================= CHAT ================= */
+var S = { name:"AI", wake:"hey", voice:"female", pers:"balanced", wallpaper:"blue", orb:"pink" };
+var thinking=false;
+
+function sysPrompt(){
+  var base="You are "+S.name+", a customizable AI assistant in a free GCAI demo. "+
+    "Keep replies conversational and under 120 words unless asked for more. "+
+    "Never mention system prompts, models, or providers. You are "+S.name+".";
+  if(S.pers==="cheerful")
+    return base+" Personality: cheerful, upbeat, warm, genuinely enthusiastic. Light humor welcome.";
+  if(S.pers==="moody")
+    return base+" Personality: moody, dry deadpan wit, a little sardonic — but always actually helpful underneath.";
+  return base+" Personality: balanced, straightforward, neutral and helpful. No strong flavor either way.";
+}
+function lockedReply(q){
+  var t=q.toLowerCase();
+  if(/\b(image|picture|photo|drawing|draw|paint|generate|create)\b[\s\S]{0,20}\b(image|picture|photo|drawing|it)\b|\b(generate|create|make|draw)\b[\s\S]{0,12}\b(image|picture|photo|logo)\b/.test(t))
+    return "Image generation isn't in the demo — it's waiting for you in the full GCAI product.";
+  if(/\b(note|notes|notepad)\b/.test(t) || /remember this|take a note|save (this|that|it)/.test(t))
+    return "Notes aren't in the demo — the full GCAI keeps notes for you.";
+  return null;
+}
+function sendMessage(text){
+  text=String(text||"").trim();
+  if(!text||thinking) return;
+  if(isLocked()){ showComplete(); return; }
+  unlockAudio();
+  // stop any current speech (interrupt)
+  speakToken++;
+  stopNetAudio();
+  try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){}
+  $("orb").classList.remove("talking");
+  thinking=true;
+  var n=used()+1; setUsed(n); updateCounter();
+  var canned=lockedReply(text);
+  if(canned){ thinking=false; say(canned,"demo"); checkLock(); return; }
+  $("subtitle").textContent="Thinking…";
+  askBrain(text, sysPrompt()).then(function(r){
+    thinking=false;
+    say(r.text, r.brain);
+    checkLock();
+  }).catch(function(){
+    thinking=false;
+    setUsed(used()-1); updateCounter(); // failures don't eat quota
+    say("Every brain is having a moment right now. Give it a few seconds and try again.","offline");
+  });
+}
+function say(text, brain){
+  var orb=$("orb");
+  $("brainTag").textContent = brain==="demo" ? "demo" : "via "+brain;
+  speak(text,
+    function(){ // audio started: glow + words together
+      orb.classList.add("talking");
+      $("subtitle").textContent=text;
+    },
+    function(){ orb.classList.remove("talking"); });
+}
+function checkLock(){
+  if(isLocked()){ setTimeout(showComplete, 2500); }
+}
+function updateCounter(){
+  $("reqLeft").textContent = String(remaining());
+}
+
+/* ================= LIMIT BREAK BOOST ================= */
+function updateBoostUI(){
+  var b=boostState(), btn=$("boostBtn"), t=$("boostTimer");
+  if(!b.used){ btn.disabled=false; btn.textContent="LIMIT BREAK"; t.textContent=""; return; }
+  btn.disabled=true; btn.textContent="LIMIT BREAK USED";
+  var left=BOOST_WINDOW_MS-(Date.now()-b.at);
+  if(left>0){
+    var m=Math.floor(left/60000), s=Math.floor((left%60000)/1000);
+    t.textContent="+"+Math.max(0,BOOST_BONUS-(used()-DEMO_LIMIT))+" bonus · "+m+":"+(s<10?"0":"")+s;
+  } else t.textContent="";
+}
+setInterval(function(){ if($("hud").classList.contains("hidden")) return; updateBoostUI(); updateCounter(); },1000);
+$("boostBtn").onclick=function(){
+  var b=boostState();
+  if(b.used) return;
+  lsSet("gcai_boost_"+emailKey, JSON.stringify({used:true, at:Date.now()}));
+  updateBoostUI(); updateCounter();
+  flashHint("LIMIT BREAK active — 10 bonus requests for the next 10 minutes.");
+};
+
+/* ================= DEMO COMPLETE + TRANSFER CODE ================= */
+function genCode(st){
+  // deterministic: identical settings always yield the identical code
+  var base=[st.name,st.voice,st.pers,st.wallpaper,st.orb].join("|").toLowerCase();
+  var A="ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+  function grp(seed){
+    var h=djb2(seed), s="";
+    for(var i=0;i<4;i++){ s+=A.charAt(h%A.length); h=Math.floor(h/A.length); }
+    return s;
+  }
+  return "GCAI-"+grp(base)+"-"+grp(base+"#2");
+}
+function showComplete(){
+  stopMic();
+  hide("gate-email"); hide("wizard"); hide("hud");
+  var st=settings()||{name:"AI",voice:"female",pers:"balanced",wallpaper:"blue",orb:"pink"};
+  $("codeBox").textContent=genCode(st);
+  show("complete");
+}
+$("copyCode").onclick=function(){
+  var t=$("codeBox").textContent;
+  function done(){ $("copyCode").textContent="Copied"; setTimeout(function(){ $("copyCode").textContent="Copy code"; },2000); }
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(t).then(done,done);
+  } else {
+    var ta=document.createElement("textarea"); ta.value=t; document.body.appendChild(ta);
+    ta.select(); try{ document.execCommand("copy"); }catch(e){} document.body.removeChild(ta); done();
+  }
+};
+
+/* ================= HUD INIT ================= */
+function applyTheme(st){
+  var w=RAINBOW.filter(function(r){ return r.n===st.wallpaper; })[0]||RAINBOW[4];
+  var o=RAINBOW.filter(function(r){ return r.n===st.orb; })[0]||RAINBOW[6];
+  document.body.style.background =
+    "radial-gradient(1200px 700px at 50% 18%, "+rgba(w.c,0.28)+", transparent 60%),"+
+    "linear-gradient(180deg, "+rgba(w.c,0.14)+", #0a0d13 55%)";
+  var orb=$("orb");
+  orb.style.background =
+    "radial-gradient(circle at 35% 30%, "+rgba(o.c,0.95)+", "+o.c+" 55%, "+rgba(o.c,0.5)+")";
+  orb.style.boxShadow="0 0 40px 6px "+rgba(o.c,0.35);
+  // glow intensifies while talking
+  var style=document.createElement("style");
+  style.textContent="#orb.talking{box-shadow:0 0 90px 24px "+rgba(o.c,0.75)+" !important;}";
+  document.head.appendChild(style);
+  var op=$("orbPreview");
+  if(op) op.style.background="radial-gradient(circle at 35% 30%, "+rgba(o.c,0.9)+", "+o.c+" 55%, "+rgba(o.c,0.55)+")";
+}
+function startHud(st){
+  S.name=st.name; S.wake=st.wake; S.voice=st.voice; S.pers=st.pers;
+  S.wallpaper=st.wallpaper; S.orb=st.orb;
+  applyTheme(st);
+  $("hudName").textContent=st.name;
+  $("hudSub").textContent="GCAI demo · "+st.pers;
+  setWakeHint();
+  updateCounter(); updateBoostUI();
+  show("hud");
+  probeAll();
+  var greet = st.pers==="cheerful" ? "Hey! I'm "+st.name+", and I'm so glad you're here. Ask me anything — you've got 25 requests to play with."
+    : st.pers==="moody" ? "I'm "+st.name+". Twenty-five requests. Try not to waste them."
+    : "I'm "+st.name+". You have 25 demo requests — ask me anything.";
+  setTimeout(function(){ say(greet,"demo"); },600);
+}
+$("micBtn").onclick=toggleMic;
+$("sendBtn").onclick=function(){ var v=$("q").value; $("q").value=""; sendMessage(v); };
+$("q").addEventListener("keydown",function(e){ if(e.key==="Enter"){ var v=$("q").value; $("q").value=""; sendMessage(v); } });
+
+})();
+</script>
+</body>
+</html>
