@@ -4,7 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>GCAI — Free Demo</title>
-<!-- GCAI DEMO v11 — 2026-09-22: true self-healing brain chain (blacklisted brains
+<!-- GCAI DEMO v12 — 2026-09-22: wake follow-up window tightened to 2 seconds
+     like LUNA's (ding, then ~2s where the name isn't needed).
+     v11 items kept: true self-healing brain chain (blacklisted brains
      get retried, re-probe every 90s, probe no longer false-flags on nonce);
      wake ding fixed (AudioContext primed on gesture, resume-then-play);
      demo answers time/date itself and looks up general knowledge on Wikipedia
@@ -777,7 +779,8 @@ function toggleMic(){ if(micOn) stopMic(); else startListening(); }
 function stopMic(){ micOn=false; try{ if(recog) recog.stop(); }catch(e){} $("micBtn").classList.remove("live"); }
 function ackWake(){
   // Bare name with no command: play the chosen wake ding (chime only, like
-  // LUNA), then a follow-up window where the wake word isn't needed.
+  // LUNA), then a short follow-up window where the wake word isn't needed —
+  // 2 seconds, matching LUNA's followUpUntil window.
   // Mic stays on; anything heard while the AI itself is speaking is ignored
   // so it can't trigger on its own voice.
   pulseOrb();
@@ -787,7 +790,7 @@ function ackWake(){
   flashHint("I'm listening — go ahead.");
   playDing(S.ding);
   setTimeout(function(){ orb.classList.remove("talking"); setWakeHint(); }, 900);
-  followUpUntil=Date.now()+8000;
+  followUpUntil=Date.now()+2000;
 }
 function setWakeHint(){
   if(!S.name) return;
