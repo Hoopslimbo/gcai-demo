@@ -4,9 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>GCAI — Free Demo</title>
-<!-- GCAI DEMO v4 — 2026-09-22: SVG puzzle-piece add-ons icon, electric activation burst,
-     Limit Break = unlimited requests for 10 min (not +10), black/white/gray options,
-     original female voice restored, male voice de-frogged, stronger white edge fade -->
+<!-- GCAI DEMO v5 — 2026-09-22: male voice deeper (pitch 0.35) without frog effect,
+     boost button no more bounce (single click animation), brain list hidden from view -->
 <!--
   GCAI DEMO (Genuinely Customizable Artificial Intelligence)
   Single-file demo. Honest engineering notes:
@@ -110,8 +109,9 @@
               background:#141a26; border:2px solid #2a3140; transition:all .2s ease; line-height:1;
               display:inline-flex; align-items:center; justify-content:center; vertical-align:middle; }
   #addonBtn:hover { border-color:#8ab4ff; transform:scale(1.08); }
-  #addonBtn.active { border-color:#f5b04b; box-shadow:0 0 16px #f5b04b88; animation:boostPulse 1.6s ease-in-out infinite; }
-  @keyframes boostPulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.12); } }
+  #addonBtn.active { border-color:#f5b04b; box-shadow:0 0 16px #f5b04b88; }
+  #addonBtn.clicked { animation:btnClick .3s ease-out; }
+  @keyframes btnClick { 0% { transform:scale(1); } 40% { transform:scale(.82); } 100% { transform:scale(1); } }
   #gearBtn { margin-left:8px; width:40px; height:40px; border-radius:50%; cursor:pointer; font-size:19px;
              background:#141a26; border:2px solid #2a3140; color:#c7d0e0; transition:all .2s ease; line-height:1; }
   #gearBtn:hover { border-color:#8ab4ff; transform:rotate(30deg); }
@@ -124,7 +124,8 @@
   @keyframes orbTalk { 0%,100% { transform:scale(1); } 50% { transform:scale(1.09); } }
   #subtitle { margin-top:26px; max-width:640px; padding:0 28px; text-align:center; font-size:17px;
               line-height:1.65; min-height:60px; color:#dfe5ef; }
-  #brainTag { margin-top:10px; font-size:11.5px; letter-spacing:2px; color:#5b6472; text-transform:uppercase; min-height:16px; }
+  /* brain list kept hidden — internal status only, not publicly viewable */
+  #brainTag { display:none; }
   .typebar { width:100%; max-width:720px; display:flex; gap:10px; padding:14px 20px 22px; z-index:5; }
   #micBtn { width:52px; height:52px; flex:0 0 52px; border-radius:50%; border:2px solid #2a3140;
             background:#141a26; cursor:pointer; position:relative; transition:all .2s ease; }
@@ -155,7 +156,7 @@
   .modal-nav .btn { margin:0; }
   .addon-card { background:#0d1119; border:2px solid #2a3140; border-radius:16px; padding:18px; margin-bottom:14px;
                 transition:border-color .25s ease, box-shadow .25s ease; }
-  .addon-card.armed { border-color:#f5b04b; box-shadow:0 0 24px #f5b04b55; animation:boostPulse 1.6s ease-in-out infinite; }
+  .addon-card.armed { border-color:#f5b04b; box-shadow:0 0 24px #f5b04b55; }
   .a-top { display:flex; gap:14px; align-items:center; text-align:left; margin-bottom:14px; }
   .a-ico { font-size:34px; }
   .a-name { font-size:17px; font-weight:700; letter-spacing:1px; }
@@ -560,7 +561,7 @@ var NET_TL = "en-US";
    rate for male vs female so the two options never sound the same. */
 var VOICES = {
   female:{ name:"US English Female", pitch:"0.5", rate:"0.55", devPitch:1.25 },
-  male:{ name:"UK English Male", pitch:"0.55", rate:"0.55", devPitch:0.75 }
+  male:{ name:"UK English Male", pitch:"0.35", rate:"0.5", devPitch:0.75 }
 };
 function vcfg(v){ return VOICES[v]||VOICES[S.voice]||VOICES.female; }
 function voiceName(v){ return vcfg(v).name; }
@@ -941,6 +942,10 @@ $("lbActivate").onclick=function(){
   lsSet("gcai_boost_"+emailKey, JSON.stringify({used:true, at:Date.now()}));
   updateBoostUI(); updateCounter();
   electricBurst();
+  // little click animation on the puzzle button with the lightning
+  var ab=$("addonBtn");
+  ab.classList.remove("clicked"); void ab.offsetWidth; ab.classList.add("clicked");
+  setTimeout(function(){ ab.classList.remove("clicked"); },350);
   pulseOrb();
   flashHint("LIMIT BREAK active — unlimited requests for the next 10 minutes.");
   speak("Limit break active. Unlimited requests for the next ten minutes.", null, null);
