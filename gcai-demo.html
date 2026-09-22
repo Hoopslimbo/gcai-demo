@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>GCAI — Free Demo</title>
-<!-- GCAI DEMO v6 — 2026-09-22: male voice deeper (pitch 0.25), full-version upsell gate
-     for recipes/lists/writing/news/weather/open/3D/email (no quota used), v5 items kept -->
+<!-- GCAI DEMO v7 — 2026-09-22: default AI name is now Genie (company stays GCAI);
+     v6 items kept: male voice deeper (pitch 0.25), full-version upsell gate -->
 <!--
   GCAI DEMO (Genuinely Customizable Artificial Intelligence)
   Single-file demo. Honest engineering notes:
@@ -234,8 +234,8 @@
     <div class="step" data-step="1">
       <h2>Name your AI</h2>
       <p class="hint">This is the name you'll call it by.</p>
-      <input id="aiName" class="field" maxlength="20" placeholder="e.g. Nova" style="max-width:320px;margin:0 auto 20px;">
-      <p class="hint">Call it by name any time — "Hey Nova" or just "Nova". Both always work.</p>
+      <input id="aiName" class="field" maxlength="20" value="Genie" placeholder="e.g. Genie" style="max-width:320px;margin:0 auto 20px;">
+      <p class="hint">Call it by name any time — "Hey Genie" or just "Genie". Both always work.</p>
     </div>
 
     <div class="step" data-step="2">
@@ -288,7 +288,7 @@
 <!-- 4. MAIN HUD -->
 <div id="hud" class="screen hidden">
   <div class="hud-top">
-    <div class="who"><span id="hudName">AI</span><small id="hudSub">GCAI demo</small></div>
+    <div class="who"><span id="hudName">Genie</span><small id="hudSub">GCAI demo</small></div>
     <div>
       <span class="req-pill"><b id="reqLeft">25</b> left</span><span id="boostTimer"></span><button id="addonBtn" title="Add-ons & boosts" aria-label="Add-ons"><svg viewBox="0 0 24 24" width="24" height="24" fill="#fff" aria-hidden="true"><rect x="5" y="7" width="13" height="12" rx="2.5"/><circle cx="11.5" cy="7" r="3"/><circle cx="18" cy="13" r="3"/></svg></button><button id="gearBtn" title="Theme settings">&#9881;</button>
     </div>
@@ -819,7 +819,7 @@ function askBrain(prompt,sys){
 }
 
 /* ================= CHAT ================= */
-var S = { name:"AI", wake:"hey", voice:"female", pers:"balanced", wallpaper:"blue", orb:"pink", aura:"blue" };
+var S = { name:"Genie", wake:"hey", voice:"female", pers:"balanced", wallpaper:"blue", orb:"pink", aura:"blue" };
 var thinking=false;
 
 function sysPrompt(){
@@ -840,7 +840,7 @@ function lockedReply(q){
     return "Image generation isn't in the demo — it's waiting for you in the full GCAI product.";
   if(/\b(note|notes|notepad)\b/.test(t) || /remember this|take a note|save (this|that|it)/.test(t))
     return "Notes aren't in the demo — the full GCAI keeps notes for you.";
-  /* Full-version features: the demo is chat-only. Anything the real GCAI/LUNA
+  /* Full-version features: the demo is chat-only. Anything the real Genie
      can do gets an upsell instead of an answer — and never eats quota. */
   if(/\b(recipe|recipes)\b|how (do|can) i (make|cook|bake|prepare)\b|ingredients for\b/.test(t))
     return "Recipes are a full-version thing — grab the full GCAI and I'll walk you through recipes step by step.";
