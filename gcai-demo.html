@@ -4,7 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Genie - Demo</title>
-<!-- GCAI DEMO v27 — 2026-09-23: lookups understand "what's"/"who's"; Wikipedia
+<!-- GCAI DEMO v28 — 2026-09-23: Wikipedia search prefers the article actually named
+     in your question ("the character Bugs Bunny" -> Bugs Bunny, not Lola Bunny),
+     so lookups land on the right article and the right image.
+     v27: lookups understand "what's"/"who's"; Wikipedia
      full-text search finds the article from your raw phrasing ("the pokemon
      gengar" -> Gengar) with the Wikipedia-style popup + image; brain answers
      as backup instead of "couldn't find anything".
@@ -1393,12 +1396,19 @@ function doLookup(lq){
         return j;
       });
   }
-  function wikiSearch(title){ // Wikipedia full-text search: best-match title, then its summary
+  function wikiSearch(title){ // Wikipedia full-text search: prefer the article named in
+    // the question (e.g. "the character Bugs Bunny" -> "Bugs Bunny", not "Lola Bunny"),
+    // then fall back to the top hit
     return withTimeout(fetch("https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch="+
-      encodeURIComponent(title)+"&srlimit=1&format=json&origin=*").then(function(r){
+      encodeURIComponent(title)+"&srlimit=5&format=json&origin=*").then(function(r){
         if(!r.ok) throw 0; return r.json();
       }),15000).then(function(j){
-        var t=(((j||{}).query||{}).search||[])[0]; if(!t||!t.title) throw 0; return wikiSummary(t.title);
+        var hits=(((j||{}).query||{}).search||[]); if(!hits.length) throw 0;
+        var ql=String(title).toLowerCase(), best=hits[0];
+        for(var i=0;i<hits.length;i++){
+          if(hits[i].title&&ql.indexOf(hits[i].title.toLowerCase())>-1){ best=hits[i]; break; }
+        }
+        return wikiSummary(best.title);
       });
   }
   function dictLookup(word){
