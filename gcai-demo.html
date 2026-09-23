@@ -4,8 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Genie - Demo</title>
-<!-- GCAI DEMO v22 — 2026-09-23: "say _____" repeats exactly (free; "in a cheery
-     mood" applies pitch/pace through the voice path). Who/what questions are
+<!-- GCAI DEMO v23 — 2026-09-23: "say _____" moods understand multi-word phrases
+     ("in a very cheery mood"), synonyms ("joyful" -> happy), and "manner".
+     Who/what questions are
      the full Luna treatment: Wikipedia summary → Wikipedia best-match search
      → dictionary for single words ("define ___" goes dictionary-first), with
      the article's first image and a glass popup; total miss refunds the
@@ -1209,7 +1210,9 @@ function lockedReply(q){
 }
 /* ================= "SAY _____" (demo feature, free) =================
    "Say hello" repeats it exactly, no preamble. "Say hello in a cheery mood"
-   says it with that mood's pitch and pace. Costs no request. */
+   says it with that mood's pitch and pace. Multi-word moods ("in a very
+   cheery mood"), synonyms ("joyful" -> happy), and "manner" all resolve.
+   Costs no request. */
 var SAY_MOODS={
   cheery:{pitch:1.3,rate:1.12}, cheerful:{pitch:1.3,rate:1.12}, happy:{pitch:1.3,rate:1.12},
   excited:{pitch:1.45,rate:1.18}, enthusiastic:{pitch:1.4,rate:1.15},
@@ -1220,10 +1223,26 @@ var SAY_MOODS={
   spooky:{pitch:0.7,rate:0.85}, scary:{pitch:0.7,rate:0.85},
   sleepy:{pitch:0.85,rate:0.8}, tired:{pitch:0.85,rate:0.8}
 };
+/* mood synonyms so "in a joyful tone", "in a furious voice" etc. land on a preset */
+var SAY_MOOD_SYNONYMS={joyful:"happy",glad:"happy",delighted:"happy",ecstatic:"excited",thrilled:"excited",upset:"sad",depressed:"sad",furious:"angry",grumpy:"angry",chill:"relaxed",easygoing:"calm",frightened:"scary",terrified:"scary",nervous:"calm"};
+function resolveSayMood(cand){
+  var words=String(cand||"").toLowerCase().split(/\s+/).filter(Boolean);
+  for(var i=words.length-1;i>=0;i--){
+    if(SAY_MOODS[words[i]]) return words[i];
+    if(SAY_MOOD_SYNONYMS[words[i]]) return SAY_MOOD_SYNONYMS[words[i]];
+  }
+  return null;
+}
 function parseSay(q){
   var s=String(q||"");
-  var m=s.match(/^\s*say\s+(.+)\s+in\s+an?\s+([a-z]+)\s+(?:mood|voice|tone)\s*$/i);
-  if(m && m[1].trim()) return {text:m[1].trim(), mood:(m[2]||"").toLowerCase()};
+  var m=s.match(/^\s*say\s+(.+)\s+in\s+an?\s+([a-z][a-z\s]{0,40}?)\s+(?:mood|voice|tone|manner)\s*$/i);
+  if(m && m[1].trim()){
+    var mood=resolveSayMood(m[2]);
+    if(mood) return {text:m[1].trim(), mood:mood};
+    // unrecognized mood phrase: repeat the whole thing exactly, no mood
+    var m0=s.match(/^\s*say\s+(.+?)\s*$/i);
+    return {text:m0?m0[1].trim():m[1].trim(), mood:null};
+  }
   var m2=s.match(/^\s*say\s+(.+?)\s*$/i);
   if(m2 && m2[1].trim()) return {text:m2[1].trim(), mood:null};
   return null;
