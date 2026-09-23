@@ -3,8 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Genie - Demo</title>
-<!-- GCAI DEMO v29 — 2026-09-23: side-state subtitles are bare bold text with no
+<title>Ondra - Demo</title>
+<!-- GCAI DEMO v30 — 2026-09-23: product renamed Genie -> Ondra (ON-drah)
+     everywhere user-visible: tab title, welcome card, HUD, default AI name
+     and wake hint, upsell lines, export help; spoken as "ondrah" so the
+     voice says ON-drah.
+     v29: side-state subtitles are bare bold text with no
      window (white, black on white wallpapers); welcome X tooltip stays inside
      the card so hovering it never summons a horizontal scrollbar; gear hover
      twists only the glyph so its tooltip stays level and still; lookup popups
@@ -37,7 +41,7 @@
      the orb slides aside and keeps animating while a popup is open. Recipes
      now work in the demo (one request, looked up online via TheMealDB —
      food/desserts only, with photo, ingredients, and instructions; lists stay
-     Genie-only). The clock popup is free: live digital readout on top, analog
+     Ondra-only). The clock popup is free: live digital readout on top, analog
      clock face below. First run shows a WELCOME! card listing what to
      ask (X to close, once ever). Hover tooltips under every icon button
      (beneath the button, except Send which sits at the very bottom so its
@@ -414,8 +418,8 @@
     <div class="step" data-step="1">
       <h2>Name your AI</h2>
       <p class="hint">This is the name you'll call it by.</p>
-      <input id="aiName" class="field" maxlength="20" value="Genie" placeholder="e.g. Genie" style="max-width:320px;margin:0 auto 20px;">
-      <p class="hint">Call it by name any time — "Hey Genie" or just "Genie". Both always work.</p>
+      <input id="aiName" class="field" maxlength="20" value="Ondra" placeholder="e.g. Ondra" style="max-width:320px;margin:0 auto 20px;">
+      <p class="hint">Call it by name any time — "Hey Ondra" or just "Ondra". Both always work.</p>
     </div>
 
     <div class="step" data-step="2">
@@ -475,7 +479,7 @@
 <!-- 4. MAIN HUD -->
 <div id="hud" class="screen hidden">
   <div class="hud-top">
-    <div class="who"><span id="hudName">Genie</span><small id="hudSub">GCAI demo</small></div>
+    <div class="who"><span id="hudName">Ondra</span><small id="hudSub">GCAI demo</small></div>
     <div>
       <span class="req-pill"><b id="reqLeft">25</b> left</span><span id="boostTimer"></span><button id="addonBtn" data-tip="Add-ons" aria-label="Add-ons"><svg viewBox="0 0 24 24" width="24" height="24" fill="#fff" aria-hidden="true"><rect x="5" y="7" width="13" height="12" rx="2.5"/><circle cx="11.5" cy="7" r="3"/><circle cx="18" cy="13" r="3"/></svg></button><button id="gearBtn" data-tip="Settings" aria-label="Settings"><span class="gear-ico">&#9881;</span></button>
     </div>
@@ -580,7 +584,7 @@
     </div>
     <div id="codeBox">GCAI-0000-0000</div>
     <ul>
-      <li>Enter this code in Genie and your AI appears exactly as you built it — same name, voice, personality, and colors (wallpaper, orb, aura).</li>
+      <li>Enter this code in Ondra and your AI appears exactly as you built it — same name, voice, personality, and colors (wallpaper, orb, aura).</li>
       <li>It also unlocks an <b>exclusive wallpaper + orb color set</b> only demo users get.</li>
       <li>One code per person. Keep it somewhere safe.</li>
     </ul>
@@ -893,6 +897,7 @@ function stripEmojis(t){ return String(t||"").replace(EMOJI_RE,"").replace(/[ \t
    "asterisk", ...). Displayed text keeps everything — only speech is cleaned. */
 function cleanForSpeech(t){
   return stripEmojis(t)
+    .replace(/\bOndra\b/g,"ondrah")        // product name: say it ON-drah
     .replace(/[_]/g," ")                  // never say "underscore"
     .replace(/[\/\\]/g," ")               // never say "slash"/"backslash"
     .replace(/[*#~`^|<>=\[\]{}]/g,"")     // markdown-ish junk: drop silently
@@ -1299,7 +1304,7 @@ function popDragEnd(){ popDrag=null; document.body.classList.remove("popDragging
 })();
 
 /* ================= CHAT ================= */
-var S = { name:"Genie", wake:"hey", voice:"female", pers:"balanced", wallpaper:"blue", orb:"pink", aura:"blue", voiceMuted:false };
+var S = { name:"Ondra", wake:"hey", voice:"female", pers:"balanced", wallpaper:"blue", orb:"pink", aura:"blue", voiceMuted:false };
 var thinking=false;
 
 /* ================= CONVERSATION MEMORY =================
@@ -1326,7 +1331,7 @@ function sysPrompt(){
     "If the prompt starts with recent conversation, use it for context on follow-ups "+
     "(yes / no / why / tell me more / what about...) — never treat a follow-up as unrelated. "+
     "The demo is chat-only: if asked for lists, images, notes, news, "+
-    "opening apps or sites, 3D models, emails, or other full-product features, say those need Genie. "+
+    "opening apps or sites, 3D models, emails, or other full-product features, say those need Ondra. "+
     "You can also answer time/date questions from the device clock, give live weather, share recipes, and look up general knowledge — those are demo features too.";
   if(S.pers==="cheerful")
     return base+" Personality: cheerful, upbeat, warm, genuinely enthusiastic. Light humor welcome.";
@@ -1337,22 +1342,22 @@ function sysPrompt(){
 function lockedReply(q){
   var t=q.toLowerCase();
   if(/\b(image|picture|photo|drawing|draw|paint|generate|create)\b[\s\S]{0,20}\b(image|picture|photo|drawing|it)\b|\b(generate|create|make|draw)\b[\s\S]{0,12}\b(image|picture|photo|logo)\b/.test(t))
-    return "Image generation isn't in the demo — it's waiting for you in Genie.";
+    return "Image generation isn't in the demo — it's waiting for you in Ondra.";
   if(/\b(note|notes|notepad)\b/.test(t) || /remember this|take a note|save (this|that|it)/.test(t))
-    return "Notes aren't in the demo — Genie keeps notes for you.";
-  /* Full-version features: the demo is chat-only. Anything the real Genie
+    return "Notes aren't in the demo — Ondra keeps notes for you.";
+  /* Full-version features: the demo is chat-only. Anything the real Ondra
      can do gets an upsell instead of an answer — and never eats quota.
      (Recipes left this list: they work in the demo now, with a popup.) */
   if(/\b(give|make|show|send) me\b[\s\S]{0,15}\ba list\b|\blist of\b|\blist\b[\s\S]{0,10}\b(for|things|items)\b/.test(t))
-    return "Lists are a full-version thing — Genie builds proper lists for you.";
+    return "Lists are a full-version thing — Ondra builds proper lists for you.";
   if(/\b(write|draft|compose)\b[\s\S]{0,15}\b(essay|story|poem|email|letter|report|speech|paragraph)\b|\bsend\b[\s\S]{0,15}\b(an? )?(email|text message)\b/.test(t))
-    return "Writing and emails are a full-version thing — Genie has a whole writer built in.";
+    return "Writing and emails are a full-version thing — Ondra has a whole writer built in.";
   if(/\bnews\b|\bheadlines\b|\bbriefing\b/.test(t))
-    return "News briefings are a full-version thing — Genie reads you the latest.";
+    return "News briefings are a full-version thing — Ondra reads you the latest.";
   if(/^\s*(open|launch)\b|\bplay\b[\s\S]{0,20}\b(spotify|youtube|music|song)\b/.test(t))
-    return "Opening apps, sites, and music is a full-version thing — Genie does all of that.";
+    return "Opening apps, sites, and music is a full-version thing — Ondra does all of that.";
   if(/\b3d model\b|\b3d print\b/.test(t))
-    return "3D models are a full-version thing — Genie builds them for you.";
+    return "3D models are a full-version thing — Ondra builds them for you.";
   return null;
 }
 /* ================= "SAY _____" (demo feature, free) =================
@@ -2004,7 +2009,7 @@ $("wlJoin2").onclick=function(){
 function showComplete(){
   stopMic();
   hide("wizard"); hide("hud"); hide("waitlistPop");
-  var st=settings()||{name:"Genie",voice:"female",pers:"balanced",wallpaper:"blue",orb:"pink",aura:"blue"};
+  var st=settings()||{name:"Ondra",voice:"female",pers:"balanced",wallpaper:"blue",orb:"pink",aura:"blue"};
   $("codeBox").textContent=genCode(st);
   if(isLaunched()){
     hide("wlFinalWrap"); hide("wlFinalDone"); show("buyWrap");
@@ -2056,7 +2061,7 @@ function startHud(st, sayHi){
   applyTheme(st);
   $("hudName").textContent=st.name;
   document.title=st.name+" - Demo"; // tab shows their AI's name once it's made
-  $("hudSub").textContent="Genie Demo · "+st.pers;
+  $("hudSub").textContent="Ondra Demo · "+st.pers;
   setWakeHint();
   updateCounter(); updateBoostUI();
   show("hud");
