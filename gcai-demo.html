@@ -4,7 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Genie - Demo</title>
-<!-- GCAI DEMO v21 — 2026-09-23: side popups for weather, recipes, and the clock —
+<!-- GCAI DEMO v22 — 2026-09-23: "say _____" repeats exactly (free; "in a cheery
+     mood" applies pitch/pace through the voice path). Who/what questions are
+     the full Luna treatment: Wikipedia summary → Wikipedia best-match search
+     → dictionary for single words ("define ___" goes dictionary-first), with
+     the article's first image and a glass popup; total miss refunds the
+     request instead of falling back to the brain. Guards: "who/what are you",
+     "your name", and math stay with the brain. Welcome card lists the new
+     repeat trick.
+     v21 — 2026-09-23: side popups for weather, recipes, and the clock —
      the orb slides aside and keeps animating while a popup is open. Recipes
      now work in the demo (one request, looked up online via TheMealDB —
      food/desserts only, with photo, ingredients, and instructions; lists stay
@@ -461,6 +469,7 @@
       <li><b>⏰ The time</b><span>"What time is it?"</span></li>
       <li><b>📅 The date</b><span>"What day is it today?"</span></li>
       <li><b>🔍 Quick facts</b><span>"Who is...?" or "What is...?"</span></li>
+      <li><b>🗣️ Repeat after me</b><span>"Say hello in a cheery mood"</span></li>
       <li><b>🎨 Make me yours</b><span>Tap the gear to change my name and look</span></li>
     </ul>
   </div>
@@ -802,7 +811,7 @@ function cleanForSpeech(t){
     .replace(/\s+([,.!?;:])/g,"$1")       // no space before punctuation
     .replace(/[ \t]{2,}/g," ").trim();
 }
-function speak(text, onStart, onDone, voice){
+function speak(text, onStart, onDone, voice, prosody){
   text=cleanForSpeech(text); // what it says out loud — never emojis/_/-// junk
   var my = ++speakToken;
   var started=false;
@@ -817,10 +826,14 @@ function speak(text, onStart, onDone, voice){
   setTimeout(fireStart, 15000); // backstop: never leave the UI hanging
   try{ if(window.speechSynthesis && (speechSynthesis.speaking||speechSynthesis.pending)) speechSynthesis.cancel(); }catch(e){}
   stopNetAudio();
-  netSpeak(text, my, fireStart, fireDone, voice);
+  netSpeak(text, my, fireStart, fireDone, voice, prosody);
 }
-function netSpeak(text, my, onStart, onDone, voice){
-  var cfg = vcfg(voice);
+function netSpeak(text, my, onStart, onDone, voice, prosody){
+  var cfg = Object.assign({}, vcfg(voice));
+  if(prosody){ // mood multipliers (e.g. cheery = higher/faster) on top of the chosen voice
+    if(prosody.pitch) cfg.pitch=(parseFloat(cfg.pitch)*prosody.pitch).toFixed(2);
+    if(prosody.rate) cfg.rate=(parseFloat(cfg.rate)*prosody.rate).toFixed(2);
+  }
   var parts = String(text).match(/[^.!?]+[.!?]+["'")\]]?|[^.!?]+$/g) || [String(text)];
   var chunks=[], cur="";
   for(var i=0;i<parts.length;i++){
@@ -830,7 +843,7 @@ function netSpeak(text, my, onStart, onDone, voice){
   if(cur.trim()) chunks.push(cur.trim());
   var ci=0, finished=false;
   function doneAll(){ if(finished||my!==speakToken) return; finished=true; netAudio=null; onStart(); onDone(); }
-  function fallBack(){ if(finished||my!==speakToken) return; finished=true; netAudio=null; deviceSpeak(text,onStart,onDone,voice); }
+  function fallBack(){ if(finished||my!==speakToken) return; finished=true; netAudio=null; deviceSpeak(text,onStart,onDone,voice,prosody); }
   function playChunk(){
     if(finished||my!==speakToken) return;
     if(ci>=chunks.length){ doneAll(); return; }
@@ -881,10 +894,14 @@ function pickVoice(){
     return vs[0];
   }catch(e){ return null; }
 }
-function deviceSpeak(text,onStart,onDone,voice){
+function deviceSpeak(text,onStart,onDone,voice,prosody){
   // last-resort fallback only; the product voice is the internet voice above
   try{
     var u=new SpeechSynthesisUtterance(text); u.rate=1; u.pitch=vcfg(voice).devPitch;
+    if(prosody){
+      if(prosody.rate) u.rate=Math.min(2,Math.max(.5,prosody.rate));
+      if(prosody.pitch) u.pitch=Math.min(2,Math.max(0,vcfg(voice).devPitch*prosody.pitch));
+    }
     if(voice==="male"){ var pv=pickVoice(); if(pv) u.voice=pv; }
     u.onstart=onStart; u.onend=onDone; u.onerror=onDone;
     speechSynthesis.speak(u);
@@ -1190,6 +1207,32 @@ function lockedReply(q){
     return "3D models are a full-version thing — Genie builds them for you.";
   return null;
 }
+/* ================= "SAY _____" (demo feature, free) =================
+   "Say hello" repeats it exactly, no preamble. "Say hello in a cheery mood"
+   says it with that mood's pitch and pace. Costs no request. */
+var SAY_MOODS={
+  cheery:{pitch:1.3,rate:1.12}, cheerful:{pitch:1.3,rate:1.12}, happy:{pitch:1.3,rate:1.12},
+  excited:{pitch:1.45,rate:1.18}, enthusiastic:{pitch:1.4,rate:1.15},
+  sad:{pitch:0.8,rate:0.88}, gloomy:{pitch:0.8,rate:0.88},
+  angry:{pitch:0.85,rate:1.15}, mad:{pitch:0.85,rate:1.15},
+  calm:{pitch:0.95,rate:0.9}, relaxed:{pitch:0.95,rate:0.9},
+  serious:{pitch:0.9,rate:0.95}, stern:{pitch:0.88,rate:0.95},
+  spooky:{pitch:0.7,rate:0.85}, scary:{pitch:0.7,rate:0.85},
+  sleepy:{pitch:0.85,rate:0.8}, tired:{pitch:0.85,rate:0.8}
+};
+function parseSay(q){
+  var s=String(q||"");
+  var m=s.match(/^\s*say\s+(.+)\s+in\s+an?\s+([a-z]+)\s+(?:mood|voice|tone)\s*$/i);
+  if(m && m[1].trim()) return {text:m[1].trim(), mood:(m[2]||"").toLowerCase()};
+  var m2=s.match(/^\s*say\s+(.+?)\s*$/i);
+  if(m2 && m2[1].trim()) return {text:m2[1].trim(), mood:null};
+  return null;
+}
+function doSay(sq){
+  thinking=false; // nothing to look up — just repeat
+  say(sq.text,"demo",SAY_MOODS[sq.mood]||null); // unknown mood: normal delivery
+  checkLock();
+}
 /* ============ LOCAL KNOWLEDGE: time, date, web lookup ============
    The demo answers the clock itself (free, no request spent) and looks up
    general knowledge on Wikipedia (counts as one request). Anything Wikipedia
@@ -1203,31 +1246,86 @@ function localAnswer(q){
   return null;
 }
 function lookupQuery(q){
-  var m=String(q||"").match(/^(?:who is|who was|what is|what was|what are|look up|search for|tell me about)\s+(.+?)[?.!]*$/i);
-  return m ? m[1].trim() : null;
+  var s=String(q||"");
+  var m=s.match(/^(?:who is|who was|who were|what is|what was|what were|what are|look up|search for|tell me about)\s+(.+?)[?.!]*$/i);
+  if(m){
+    var topic=m[1].trim();
+    if(!topic) return null;
+    if(/^(you|your|yourself)\b/i.test(topic)) return null; // self questions stay with the brain
+    if(/\d/.test(topic) && /[+\-*/%^]|percent|\bof\b/.test(topic)) return null; // math stays with the brain
+    return {q:topic, dict:false};
+  }
+  var d=s.match(/^\s*define\s+(.+?)[?.!]*$/i);
+  if(d && d[1].trim()) return {q:d[1].trim(), dict:true};
+  return null;
 }
-function doLookup(query){
+function doLookup(lq){
+  var query=lq.q;
   if(!boostActive()) setUsed(used()+1); updateCounter();
   $("subtitle").textContent="Looking that up…";
-  function done(text){ thinking=false; say(text,"demo"); checkLock(); }
-  function brainFallback(){
-    askBrain(histPrompt(), sysPrompt()).then(function(r){
-      thinking=false; say(r.text, r.brain); checkLock();
-    }).catch(function(){
-      thinking=false;
-      if(!boostActive()) setUsed(used()-1); updateCounter();
-      say("I couldn't find that and every brain is having a moment right now. Give it a few seconds and try again.","offline");
-    });
+  function noGood(msg){
+    thinking=false;
+    if(!boostActive()) setUsed(used()-1); updateCounter(); // total miss: no quota spent
+    say(msg,"demo"); checkLock();
   }
-  withTimeout(fetch("https://en.wikipedia.org/api/rest_v1/page/summary/"+encodeURIComponent(query),
-    {headers:{"Accept":"application/json"}}).then(function(r){
-      if(!r.ok) throw new Error("no page"); return r.json();
-    }),15000).then(function(j){
-      var ex=j.extract||"";
-      if(!ex || j.type==="disambiguation") throw new Error("no page");
-      var sentences=ex.match(/[^.!?]+[.!?]+/g)||[ex];
-      done("Here's what I found on "+(j.title||query)+": "+sentences.slice(0,3).join(" ").trim());
-    }).catch(function(){ brainFallback(); });
+  if(!query){ noGood("What do you want me to look up?"); return; }
+  function wikiSummary(title){
+    return withTimeout(fetch("https://en.wikipedia.org/api/rest_v1/page/summary/"+encodeURIComponent(title),
+      {headers:{"Accept":"application/json"}}).then(function(r){
+        if(!r.ok) throw 0; return r.json();
+      }),15000).then(function(j){
+        if(!j.extract || j.type==="disambiguation") throw 0;
+        return j;
+      });
+  }
+  function wikiSearch(title){ // best-match title, then its summary
+    return withTimeout(fetch("https://en.wikipedia.org/w/api.php?action=opensearch&search="+
+      encodeURIComponent(title)+"&limit=1&format=json&origin=*").then(function(r){
+        if(!r.ok) throw 0; return r.json();
+      }),15000).then(function(j){
+        var t=(j[1]||[])[0]; if(!t) throw 0; return wikiSummary(t);
+      });
+  }
+  function dictLookup(word){
+    return withTimeout(fetch("https://api.dictionaryapi.dev/api/v2/entries/en/"+encodeURIComponent(word))
+      .then(function(r){ if(!r.ok) throw 0; return r.json(); }),15000)
+      .then(function(j){
+        var e=(j||[])[0]; if(!e) throw 0;
+        var pos="", def="";
+        try{ pos=e.meanings[0].partOfSpeech||""; def=e.meanings[0].definitions[0].definition||""; }catch(x){}
+        if(!def) throw 0;
+        return {dict:true, word:e.word||word, pos:pos, def:def};
+      });
+  }
+  function showWiki(p){
+    thinking=false;
+    var img=p.thumbnail&&p.thumbnail.source; // first image from the article
+    var sentences=(p.extract.match(/[^.!?]+[.!?]+/g)||[p.extract]).slice(0,3).join(" ").trim();
+    openPopup(p.title||query,
+      (img?'<img class="rcp-img" src="'+escHtml(img)+'" alt="">':'')+
+      '<div class="wx-big" style="font-size:25px;line-height:1.3;">'+escHtml(p.title||query)+'</div>'+
+      '<div class="rcp-inst">'+escHtml(p.extract)+'</div>');
+    say("Here's what I found on "+(p.title||query)+": "+sentences,"demo");
+    checkLock();
+  }
+  function showDict(d){
+    thinking=false;
+    openPopup(d.word,
+      '<div class="wx-big" style="font-size:25px;line-height:1.3;">'+escHtml(d.word)+'</div>'+
+      (d.pos?'<div class="wx-cond">'+escHtml(d.pos)+'</div>':'')+
+      '<div class="rcp-inst">'+escHtml(d.def)+'</div>');
+    say(d.word+": "+d.def,"demo");
+    checkLock();
+  }
+  var singleWord=/^[A-Za-z-]+$/.test(query);
+  var chain;
+  if(lq.dict && singleWord)
+    chain=dictLookup(query).catch(function(){ return wikiSummary(query).catch(function(){ return wikiSearch(query); }); });
+  else
+    chain=wikiSummary(query).catch(function(){ return wikiSearch(query); })
+      .catch(function(){ if(singleWord) return dictLookup(query); throw 0; });
+  chain.then(function(p){ if(p && p.dict) showDict(p); else showWiki(p); })
+       .catch(function(){ noGood("I couldn't find anything on \""+query+"\". Try asking me another way."); });
 }
 /* ============ LIVE WEATHER (demo feature, one request) ============
    Free no-key APIs: Open-Meteo for the forecast, device geolocation first
@@ -1323,6 +1421,7 @@ function sendMessage(text){
   stopNetAudio();
   try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){}
   $("orb").classList.remove("talking");
+  var sq=parseSay(text); if(sq){ doSay(sq); return; } // "say _____": repeats exactly, free
   thinking=true;
   closePopup(); // a new question clears any stale popup
   if(isRecipeQ(text)){ doRecipe(text); return; } // recipes work in the demo: one request
@@ -1444,7 +1543,7 @@ function doClock(){
   say("It's "+new Date().toLocaleTimeString([], {hour:"numeric",minute:"2-digit"})+".","demo");
   checkLock();
 }
-function say(text, brain){
+function say(text, brain, prosody){
   pushHist("ai",text);
   var orb=$("orb");
   $("brainTag").textContent = brain==="demo" ? "demo" : "via "+brain;
@@ -1465,7 +1564,7 @@ function say(text, brain){
         flashHint("I'm listening — go ahead.");
         setTimeout(function(){ if(Date.now()>=followUpUntil) followUpUntil=0; },8100);
       }
-    });
+    }, undefined, prosody);
 }
 function checkLock(){
   if(isLocked()){ setTimeout(showComplete, 2500); }
