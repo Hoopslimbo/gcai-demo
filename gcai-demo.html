@@ -4,15 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Genie - Demo</title>
-<!-- GCAI DEMO v23 — 2026-09-23: "say _____" moods understand multi-word phrases
-     ("in a very cheery mood"), synonyms ("joyful" -> happy), and "manner".
-     Who/what questions are
-     the full Luna treatment: Wikipedia summary → Wikipedia best-match search
-     → dictionary for single words ("define ___" goes dictionary-first), with
-     the article's first image and a glass popup; total miss refunds the
-     request instead of falling back to the brain. Guards: "who/what are you",
-     "your name", and math stay with the brain. Welcome card lists the new
-     repeat trick.
+<!-- GCAI DEMO v24 — 2026-09-23: ding always sounds (suspended-AudioContext queue
+     flush); popup layout — orb to left-quadrant middle, subtitles wide at the
+     bottom, popup spans screen-middle to right-middle; recipe detection
+     understands slang ("2x choc cookie", "dub choc cake") with search fallback
+     through shorter dish names; voice cards renamed "Average female/male voice";
+     device gate — phones and iPads (incl. iPadOS) get "This software is only
+     accessible through computers. Please try again on a computer".
+     v23: "say _____" moods understand multi-word phrases, synonyms, "manner".
      v21 — 2026-09-23: side popups for weather, recipes, and the clock —
      the orb slides aside and keeps animating while a popup is open. Recipes
      now work in the demo (one request, looked up online via TheMealDB —
@@ -208,7 +207,14 @@
   #setName:focus { border-color:#8ab4ff; }
   /* ---------- side popup (weather / recipes / clock) ---------- */
   #orbWrap { transition:transform .55s cubic-bezier(.2,.8,.3,1); }
-  body.hasPopup #orbWrap { transform:translateX(-200px); } /* orb slides aside, keeps animating */
+  /* popup open: orb moves to the middle of the left quadrant (still vertically
+     centered), subtitles widen and drop to the bottom, and the popup takes the
+     band from the middle of the screen to the middle of the right side */
+  body.hasPopup #orbWrap { transform:translateX(calc(18vw - 50vw)); }
+  body.hasPopup #subtitle { position:fixed; left:50%; transform:translateX(-50%); bottom:134px;
+             max-width:1100px; width:calc(100vw - 56px); margin:0; z-index:6; }
+  body.hasPopup #popup { left:50vw; right:auto; width:34vw; min-width:340px; max-width:560px;
+             max-height:66vh; }
   /* Liquid Glass popup: frosted translucency, bright glass edge, soft sheen */
   #popup { position:fixed; right:18px; top:50%; transform:translateY(-50%); width:350px; max-width:calc(100vw - 36px);
            max-height:72vh; overflow-y:auto; z-index:80; border-radius:24px;
@@ -259,7 +265,11 @@
   .welcome-list span { color:#9aa3b2; font-size:13.5px; }
   @media (max-width:720px) {
     body.hasPopup #orbWrap { transform:none; }
-    #popup { left:16px; right:16px; width:auto; top:auto; bottom:104px; transform:none; max-height:46vh; }
+    body.hasPopup #subtitle { position:static; transform:none; width:auto; max-width:640px;
+      margin:26px 0 0; z-index:5; }
+    /* same specificity as the desktop hasPopup rule so the bottom sheet wins on mobile */
+    body.hasPopup #popup { left:16px; right:16px; width:auto; min-width:0; top:auto; bottom:104px;
+      transform:none; max-height:46vh; }
     @keyframes popIn { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:none; } }
   }
   #q { flex:1; padding:14px 18px; font-size:16px; border-radius:26px; border:1px solid #2a3140;
@@ -338,7 +348,7 @@
   <div class="card">
     <div class="logo">GCAI</div>
     <h1>Computers only</h1>
-    <p>The GCAI demo needs a desktop or laptop computer — a bigger stage for a bigger AI.<br><br>Please come back on a computer to try it.</p>
+    <p>This software is only accessible through computers. Please try again on a computer.</p>
   </div>
 </div>
 
@@ -364,8 +374,8 @@
       <h2>Pick a voice</h2>
       <p class="hint">Tap a voice to hear it.</p>
       <div class="cards" id="voiceCards">
-        <div class="card-opt sel" data-voice="female"><div class="t">Female</div><div class="d">Warm, natural feminine voice</div></div>
-        <div class="card-opt" data-voice="male"><div class="t">Male</div><div class="d">Natural masculine voice</div></div>
+        <div class="card-opt sel" data-voice="female"><div class="t">Average female voice</div><div class="d">Warm, natural feminine voice</div></div>
+        <div class="card-opt" data-voice="male"><div class="t">Average male voice</div><div class="d">Natural masculine voice</div></div>
       </div>
       <div style="margin:26px 0 12px;font-size:19px;font-weight:600">Wake ding</div>
       <p class="hint">The sound it makes when it hears its wake word. Tap to hear each one.</p>
@@ -574,8 +584,11 @@ function djb2(s){
   return h;
 }
 
-/* ================= DEVICE GATE ================= */
-var isMobile = /iphone|ipad|ipod|android|mobile|tablet/i.test(navigator.userAgent||"");
+/* ================= DEVICE GATE =================
+   Computers only — no phones, no iPads. iPadOS reports a desktop UA, so it
+   is caught via MacIntel + touch points. */
+var isMobile = /iphone|ipad|ipod|android|mobile|tablet/i.test(navigator.userAgent||"") ||
+  (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
 if(isMobile){
   // phones/tablets get the computers-only screen; nothing else runs
   show("gate-device");
@@ -763,29 +776,57 @@ document.addEventListener("click", unlockAudio);
 
 /* ================= WAKE DING =================
    Customizable chime when the AI hears its wake word (like LUNA's chime). */
-var actx=null;
+var actx=null, dingQueue=[];
 function ensureCtx(){
-  // Luna-style: lazily create one shared AudioContext on first ding. The
-  // first ding can only happen after the user has tapped the mic (user
-  // activation), so the browser creates it in "running" state — no
-  // resume-then-play dance needed, and no silent failures.
+  // One shared AudioContext, created lazily. Mobile browsers (notably iOS
+  // Safari) suspend it whenever the OS takes the audio session — e.g. while
+  // the TTS mp3 is playing — so a ding fired at an unlucky moment used to
+  // schedule oscillators on a suspended context and never sound. Fix:
+  // resume() is now issued properly (its promise rejection is caught), and
+  // dings fired while suspended are queued and flush the moment the context
+  // runs again. Stale queued dings (>2.5s old) are dropped so a late flush
+  // never plays a confusing out-of-date ding.
   try{
-    if(!actx) actx=new (window.AudioContext||window.webkitAudioContext)();
-    if(actx.state==="suspended"){ try{ actx.resume(); }catch(e){} }
+    if(!actx){
+      var AC=window.AudioContext||window.webkitAudioContext;
+      if(!AC) return null;
+      actx=new AC();
+      actx.onstatechange=function(){
+        if(actx.state==="running"&&dingQueue.length){
+          var now=Date.now(), q=dingQueue; dingQueue=[];
+          for(var i=0;i<q.length;i++){
+            if(now-q[i].at<2500){ try{ q[i].fn(); }catch(e){} }
+          }
+        }
+      };
+    }
+    if(actx.state==="suspended"){
+      try{ var p=actx.resume(); if(p&&p.catch) p.catch(function(){}); }catch(e){}
+    }
   }catch(e){}
   return actx;
 }
 function beep(freq,dur,delay,type,vol){
+  var ctx=ensureCtx(); if(!ctx) return;
+  function schedule(){
+    try{
+      var t=ctx.currentTime+(delay||0)+0.03;
+      var o=ctx.createOscillator(), g=ctx.createGain();
+      o.type=type||"sine"; o.frequency.value=freq;
+      g.gain.setValueAtTime(0.0001,t);
+      g.gain.exponentialRampToValueAtTime(vol||0.25,t+0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+      o.connect(g); g.connect(ctx.destination);
+      o.start(t); o.stop(t+dur+0.05);
+    }catch(e){}
+  }
   try{
-    var ctx=ensureCtx(); if(!ctx) return;
-    var t=ctx.currentTime+(delay||0);
-    var o=ctx.createOscillator(), g=ctx.createGain();
-    o.type=type||"sine"; o.frequency.value=freq;
-    g.gain.setValueAtTime(0.0001,t);
-    g.gain.exponentialRampToValueAtTime(vol||0.25,t+0.02);
-    g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
-    o.connect(g); g.connect(ctx.destination);
-    o.start(t); o.stop(t+dur+0.05);
+    if(ctx.state==="running") schedule();
+    else{
+      // suspended: queue it — onstatechange flushes when we run again
+      dingQueue.push({at:Date.now(),fn:schedule});
+      if(dingQueue.length>8) dingQueue.shift(); // cap: never hoard dings
+    }
   }catch(e){}
 }
 var DINGS={
@@ -1133,8 +1174,9 @@ function askBrain(prompt,sys){
 }
 
 /* ================= SIDE POPUP =================
-   Weather, recipes, and the clock open a popup on the side of the screen;
-   the orb slides aside (body.hasPopup) and keeps animating while it's open.
+   Weather, recipes, and the clock open a popup; while one is open the orb
+   moves to the middle of the left quadrant, subtitles widen and drop to the
+   bottom, and the popup takes the middle-to-right band (body.hasPopup).
    Only these three ever pop — everything else stays in the subtitle. */
 var popupClockTimer=null;
 function escHtml(s){ return String(s||"").replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
@@ -1466,21 +1508,67 @@ function sendMessage(text){
 }
 /* ================= RECIPES (demo feature, with popup) =================
    Recipes work in the demo — one request, looked up online (TheMealDB, no key).
-   Only food/desserts/edible things: anything the food database doesn't know
-   gets a "food and desserts only" reply instead of a made-up recipe. */
+   Detection understands slang/shorthand ("2x choc cookie", "dub choc cake",
+   "make me tacos", "i want pancakes", "grilled chicken") and the search falls
+   back through progressively shorter dish names ("double chocolate cookie" ->
+   "chocolate cookie" -> "cookie") so any wording finds something edible.
+   Only food/desserts: a total miss gets an honest reply, never a made-up recipe. */
+var FOOD_WORDS="cookie|cookies|brownie|brownies|cake|cakes|cupcake|cupcakes|muffin|muffins|pancake|pancakes|waffle|waffles|donut|donuts|doughnut|doughnuts|pie|pies|pizza|pizzas|pasta|spaghetti|lasagna|macaroni|ramen|pho|taco|tacos|burrito|burritos|quesadilla|enchilada|nachos|burger|burgers|sandwich|sandwiches|fries|nuggets|chicken|turkey|beef|pork|steak|steaks|bacon|sausage|meatball|meatballs|meatloaf|fish|salmon|tuna|shrimp|prawns|curry|curries|soup|soups|stew|chili|salad|salads|salsa|guacamole|hummus|falafel|sushi|dumpling|dumplings|wonton|spring rolls|fried rice|pad thai|lo mein|biryani|tikka|masala|kebab|kebabs|gyro|gyros|paella|risotto|jambalaya|gumbo|omelet|omelette|frittata|crepe|crepes|french toast|oatmeal|granola|smoothie|smoothies|milkshake|ice cream|sorbet|pudding|custard|fudge|truffle|truffles|cheesecake|tiramisu|chocolate|candy|popcorn|pretzel|pretzels|bagel|bagels|croissant|bread|biscuit|biscuits|empanada|samosa|tamale|chimichanga|fajita|casserole|alfredo|carbonara|pesto|teriyaki|kung pao|orange chicken|sesame chicken|general tso|fried chicken|roast chicken|pork chops|french fries|onion rings|chicken wings|dinner|lunch|breakfast|brunch|dessert|desserts|snack|snacks";
+var FOOD_RE=new RegExp("\\b(?:"+FOOD_WORDS+")\\b");
+var FOOD_MODS="grilled|fried|baked|roasted|crispy|spicy|sweet|sour|creamy|cheesy|glazed|smoked|steamed|stuffed|loaded|homemade|easy|quick|classic|double|triple";
+var FOOD_MOD_RE=new RegExp("^(?:"+FOOD_MODS+")$");
+var FOOD_FILLER_RE=/^(and|with|de)$/;
+/* multi-word foods ("ice cream", "orange chicken") collapsed for the bare-phrase test */
+var FOOD_MULTI=FOOD_WORDS.split("|").filter(function(w){ return w.indexOf(" ")>-1; });
+/* slang/shorthand -> searchable words: "2x choc cookie" -> "double chocolate cookie" */
+function expandFoodSlang(t){
+  var s=" "+String(t||"").toLowerCase()+" ";
+  s=s.replace(/\bchoc\b/g," chocolate ");
+  s=s.replace(/\bdub\b/g," double ");
+  s=s.replace(/\bveggies\b/g," vegetables ");
+  s=s.replace(/\bveggie\b/g," vegetable ");
+  s=s.replace(/\bsando\b/g," sandwich ");
+  s=s.replace(/\bw\//g," with ");
+  s=s.replace(/\bn\b/g," and ");
+  s=s.replace(/\b2\s*x\b/g," double ");
+  s=s.replace(/\b3\s*x\b/g," triple ");
+  s=s.replace(/\b(\d+)\s*x\b/g," ");
+  return s.replace(/\s+/g," ").trim();
+}
 function isRecipeQ(q){
   var t=String(q||"").toLowerCase();
-  return /\b(recipe|recipes)\b|how (do|can) i (make|cook|bake|prepare)\b|ingredients for\b/.test(t);
+  if(/\brecipes?\b/.test(t)) return true;
+  if(/\bhow\s+(do|does|can)\s+i\s+(make|cook|bake|prepare)\b|\bhow\s+to\s+(make|cook|bake|prepare)\b|\bingredients\s+for\b/.test(t)) return true;
+  var x=expandFoodSlang(t);
+  // "make me ___" only counts with a food word — "make me a logo" stays an upsell
+  if(/\b(make|cook|bake|prepare|whip\s*up)\s+(me|us)\b/.test(t)&&FOOD_RE.test(x)) return true;
+  if(/\bcan\s+you\s+(make|cook|bake|prepare)\b/.test(t)&&FOOD_RE.test(x)) return true;
+  if(!FOOD_RE.test(x)) return false; // no food word anywhere: not a recipe ask
+  if(/\b(\d+\s*x|double|triple|dub)\b/.test(t)) return true; // "2x choc cookie", "dub choc cake"
+  // request-y phrasings only count with a food word — "i want a logo" / "give me a list" stay upsells
+  if(/\b(i\s*(want|need|crave)|gimme|lemme\s*(get|have)|get\s+me|give\s+me)\b/.test(t)&&FOOD_RE.test(x)) return true;
+  if(/^(who|what|when|where|why|how|is|are|do|does|will|would|tell)\b/.test(t)) return false; // questions stay with brain/lookup
+  // bare food phrase of <=4 food/modifier words: "choc cookie", "pizza", "grilled chicken",
+  // "orange chicken", "chicken and waffles"
+  var joined=" "+x.replace(/[^a-z ]/g," ").replace(/\s+/g," ").trim()+" ";
+  for(var fi=0;fi<FOOD_MULTI.length;fi++){ joined=joined.split(" "+FOOD_MULTI[fi]+" ").join(" _food_ "); }
+  var words=joined.trim().split(" ").filter(Boolean);
+  if(words.length>0&&words.length<=4&&words.every(function(w){
+    return w==="_food_"||FOOD_RE.test(w)||FOOD_MOD_RE.test(w)||FOOD_FILLER_RE.test(w);
+  })) return true;
+  return false;
 }
 function extractDish(q){
-  var s=String(q||"").toLowerCase();
+  var s=expandFoodSlang(q);
   s=s.replace(/\b(give|show|find|get|send)\s+me\b/g," ");
-  s=s.replace(/\b(i want|i need|can i have|could i have|do you have)\b/g," ");
+  s=s.replace(/\b(i\s+want|i\s+need|i\s+crave|can\s+i\s+have|could\s+i\s+have|do\s+you\s+have|gimme|lemme\s+(get|have))\b/g," ");
+  s=s.replace(/\b(can\s+you\s+)?(make|cook|bake|prepare|whip\s*up)\s+(me|us|you)\b/g," ");
+  s=s.replace(/\bcan\s+you\s+(make|cook|bake|prepare)\b/g," ");
   s=s.replace(/\bhow\s+(do|does|can)\s+i\s+(make|cook|bake|prepare)\b/g," ");
   s=s.replace(/\bhow\s+to\s+(make|cook|bake|prepare)\b/g," ");
   s=s.replace(/\bingredients\s+for\b/g," ");
   s=s.replace(/\brecipes?\b/g," ");
-  s=s.replace(/\b(for|a|an|the|some|please)\b/g," ");
+  s=s.replace(/\b(for|a|an|the|some|please|my|your|of|me|us)\b/g," ");
   return s.replace(/[?.!]+$/,"").replace(/\s+/g," ").trim();
 }
 function doRecipe(q){
@@ -1493,27 +1581,45 @@ function doRecipe(q){
     say(msg,"demo"); checkLock();
   }
   if(!dish){ noGood("What dish do you want a recipe for?"); return; }
-  withTimeout(fetch("https://www.themealdb.com/api/json/v1/1/search.php?s="+encodeURIComponent(dish))
-    .then(function(r){ if(!r.ok) throw 0; return r.json(); }),15000)
-    .then(function(j){
-      thinking=false;
-      var m=(j.meals||[])[0];
-      if(!m){ noGood("I couldn't find a recipe for \""+dish+"\" — I only do food and desserts. Try another dish."); return; }
-      var ings=[];
-      for(var i=1;i<=20;i++){
-        var ing=String(m["strIngredient"+i]||"").trim(), msr=String(m["strMeasure"+i]||"").trim();
-        if(ing) ings.push((msr?msr+" ":"")+ing);
-      }
-      openPopup("Recipe",
-        (m.strMealThumb?'<img class="rcp-img" src="'+escHtml(m.strMealThumb)+'" alt="">':'')+
-        '<div class="wx-big" style="font-size:25px;line-height:1.3;">'+escHtml(m.strMeal)+'</div>'+
-        ((m.strCategory||m.strArea)?'<div class="wx-cond">'+escHtml([m.strCategory,m.strArea].filter(Boolean).join(" · "))+'</div>':'')+
-        (ings.length?'<div class="rcp-sec">Ingredients</div><ul class="rcp-ing">'+ings.map(function(x){ return "<li>"+escHtml(x)+"</li>"; }).join("")+'</ul>':'')+
-        (m.strInstructions?'<div class="rcp-sec">Instructions</div><div class="rcp-inst">'+escHtml(m.strInstructions)+'</div>':''));
-      say("Here's "+m.strMeal+" — I put the full recipe in the popup.","demo");
-      checkLock();
-    })
-    .catch(function(){ noGood("I couldn't reach the recipe service right now. Give it a few seconds and try again."); });
+  // try the full dish name, then progressively shorter ("double chocolate
+  // cookie" -> "chocolate cookie" -> "cookie") so any wording lands on food
+  var words=dish.split(" ").filter(Boolean), cands=[dish], seen={};
+  seen[dish]=1;
+  for(var i=1;i<words.length;i++){
+    var c=words.slice(i).join(" ");
+    if(c&&!seen[c]){ seen[c]=1; cands.push(c); }
+  }
+  function recipePopup(m){
+    var ings=[];
+    for(var i=1;i<=20;i++){
+      var ing=String(m["strIngredient"+i]||"").trim(), msr=String(m["strMeasure"+i]||"").trim();
+      if(ing) ings.push((msr?msr+" ":"")+ing);
+    }
+    openPopup("Recipe",
+      (m.strMealThumb?'<img class="rcp-img" src="'+escHtml(m.strMealThumb)+'" alt="">':'')+
+      '<div class="wx-big" style="font-size:25px;line-height:1.3;">'+escHtml(m.strMeal)+'</div>'+
+      ((m.strCategory||m.strArea)?'<div class="wx-cond">'+escHtml([m.strCategory,m.strArea].filter(Boolean).join(" · "))+'</div>':'')+
+      (ings.length?'<div class="rcp-sec">Ingredients</div><ul class="rcp-ing">'+ings.map(function(x){ return "<li>"+escHtml(x)+"</li>"; }).join("")+'</ul>':'')+
+      (m.strInstructions?'<div class="rcp-sec">Instructions</div><div class="rcp-inst">'+escHtml(m.strInstructions)+'</div>':''));
+    say("Here's "+m.strMeal+" — I put the full recipe in the popup.","demo");
+    checkLock();
+  }
+  function tryCand(idx){
+    if(idx>=cands.length){
+      noGood("I couldn't find a recipe for \""+dish+"\" — I only do food and desserts. Try another dish.");
+      return;
+    }
+    withTimeout(fetch("https://www.themealdb.com/api/json/v1/1/search.php?s="+encodeURIComponent(cands[idx]))
+      .then(function(r){ if(!r.ok) throw 0; return r.json(); }),15000)
+      .then(function(j){
+        var m=(j.meals||[])[0];
+        if(!m){ tryCand(idx+1); return; } // no hit: shorten and retry
+        thinking=false;
+        recipePopup(m);
+      })
+      .catch(function(){ noGood("I couldn't reach the recipe service right now. Give it a few seconds and try again."); });
+  }
+  tryCand(0);
 }
 /* ================= CLOCK POPUP =================
    "What time is it" opens a mini popup: live digital clock on top, and below
