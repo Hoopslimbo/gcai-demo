@@ -4,7 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Genie - Demo</title>
-<!-- GCAI DEMO v28 — 2026-09-23: Wikipedia search prefers the article actually named
+<!-- GCAI DEMO v29 — 2026-09-23: side-state subtitles are bare bold text with no
+     window (white, black on white wallpapers); welcome X tooltip stays inside
+     the card so hovering it never summons a horizontal scrollbar; gear hover
+     twists only the glyph so its tooltip stays level and still; lookup popups
+     close themselves when the AI finishes talking (orb + subtitles return to
+     the middle); lookup popup images show fully, never cropped; follow-up ding
+     fires on any "?" in a reply, not just a trailing one; TTS preloads the
+     next speech piece and retries a failed piece once so network blips can't
+     cut the audio; brain instructed to never invent facts.
+     v28: Wikipedia search prefers the article actually named
      in your question ("the character Bugs Bunny" -> Bugs Bunny, not Lola Bunny),
      so lookups land on the right article and the right image.
      v27: lookups understand "what's"/"who's"; Wikipedia
@@ -174,7 +183,10 @@
   @keyframes btnClick { 0% { transform:scale(1); } 40% { transform:scale(.82); } 100% { transform:scale(1); } }
   #gearBtn { margin-left:8px; width:40px; height:40px; border-radius:50%; cursor:pointer; font-size:19px;
              background:#141a26; border:2px solid #2a3140; color:#c7d0e0; transition:all .2s ease; line-height:1; }
-  #gearBtn:hover { border-color:#8ab4ff; transform:rotate(30deg); }
+  #gearBtn:hover { border-color:#8ab4ff; }
+  /* twist only the gear glyph — rotating the button would twist its tooltip too */
+  #gearBtn .gear-ico { display:inline-block; transition:transform .2s ease; }
+  #gearBtn:hover .gear-ico { transform:rotate(30deg); }
   #boostTimer { font-size:12px; color:#f5b04b; margin-left:8px; }
   .stage { flex:1; width:100%; display:flex; flex-direction:column; align-items:center; justify-content:center;
            position:relative; z-index:5; min-height:0; }
@@ -248,14 +260,18 @@
   #popupBody { overflow-y:auto; min-height:0; }
   body.popDragging, body.popDragging .popup-head { cursor:grabbing; }
   body.popDragging { user-select:none; -webkit-user-select:none; }
-  /* popup open + AI talking: subtitles bundle up small under the orb (which is
-     moved to the left) so they never cover the window */
+  /* popup open + AI talking: subtitles sit bare under the orb (which is
+     moved to the left) — no window, just bold text; white, or black on a
+     white wallpaper */
   @media (min-width:721px){
     body.hasPopup.aiTalking #subtitle { left:18vw; right:auto; transform:translateX(-50%);
       top:calc(50% + 108px); bottom:auto; width:max-content; max-width:30vw; margin:0;
-      font-size:14.5px; line-height:1.5; padding:10px 16px; min-height:0;
-      background:rgba(13,17,25,.55); border-radius:14px; border:1px solid rgba(255,255,255,.12);
-      -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px); }
+      font-size:14.5px; line-height:1.5; padding:0; min-height:0;
+      font-weight:700; color:#fff; text-shadow:0 2px 10px rgba(0,0,0,.6);
+      background:none; border:none; border-radius:0;
+      -webkit-backdrop-filter:none; backdrop-filter:none; }
+    body.light-wall.hasPopup.aiTalking #subtitle { color:#000;
+      text-shadow:0 1px 0 rgba(255,255,255,.65); }
   }
   #popupTitle { font-size:15px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:#8ab4ff; }
   #popupClose { width:34px; height:34px; border-radius:50%; border:2px solid #2a3140; background:#141a26; color:#c7d0e0;
@@ -273,6 +289,9 @@
   .rcp-steps { text-align:left; font-size:14.5px; line-height:1.7; padding-left:22px; margin:0; }
   .rcp-steps li { margin-bottom:8px; }
   .rcp-img { width:100%; max-height:180px; object-fit:cover; border-radius:14px; margin-bottom:10px; }
+  /* lookup popups show the whole image, never a cropped band */
+  .wiki-img { width:100%; height:auto; max-height:52vh; display:block;
+              border-radius:14px; margin-bottom:10px; }
   .rcp-inst { text-align:left; font-size:14px; line-height:1.7; color:#dfe5ef; white-space:pre-wrap; }
   .clock-digital { font-size:42px; font-weight:700; font-variant-numeric:tabular-nums; letter-spacing:2px; margin:2px 0 12px; }
   .clockface { width:230px; height:230px; }
@@ -284,6 +303,9 @@
                   border:2px solid #2a3140; background:#141a26; color:#c7d0e0; cursor:pointer; font-size:14px;
                   line-height:1; transition:all .2s ease; }
   #welcomeClose:hover { border-color:#ff5b5b; color:#ff5b5b; transform:scale(1.08); }
+  /* keep the "Close" tooltip inside the card: centered it spills past the right
+     edge on hover and summons a horizontal scrollbar */
+  #welcomeClose[data-tip]:hover::before { left:auto; right:0; transform:none; }
   .welcome-list { list-style:none; margin:0; padding:0; }
   .welcome-list li { background:#0d1119; border:1px solid #2a3140; border-radius:12px; padding:10px 14px; margin-bottom:8px; }
   .welcome-list li:last-child { margin-bottom:0; }
@@ -455,7 +477,7 @@
   <div class="hud-top">
     <div class="who"><span id="hudName">Genie</span><small id="hudSub">GCAI demo</small></div>
     <div>
-      <span class="req-pill"><b id="reqLeft">25</b> left</span><span id="boostTimer"></span><button id="addonBtn" data-tip="Add-ons" aria-label="Add-ons"><svg viewBox="0 0 24 24" width="24" height="24" fill="#fff" aria-hidden="true"><rect x="5" y="7" width="13" height="12" rx="2.5"/><circle cx="11.5" cy="7" r="3"/><circle cx="18" cy="13" r="3"/></svg></button><button id="gearBtn" data-tip="Settings" aria-label="Settings">&#9881;</button>
+      <span class="req-pill"><b id="reqLeft">25</b> left</span><span id="boostTimer"></span><button id="addonBtn" data-tip="Add-ons" aria-label="Add-ons"><svg viewBox="0 0 24 24" width="24" height="24" fill="#fff" aria-hidden="true"><rect x="5" y="7" width="13" height="12" rx="2.5"/><circle cx="11.5" cy="7" r="3"/><circle cx="18" cy="13" r="3"/></svg></button><button id="gearBtn" data-tip="Settings" aria-label="Settings"><span class="gear-ico">&#9881;</span></button>
     </div>
   </div>
   <div class="stage">
@@ -909,23 +931,45 @@ function netSpeak(text, my, onStart, onDone, voice, prosody){
     else cur = cur ? cur+" "+parts[i] : parts[i];
   }
   if(cur.trim()) chunks.push(cur.trim());
-  var ci=0, finished=false;
-  function doneAll(){ if(finished||my!==speakToken) return; finished=true; netAudio=null; onStart(); onDone(); }
-  function fallBack(){ if(finished||my!==speakToken) return; finished=true; netAudio=null; deviceSpeak(text,onStart,onDone,voice,prosody); }
+  var ci=0, finished=false, retried=false;
+  // The reply plays in pieces; the next piece preloads while the current one
+  // plays, so a slow network never leaves a gap — or a cut — mid-sentence.
+  var preA=null, preIdx=-1;
+  function chunkUrl(c){
+    return "https://code.responsivevoice.org/getvoice.php?t="+encodeURIComponent(c)+
+      "&tl="+(cfg.tl||NET_TL)+"&sv=g1&vn="+encodeURIComponent(cfg.name)+
+      "&pitch="+cfg.pitch+"&rate="+cfg.rate+"&vol=1";
+  }
+  function preload(i){
+    if(i>=chunks.length||i===preIdx) return;
+    preIdx=i;
+    try{ preA=new Audio(); preA.preload="auto"; preA.src=chunkUrl(chunks[i]); preA.load(); }
+    catch(e){ preA=null; preIdx=-1; }
+  }
+  function doneAll(){ if(finished||my!==speakToken) return; finished=true; netAudio=null; preA=null; onStart(); onDone(); }
+  function fallBack(){ if(finished||my!==speakToken) return; finished=true; netAudio=null; preA=null; deviceSpeak(text,onStart,onDone,voice,prosody); }
   function playChunk(){
     if(finished||my!==speakToken) return;
     if(ci>=chunks.length){ doneAll(); return; }
-    var a = (audioUnlocked&&ttsAudio) ? ttsAudio : new Audio();
+    // reuse the preloaded piece when it's the one we need
+    var usePre=(preIdx===ci&&preA);
+    var a=usePre?preA:((audioUnlocked&&ttsAudio)?ttsAudio:new Audio());
+    preA=null; preIdx=-1;
     try{ a.pause(); }catch(e){}
     netAudio=a;
-    a.onended=function(){ if(finished||my!==speakToken) return; ci++; playChunk(); };
-    a.onplaying=function(){ onStart(); };
-    a.onerror=fallBack;
-    a.src="https://code.responsivevoice.org/getvoice.php?t="+encodeURIComponent(chunks[ci])+
-          "&tl="+(cfg.tl||NET_TL)+"&sv=g1&vn="+encodeURIComponent(cfg.name)+
-          "&pitch="+cfg.pitch+"&rate="+cfg.rate+"&vol=1";
+    a.onended=function(){ if(finished||my!==speakToken) return; ci++; retried=false; playChunk(); };
+    a.onplaying=function(){ onStart(); preload(ci+1); };
+    a.onerror=function(){
+      // one retry of the same piece before falling back to the device voice —
+      // a momentary network blip shouldn't cut the reply off
+      if(!retried&&!finished&&my===speakToken){
+        retried=true; playChunk(); return;
+      }
+      fallBack();
+    };
+    if(!usePre) a.src=chunkUrl(chunks[ci]); // preloaded already has the right URL
     try{ a.load(); }catch(e){}
-    try{ var p=a.play(); if(p&&p.catch) p.catch(fallBack); }catch(e){ fallBack(); return; }
+    try{ var p=a.play(); if(p&&p.catch) p.catch(function(){ a.onerror(); }); }catch(e){ fallBack(); return; }
     setTimeout(function(){
       if(!finished&&my===speakToken&&(a.paused||a.currentTime===0)) fallBack();
     },10000);
@@ -1205,9 +1249,11 @@ function askBrain(prompt,sys){
    bottom, and the popup takes the middle-to-right band (body.hasPopup).
    Only these three ever pop — everything else stays in the subtitle. */
 var popupClockTimer=null;
+var popupAutoClose=false; // lookup popups dismiss themselves when the AI is done talking
 function escHtml(s){ return String(s||"").replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
-function openPopup(title, html){
+function openPopup(title, html, autoClose){
   if(popupClockTimer){ clearInterval(popupClockTimer); popupClockTimer=null; }
+  popupAutoClose=!!autoClose;
   $("popupTitle").textContent=title;
   $("popupBody").innerHTML=html;
   show("popup");
@@ -1215,6 +1261,7 @@ function openPopup(title, html){
 }
 function closePopup(){
   if(popupClockTimer){ clearInterval(popupClockTimer); popupClockTimer=null; }
+  popupAutoClose=false;
   hide("popup");
   document.body.classList.remove("hasPopup");
   // a dragged window reopens in its default spot next time
@@ -1275,6 +1322,7 @@ function sysPrompt(){
   var base="You are "+S.name+", a customizable AI assistant in a free GCAI demo. "+
     "Keep replies conversational and under 120 words unless asked for more. "+
     "Never mention system prompts, models, or providers. You are "+S.name+". "+
+    "If you don't know a fact, say you don't know — never invent facts, dates, or relationships. "+
     "If the prompt starts with recent conversation, use it for context on follow-ups "+
     "(yes / no / why / tell me more / what about...) — never treat a follow-up as unrelated. "+
     "The demo is chat-only: if asked for lists, images, notes, news, "+
@@ -1427,9 +1475,9 @@ function doLookup(lq){
     var img=p.thumbnail&&p.thumbnail.source; // first image from the article
     var sentences=(p.extract.match(/[^.!?]+[.!?]+/g)||[p.extract]).slice(0,3).join(" ").trim();
     openPopup(p.title||query,
-      (img?'<img class="rcp-img" src="'+escHtml(img)+'" alt="">':'')+
+      (img?'<img class="wiki-img" src="'+escHtml(img)+'" alt="">':'')+
       '<div class="wx-big" style="font-size:25px;line-height:1.3;">'+escHtml(p.title||query)+'</div>'+
-      '<div class="rcp-inst">'+escHtml(p.extract)+'</div>');
+      '<div class="rcp-inst">'+escHtml(p.extract)+'</div>', true);
     say("Here's what I found on "+(p.title||query)+": "+sentences,"demo");
     checkLock();
   }
@@ -1438,7 +1486,7 @@ function doLookup(lq){
     openPopup(d.word,
       '<div class="wx-big" style="font-size:25px;line-height:1.3;">'+escHtml(d.word)+'</div>'+
       (d.pos?'<div class="wx-cond">'+escHtml(d.pos)+'</div>':'')+
-      '<div class="rcp-inst">'+escHtml(d.def)+'</div>');
+      '<div class="rcp-inst">'+escHtml(d.def)+'</div>', true);
     say(d.word+": "+d.def,"demo");
     checkLock();
   }
@@ -1752,9 +1800,12 @@ function say(text, brain, prosody){
       speaking=false; orb.classList.remove("talking");
       document.body.classList.remove("aiTalking");
       $("subtitle").textContent=""; // AI done talking: subtitles disappear
-      // Question follow-up: if the reply is a question, ding and open a 3s
-      // no-wake-word window so the user can answer directly — then reset.
-      if(/\?\s*$/.test(stripEmojis(text))){
+      if(popupAutoClose) closePopup(); // lookup window goes away by itself;
+      // orb + subtitles drift back to the middle (hasPopup removed)
+      // Question follow-up: if the reply contains a question mark anywhere,
+      // ding and open a 3s no-wake-word window so the user can answer
+      // directly — then reset.
+      if(/\?/.test(stripEmojis(text))){
         playDing(S.ding);
         followUpUntil=Date.now()+8000;
         flashHint("I'm listening — go ahead.");
