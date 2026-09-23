@@ -3,11 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>GCAI — Free Demo</title>
-<!-- GCAI DEMO v18 — 2026-09-23: fixed two missing functions that broke voice —
-     flashHint (mic errors crashed silently, now they show) and pulseOrb
-     (bare wake word crashed before the ding, now it dings + listens).
-     Deeper male voice (UK English Male pitch 0.35); iOS mic explains itself.
+<title>Genie - Demo</title>
+<!-- GCAI DEMO v20 — 2026-09-23: the wake-word follow-up window is 8s (was 2s) —
+     answers spoken after the ding were arriving after the window closed and
+     being ignored. Left-edge controls: mic mute (middle) + AI voice mute
+     below it; the voice mute skips audio but keeps the conversation flowing.
+     v19: greeting ("Hey! I'm ... 25 requests") now only plays right after
+     setup — refreshing the page stays silent.
+     v18: fixed missing flashHint (mic errors crashed silently) and pulseOrb
+     (bare wake word crashed before the ding). Deeper male voice
+     (UK English Male pitch 0.35); iOS mic explains itself.
      Luna-style wake ding (lazy AudioContext),
      question follow-up (ding + 3s no-wake-word window after a "?" reply),
      speech cleanup (never speaks emojis/_/-// junk aloud).
@@ -158,6 +163,17 @@
   #micBtn.live { border-color:#ff5b5b; box-shadow:0 0 16px #ff5b5b66; }
   #micBtn.live .dot { background:#ff5b5b; animation:blink 1s infinite; }
   @keyframes blink { 50% { opacity:.35; } }
+  /* left-edge controls: mic mute (middle) + AI voice mute (below it) */
+  #edgeBtns { position:fixed; left:12px; top:50%; transform:translateY(-50%); z-index:60;
+              display:flex; flex-direction:column; gap:14px; }
+  #voiceMuteBtn { width:52px; height:52px; border-radius:50%; border:2px solid #2a3140;
+            background:#141a26; cursor:pointer; position:relative; transition:all .2s ease;
+            display:flex; align-items:center; justify-content:center; }
+  #voiceMuteBtn.muted { border-color:#ff5b5b; }
+  #voiceMuteBtn.muted svg { opacity:.35; }
+  #voiceMuteBtn.muted::after, #micBtn:not(.live)::after { content:""; position:absolute;
+            left:9px; right:9px; top:50%; height:3px; margin-top:-1.5px;
+            background:#ff5b5b; transform:rotate(-45deg); border-radius:2px; }
   #q { flex:1; padding:14px 18px; font-size:16px; border-radius:26px; border:1px solid #2a3140;
        background:#12161f; color:#eef1f6; outline:none; }
   #q:focus { border-color:#8ab4ff; }
@@ -323,8 +339,11 @@
     <div id="subtitle">Tap the mic or type below to talk.</div>
     <div id="brainTag"></div>
   </div>
+  <div id="edgeBtns">
+    <button id="micBtn" aria-label="mute or unmute microphone"><span class="dot"></span></button>
+    <button id="voiceMuteBtn" aria-label="mute or unmute AI voice"><svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M4 9v6h4l5 5V4L8 9H4z" fill="#8ab4ff"/><path d="M16.5 8.5a5 5 0 010 7" stroke="#8ab4ff" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M19 6a8.5 8.5 0 010 12" stroke="#8ab4ff" stroke-width="2" fill="none" stroke-linecap="round" opacity=".6"/></svg></button>
+  </div>
   <div class="typebar">
-    <button id="micBtn" aria-label="microphone"><span class="dot"></span></button>
     <input id="q" placeholder="Ask anything..." autocomplete="off">
     <button id="sendBtn" aria-label="send">&#10148;</button>
   </div>
@@ -577,7 +596,7 @@ function startWizard(){
       var done={name:wiz.name,voice:wiz.voice,pers:wiz.pers,wallpaper:wiz.wallpaper,orb:wiz.orb,aura:wiz.aura,ding:wiz.ding};
       saveSettings(done);
       hide("wizard");
-      startHud(done);
+      startHud(done, true); // first run: greet out loud
     }
   };
   goStep(1);
@@ -688,6 +707,12 @@ function speak(text, onStart, onDone, voice){
   var started=false;
   function fireStart(){ if(started||my!==speakToken) return; started=true; if(onStart){ try{onStart();}catch(e){} } }
   function fireDone(){ if(my!==speakToken) return; if(onDone){ try{onDone();}catch(e){} } }
+  if(S.voiceMuted){
+    // Voice muted: no audio at all, but the conversation flow (UI state,
+    // follow-up windows, counters) moves exactly as if it had spoken.
+    setTimeout(function(){ fireStart(); fireDone(); }, 60);
+    return;
+  }
   setTimeout(fireStart, 15000); // backstop: never leave the UI hanging
   try{ if(window.speechSynthesis && (speechSynthesis.speaking||speechSynthesis.pending)) speechSynthesis.cancel(); }catch(e){}
   stopNetAudio();
@@ -855,7 +880,9 @@ function stopMic(){ micOn=false; try{ if(recog) recog.stop(); }catch(e){} $("mic
 function ackWake(){
   // Bare name with no command: play the chosen wake ding (chime only, like
   // LUNA), then a short follow-up window where the wake word isn't needed —
-  // 2 seconds, matching LUNA's followUpUntil window.
+  // 8 seconds: the ding + the user's reaction + their question + Chrome's
+  // final-transcript latency never fit in the old 2s window, so answers
+  // spoken after the ding were silently ignored.
   // Mic stays on; anything heard while the AI itself is speaking is ignored
   // so it can't trigger on its own voice.
   pulseOrb();
@@ -865,7 +892,7 @@ function ackWake(){
   flashHint("I'm listening — go ahead.");
   playDing(S.ding);
   setTimeout(function(){ orb.classList.remove("talking"); setWakeHint(); }, 900);
-  followUpUntil=Date.now()+2000;
+  followUpUntil=Date.now()+8000;
 }
 function setWakeHint(){
   if(hintTimer){ clearTimeout(hintTimer); hintTimer=null; }
@@ -987,7 +1014,7 @@ function askBrain(prompt,sys){
 }
 
 /* ================= CHAT ================= */
-var S = { name:"Genie", wake:"hey", voice:"female", pers:"balanced", wallpaper:"blue", orb:"pink", aura:"blue" };
+var S = { name:"Genie", wake:"hey", voice:"female", pers:"balanced", wallpaper:"blue", orb:"pink", aura:"blue", voiceMuted:false };
 var thinking=false;
 
 /* ================= CONVERSATION MEMORY =================
@@ -1202,9 +1229,9 @@ function say(text, brain){
       // no-wake-word window so the user can answer directly — then reset.
       if(/\?\s*$/.test(stripEmojis(text))){
         playDing(S.ding);
-        followUpUntil=Date.now()+3000;
+        followUpUntil=Date.now()+8000;
         flashHint("I'm listening — go ahead.");
-        setTimeout(function(){ if(Date.now()>=followUpUntil) followUpUntil=0; },3100);
+        setTimeout(function(){ if(Date.now()>=followUpUntil) followUpUntil=0; },8100);
       }
     });
 }
@@ -1429,30 +1456,46 @@ function applyTheme(st){
   var op=$("orbPreview");
   if(op) op.style.background=orbBg(o.c);
 }
-function startHud(st){
+function startHud(st, sayHi){
   S.name=st.name; S.wake=st.wake||"hey"; S.voice=st.voice; S.pers=st.pers;
   S.wallpaper=st.wallpaper; S.orb=st.orb; S.aura=st.aura||st.orb||"blue";
-  S.ding=st.ding||"classic";
+  S.ding=st.ding||"classic"; S.voiceMuted=!!st.voiceMuted;
+  updateVoiceBtn();
   applyTheme(st);
   $("hudName").textContent=st.name;
-  $("hudSub").textContent="GCAI demo · "+st.pers;
+  document.title=st.name+" - Demo"; // tab shows their AI's name once it's made
+  $("hudSub").textContent="Genie Demo · "+st.pers;
   setWakeHint();
   updateCounter(); updateBoostUI();
   show("hud");
   probeAll();
   startListening(true); // mic always on, like LUNA (quiet: no popup if unsupported)
-  var greet = st.pers==="cheerful" ? "Hey! I'm "+st.name+", and I'm so glad you're here. Ask me anything — you've got 25 requests to play with."
-    : st.pers==="moody" ? "I'm "+st.name+". Twenty-five requests. Try not to waste them."
-    : "I'm "+st.name+". You have 25 demo requests — ask me anything.";
-  setTimeout(function(){ say(greet,"demo"); },600);
+  if(sayHi){
+    // greeting only right after setup — a refresh stays silent
+    var greet = st.pers==="cheerful" ? "Hey! I'm "+st.name+", and I'm so glad you're here. Ask me anything — you've got 25 requests to play with."
+      : st.pers==="moody" ? "I'm "+st.name+". Twenty-five requests. Try not to waste them."
+      : "I'm "+st.name+". You have 25 demo requests — ask me anything.";
+    setTimeout(function(){ say(greet,"demo"); },600);
+  }
 }
 $("micBtn").onclick=toggleMic;
+function updateVoiceBtn(){ $("voiceMuteBtn").classList.toggle("muted", !!S.voiceMuted); }
+$("voiceMuteBtn").onclick=function(){
+  S.voiceMuted=!S.voiceMuted;
+  if(S.voiceMuted){ // stop any speech already playing
+    try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){}
+    stopNetAudio();
+  }
+  var st=settings()||{}; st.voiceMuted=S.voiceMuted; saveSettings(st);
+  updateVoiceBtn();
+};
+updateVoiceBtn();
 $("sendBtn").onclick=function(){ var v=$("q").value; $("q").value=""; sendMessage(v); };
 $("q").addEventListener("keydown",function(e){ if(e.key==="Enter"){ var v=$("q").value; $("q").value=""; sendMessage(v); } });
 
 // boot: straight into the demo — no email gate at the start
 if(isLocked()){ showComplete(); }
-else { var _boot=settings(); if(_boot){ startHud(_boot); } else { startWizard(); } }
+else { var _boot=settings(); if(_boot){ startHud(_boot, false); } else { startWizard(); } }
 
 })();
 </script>
