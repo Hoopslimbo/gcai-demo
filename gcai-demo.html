@@ -4,8 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>GCAI — Free Demo</title>
-<!-- GCAI DEMO v15 — 2026-09-23: Ace-matched male voice (UK English Male + en-GB,
-     British-male device fallback), Luna-style wake ding (lazy AudioContext),
+<!-- GCAI DEMO v18 — 2026-09-23: fixed two missing functions that broke voice —
+     flashHint (mic errors crashed silently, now they show) and pulseOrb
+     (bare wake word crashed before the ding, now it dings + listens).
+     Deeper male voice (UK English Male pitch 0.35); iOS mic explains itself.
+     Luna-style wake ding (lazy AudioContext),
      question follow-up (ding + 3s no-wake-word window after a "?" reply),
      speech cleanup (never speaks emojis/_/-// junk aloud).
      v14 items kept: naming finalized — the demo is "Genie Demo",
@@ -140,6 +143,8 @@
            position:relative; z-index:5; min-height:0; }
   #orb { width:170px; height:170px; border-radius:50%; position:relative;
          animation:orbPulse 3.2s ease-in-out infinite; transition:box-shadow .3s ease; }
+  #orb.pulseOnce { animation:orbPop .55s ease-out; }
+  @keyframes orbPop { 0% { transform:scale(1); } 35% { transform:scale(1.12); } 100% { transform:scale(1); } }
   #orb.talking { animation:orbTalk .5s ease-in-out infinite; }
   @keyframes orbTalk { 0%,100% { transform:scale(1); } 50% { transform:scale(1.09); } }
   #subtitle { margin-top:26px; max-width:640px; padding:0 28px; text-align:center; font-size:17px;
@@ -604,11 +609,12 @@ function goStep(n){
 var NET_TL = "en-US";
 /* Distinct natural internet voices per choice — different voice, pitch and
    rate for male vs female so the two options never sound the same.
-   Male matches Ace exactly: UK English Male with en-GB. (The old en-US
-   pairing made the endpoint fall back to the default female voice.) */
+   Male: UK English Male with en-GB, pitched down deeper than Ace.
+   (The old en-US pairing made the endpoint fall back to the default
+   female voice.) */
 var VOICES = {
   female:{ name:"US English Female", tl:"en-US", pitch:"0.5", rate:"0.55", devPitch:1.25 },
-  male:{ name:"UK English Male", tl:"en-GB", pitch:"0.5", rate:"0.5", devPitch:0.75 }
+  male:{ name:"UK English Male", tl:"en-GB", pitch:"0.35", rate:"0.5", devPitch:0.6 }
 };
 function vcfg(v){ return VOICES[v]||VOICES[S.voice]||VOICES.female; }
 function voiceName(v){ return vcfg(v).name; }
@@ -760,6 +766,23 @@ function deviceSpeak(text,onStart,onDone,voice){
 }
 
 /* ================= SPEECH RECOGNITION + WAKE WORD ================= */
+/* flashHint was called in 11 places but never defined — every mic error
+   message crashed silently instead of showing. Now it shows in #wakeHint
+   and auto-restores the default hint. */
+var hintTimer=null;
+function flashHint(msg,ms){
+  var el=$("wakeHint"); if(!el) return;
+  el.textContent=msg;
+  if(hintTimer) clearTimeout(hintTimer);
+  hintTimer=setTimeout(function(){ hintTimer=null; setWakeHint(); }, ms||4000);
+}
+/* pulseOrb was called by ackWake and the limit-break but never defined —
+   saying the bare wake word crashed before the ding. Quick orb pop. */
+function pulseOrb(){
+  var orb=$("orb"); if(!orb) return;
+  orb.classList.remove("pulseOnce"); void orb.offsetWidth; orb.classList.add("pulseOnce");
+  setTimeout(function(){ orb.classList.remove("pulseOnce"); },600);
+}
 var SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
 var recog=null, micOn=false, speaking=false, followUpUntil=0;
 function wakeMatch(transcript, name){
@@ -783,8 +806,14 @@ function voiceAction(fin, name, followUp, isSpeaking){
   if(followUp && fin.trim()) return {type:"send", query:fin.trim()};
   return {type:"ignore"}; // no wake word: not for us
 }
-function startListening(){
-  if(!SR || micOn) return;
+function startListening(quiet){
+  if(micOn) return;
+  if(!SR){
+    // iOS Safari/Chrome/Firefox don't implement speech recognition at all —
+    // say so instead of leaving the mic button looking dead.
+    if(!quiet) flashHint("Voice input isn't supported in this browser — iPhones and iPads can't do speech recognition, so type instead.");
+    return;
+  }
   unlockAudio();
   try{
     recog=new SR();
@@ -821,7 +850,7 @@ function startListening(){
     flashHint('Listening — say "Hey '+S.name+'" or just "'+S.name+'".');
   }catch(e){ flashHint("Couldn't start the mic — type instead."); }
 }
-function toggleMic(){ if(micOn) stopMic(); else startListening(); }
+function toggleMic(){ if(micOn) stopMic(); else startListening(false); }
 function stopMic(){ micOn=false; try{ if(recog) recog.stop(); }catch(e){} $("micBtn").classList.remove("live"); }
 function ackWake(){
   // Bare name with no command: play the chosen wake ding (chime only, like
@@ -839,6 +868,7 @@ function ackWake(){
   followUpUntil=Date.now()+2000;
 }
 function setWakeHint(){
+  if(hintTimer){ clearTimeout(hintTimer); hintTimer=null; }
   if(!S.name) return;
   // both wake phrases always work — no setup choice
   $("wakeHint").textContent = 'Say "Hey '+S.name+'" or just "'+S.name+'" — either works. Or type below.';
@@ -1410,7 +1440,7 @@ function startHud(st){
   updateCounter(); updateBoostUI();
   show("hud");
   probeAll();
-  startListening(); // mic always on, like LUNA
+  startListening(true); // mic always on, like LUNA (quiet: no popup if unsupported)
   var greet = st.pers==="cheerful" ? "Hey! I'm "+st.name+", and I'm so glad you're here. Ask me anything — you've got 25 requests to play with."
     : st.pers==="moody" ? "I'm "+st.name+". Twenty-five requests. Try not to waste them."
     : "I'm "+st.name+". You have 25 demo requests — ask me anything.";
