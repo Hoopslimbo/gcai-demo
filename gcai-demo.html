@@ -4,10 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Ondra - Demo</title>
-<!-- GCAI DEMO v31 — 2026-09-23: demo-only feedback button (top-left, speech-
-     bubble icon): opens a form to recommend a feature or report a bug, sent
-     via the user's email app to thegcaiteam@gmail.com with the demo version
-     attached. Quad-checked.
+<!-- GCAI DEMO v32 — 2026-09-23: feedback now submits straight to the
+     "Ondra Demo Feedback" Google Form (Type + Details entry IDs) via
+     fetch no-cors — no email app, no notifications to Liam.
+     v31: demo-only feedback button (top-left, speech-bubble icon) + welcome
+     bookmark tip.
      v30: product renamed Genie -> Ondra (ON-drah)
      everywhere user-visible: tab title, welcome card, HUD, default AI name
      and wake hint, upsell lines, export help; spoken as "ondrah" so the
@@ -545,7 +546,7 @@
 <div id="fbModal" class="modal hidden">
   <div class="modal-card">
     <h2>Feedback</h2>
-    <p class="sub">Recommend a feature or report a bug — it opens your email app with the message addressed to the GCAI team.</p>
+    <p class="sub">Recommend a feature or report a bug — it goes straight to the GCAI team.</p>
     <div class="trow"><div class="tlabel">Type</div>
       <div class="fb-types">
         <button class="fb-type sel" id="fbTypeFeature">&#128161; Feature idea</button>
@@ -2019,9 +2020,11 @@ var BUY_URL = "";       // full-version buy link — set at launch
 var WL_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSf6hsM_9YDXu7IPsoLi-YPE7yy3jppThHwGjI3p-pG9Cz-fRw/formResponse";
 var WL_ENTRY_NAME = "entry.2018513984"; // "Full name" question
 var WL_ENTRY_EMAIL = "entry.1933757178";
-/* ---- feedback (demo-only): feature idea / bug report via the user's email app ---- */
-var FEEDBACK_EMAIL = "thegcaiteam@gmail.com";
-var FB_VERSION = "v31";
+/* ---- feedback (demo-only): feature idea / bug report -> Google Form ---- */
+var FB_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSfqeX7pQ0oH1olTzzJL6xRwGJLsvhoIg6KmnVwUQUjwT689jQ/formResponse";
+var FB_ENTRY_TYPE = "entry.1685562403"; // "Type" question
+var FB_ENTRY_DETAILS = "entry.634914939"; // "Details" question
+var FB_VERSION = "v32";
 function fbSetType(which){
   $("fbTypeFeature").classList.toggle("sel", which==="feature");
   $("fbTypeBug").classList.toggle("sel", which==="bug");
@@ -2029,25 +2032,26 @@ function fbSetType(which){
 function fbType(){
   return $("fbTypeBug").classList.contains("sel") ? "Bug report" : "Feature idea";
 }
-function fbMailto(){
-  var msg=$("fbText").value.trim();
-  if(!msg){ $("fbErr").textContent="Tell us a little more first."; $("fbText").focus(); return null; }
-  $("fbErr").textContent="";
-  var subject="[Ondra Demo] "+fbType();
-  var body=msg+"\n\n— sent from Ondra Demo "+FB_VERSION;
-  return "mailto:"+FEEDBACK_EMAIL+"?subject="+encodeURIComponent(subject)+"&body="+encodeURIComponent(body);
-}
 $("fbTypeFeature").onclick=function(){ fbSetType("feature"); };
 $("fbTypeBug").onclick=function(){ fbSetType("bug"); };
 $("fbBtn").onclick=function(){ show("fbModal"); };
 $("fbCancel").onclick=function(){ hide("fbModal"); };
-$("fbSend").onclick=function(){
-  var url=fbMailto();
-  if(!url) return;
+function fbSend(){
+  var msg=$("fbText").value.trim();
+  if(!msg){ $("fbErr").textContent="Tell us a little more first."; $("fbText").focus(); return false; }
+  $("fbErr").textContent="";
+  var p=new URLSearchParams();
+  p.append(FB_ENTRY_TYPE, fbType());
+  p.append(FB_ENTRY_DETAILS, msg+"\n\n— sent from Ondra Demo "+FB_VERSION);
+  try{
+    fetch(FB_FORM_URL,{method:"POST",mode:"no-cors",
+      headers:{"Content-Type":"application/x-www-form-urlencoded"},body:p.toString()});
+  }catch(e){}
   hide("fbModal"); $("fbText").value="";
-  window.location.href=url;
-  flashHint("Opening your email app…");
-};
+  flashHint("Thanks! Your feedback was sent.");
+  return true;
+}
+$("fbSend").onclick=fbSend;
 function isLaunched(){
   if(!LAUNCH_DATE) return false;
   return Date.now() >= new Date(LAUNCH_DATE+"T00:00:00").getTime();
