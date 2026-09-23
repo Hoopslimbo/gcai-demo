@@ -4,7 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Genie - Demo</title>
-<!-- GCAI DEMO v24 — 2026-09-23: ding always sounds (suspended-AudioContext queue
+<!-- GCAI DEMO v27 — 2026-09-23: lookups understand "what's"/"who's"; Wikipedia
+     full-text search finds the article from your raw phrasing ("the pokemon
+     gengar" -> Gengar) with the Wikipedia-style popup + image; brain answers
+     as backup instead of "couldn't find anything".
+     v26: popup X always clickable (header pinned, only the body scrolls); subtitles disappear when the AI is done talking; popups are
+     draggable by the header; while a window is up and the AI talks, subtitles
+     bundle up small under the orb (moved left) so they never cover the window.
+     v25: voice card titles "Female"/"Male" with "Average ..." descriptions;
+     clock popup — bigger plain face, no alarm bells/legs, digital on top.
+     v24: ding always sounds (suspended-AudioContext queue
      flush); popup layout — orb to left-quadrant middle, subtitles wide at the
      bottom, popup spans screen-middle to right-middle; recipe detection
      understands slang ("2x choc cookie", "dub choc cake") with search fallback
@@ -17,7 +26,7 @@
      now work in the demo (one request, looked up online via TheMealDB —
      food/desserts only, with photo, ingredients, and instructions; lists stay
      Genie-only). The clock popup is free: live digital readout on top, analog
-     alarm-clock face below. First run shows a WELCOME! card listing what to
+     clock face below. First run shows a WELCOME! card listing what to
      ask (X to close, once ever). Hover tooltips under every icon button
      (beneath the button, except Send which sits at the very bottom so its
      tip goes above); the settings modal (gear) is now "Settings" and lets
@@ -217,7 +226,7 @@
              max-height:66vh; }
   /* Liquid Glass popup: frosted translucency, bright glass edge, soft sheen */
   #popup { position:fixed; right:18px; top:50%; transform:translateY(-50%); width:350px; max-width:calc(100vw - 36px);
-           max-height:72vh; overflow-y:auto; z-index:80; border-radius:24px;
+           max-height:72vh; overflow:hidden; display:flex; flex-direction:column; z-index:80; border-radius:24px;
            background:
              linear-gradient(160deg, rgba(255,255,255,.16) 0%, rgba(255,255,255,.03) 28%, rgba(255,255,255,0) 55%),
              rgba(16,20,29,.58);
@@ -230,7 +239,21 @@
            padding:18px 20px 22px; animation:popIn .32s ease; text-align:center; }
   #popup.hidden { display:none; }
   @keyframes popIn { from { opacity:0; transform:translateY(-50%) translateX(24px); } to { opacity:1; transform:translateY(-50%); } }
-  .popup-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+  .popup-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;
+                cursor:grab; touch-action:none; user-select:none; -webkit-user-select:none; }
+  /* the X stays pinned: only the body scrolls, never the header */
+  #popupBody { overflow-y:auto; min-height:0; }
+  body.popDragging, body.popDragging .popup-head { cursor:grabbing; }
+  body.popDragging { user-select:none; -webkit-user-select:none; }
+  /* popup open + AI talking: subtitles bundle up small under the orb (which is
+     moved to the left) so they never cover the window */
+  @media (min-width:721px){
+    body.hasPopup.aiTalking #subtitle { left:18vw; right:auto; transform:translateX(-50%);
+      top:calc(50% + 108px); bottom:auto; width:max-content; max-width:30vw; margin:0;
+      font-size:14.5px; line-height:1.5; padding:10px 16px; min-height:0;
+      background:rgba(13,17,25,.55); border-radius:14px; border:1px solid rgba(255,255,255,.12);
+      -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px); }
+  }
   #popupTitle { font-size:15px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:#8ab4ff; }
   #popupClose { width:34px; height:34px; border-radius:50%; border:2px solid #2a3140; background:#141a26; color:#c7d0e0;
                 cursor:pointer; font-size:14px; line-height:1; transition:all .2s ease; position:relative; }
@@ -249,7 +272,7 @@
   .rcp-img { width:100%; max-height:180px; object-fit:cover; border-radius:14px; margin-bottom:10px; }
   .rcp-inst { text-align:left; font-size:14px; line-height:1.7; color:#dfe5ef; white-space:pre-wrap; }
   .clock-digital { font-size:42px; font-weight:700; font-variant-numeric:tabular-nums; letter-spacing:2px; margin:2px 0 12px; }
-  .alarm { width:150px; height:155px; }
+  .clockface { width:230px; height:230px; }
   /* ---------- welcome ---------- */
   .welcome-card { position:relative; text-align:left; }
   .welcome-card h2 { text-align:center; font-size:30px; letter-spacing:3px; margin-bottom:4px; font-weight:800; }
@@ -374,8 +397,8 @@
       <h2>Pick a voice</h2>
       <p class="hint">Tap a voice to hear it.</p>
       <div class="cards" id="voiceCards">
-        <div class="card-opt sel" data-voice="female"><div class="t">Average female voice</div><div class="d">Warm, natural feminine voice</div></div>
-        <div class="card-opt" data-voice="male"><div class="t">Average male voice</div><div class="d">Natural masculine voice</div></div>
+        <div class="card-opt sel" data-voice="female"><div class="t">Female</div><div class="d">Average female voice</div></div>
+        <div class="card-opt" data-voice="male"><div class="t">Male</div><div class="d">Average male voice</div></div>
       </div>
       <div style="margin:26px 0 12px;font-size:19px;font-weight:600">Wake ding</div>
       <p class="hint">The sound it makes when it hears its wake word. Tap to hear each one.</p>
@@ -1191,8 +1214,39 @@ function closePopup(){
   if(popupClockTimer){ clearInterval(popupClockTimer); popupClockTimer=null; }
   hide("popup");
   document.body.classList.remove("hasPopup");
+  // a dragged window reopens in its default spot next time
+  var p=$("popup");
+  p.style.left=""; p.style.top=""; p.style.right=""; p.style.transform="";
 }
 $("popupClose").onclick=function(){ closePopup(); };
+
+/* draggable popup: grab the header to move the window anywhere.
+   The X is excluded so its click still closes. */
+var popDrag=null;
+function popDragMove(ev){
+  if(!popDrag) return;
+  var p=$("popup");
+  p.style.left=(ev.clientX-popDrag.dx)+"px";
+  p.style.top=(ev.clientY-popDrag.dy)+"px";
+  if(ev.preventDefault) ev.preventDefault();
+}
+function popDragEnd(){ popDrag=null; document.body.classList.remove("popDragging"); }
+(function(){
+  var head=document.querySelector(".popup-head");
+  if(!head||!head.addEventListener) return;
+  head.addEventListener("pointerdown",function(ev){
+    if(ev.target&&ev.target.closest&&ev.target.closest("#popupClose")) return;
+    var p=$("popup"), r=p.getBoundingClientRect();
+    p.style.left=r.left+"px"; p.style.top=r.top+"px";
+    p.style.right="auto"; p.style.transform="none";
+    popDrag={dx:ev.clientX-r.left, dy:ev.clientY-r.top};
+    document.body.classList.add("popDragging");
+    if(ev.preventDefault) ev.preventDefault();
+  });
+  document.addEventListener("pointermove",popDragMove);
+  document.addEventListener("pointerup",popDragEnd);
+  document.addEventListener("pointercancel",popDragEnd);
+})();
 
 /* ================= CHAT ================= */
 var S = { name:"Genie", wake:"hey", voice:"female", pers:"balanced", wallpaper:"blue", orb:"pink", aura:"blue", voiceMuted:false };
@@ -1308,7 +1362,7 @@ function localAnswer(q){
 }
 function lookupQuery(q){
   var s=String(q||"");
-  var m=s.match(/^(?:who is|who was|who were|what is|what was|what were|what are|look up|search for|tell me about)\s+(.+?)[?.!]*$/i);
+  var m=s.match(/^(?:who is|who was|who were|who's|whos|what is|what was|what were|what are|what's|whats|look up|search for|tell me about)\s+(.+?)[?.!]*$/i);
   if(m){
     var topic=m[1].trim();
     if(!topic) return null;
@@ -1339,12 +1393,12 @@ function doLookup(lq){
         return j;
       });
   }
-  function wikiSearch(title){ // best-match title, then its summary
-    return withTimeout(fetch("https://en.wikipedia.org/w/api.php?action=opensearch&search="+
-      encodeURIComponent(title)+"&limit=1&format=json&origin=*").then(function(r){
+  function wikiSearch(title){ // Wikipedia full-text search: best-match title, then its summary
+    return withTimeout(fetch("https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch="+
+      encodeURIComponent(title)+"&srlimit=1&format=json&origin=*").then(function(r){
         if(!r.ok) throw 0; return r.json();
       }),15000).then(function(j){
-        var t=(j[1]||[])[0]; if(!t) throw 0; return wikiSummary(t);
+        var t=(((j||{}).query||{}).search||[])[0]; if(!t||!t.title) throw 0; return wikiSummary(t.title);
       });
   }
   function dictLookup(word){
@@ -1386,7 +1440,14 @@ function doLookup(lq){
     chain=wikiSummary(query).catch(function(){ return wikiSearch(query); })
       .catch(function(){ if(singleWord) return dictLookup(query); throw 0; });
   chain.then(function(p){ if(p && p.dict) showDict(p); else showWiki(p); })
-       .catch(function(){ noGood("I couldn't find anything on \""+query+"\". Try asking me another way."); });
+       .catch(function(){
+         // Wikipedia came up empty: one shot from the brain as backup
+         // (quota was already counted for this lookup above).
+         $("subtitle").textContent="Thinking…";
+         askBrain(histPrompt(), sysPrompt()).then(function(r){
+           thinking=false; say(r.text, r.brain); checkLock();
+         }).catch(function(){ noGood("I couldn't find anything on \""+query+"\". Try asking me another way."); });
+       });
 }
 /* ============ LIVE WEATHER (demo feature, one request) ============
    Free no-key APIs: Open-Meteo for the forecast, device geolocation first
@@ -1482,6 +1543,8 @@ function sendMessage(text){
   stopNetAudio();
   try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){}
   $("orb").classList.remove("talking");
+  document.body.classList.remove("aiTalking");
+  $("subtitle").textContent=""; // interrupted: AI stopped talking, clear subtitles
   var sq=parseSay(text); if(sq){ doSay(sq); return; } // "say _____": repeats exactly, free
   thinking=true;
   closePopup(); // a new question clears any stale popup
@@ -1623,7 +1686,7 @@ function doRecipe(q){
 }
 /* ================= CLOCK POPUP =================
    "What time is it" opens a mini popup: live digital clock on top, and below
-   it an analog alarm clock drawn like the alarm-clock emoji. Free — no quota. */
+   it a big plain analog clock face (no alarm bells or legs). Free — no quota. */
 function isTimeQ(q){
   return /\bwhat time is it\b|\bwhat's the time\b|\bcurrent time\b|\btell me the time\b|\btime is it\b/i.test(String(q||""));
 }
@@ -1631,22 +1694,17 @@ function clockHtml(){
   var ticks="";
   for(var i=0;i<12;i++){
     var a=i*30*Math.PI/180;
-    var x1=60+30*Math.sin(a), y1=60-30*Math.cos(a), x2=60+34*Math.sin(a), y2=60-34*Math.cos(a);
+    var x1=60+44*Math.sin(a), y1=60-44*Math.cos(a), x2=60+48*Math.sin(a), y2=60-48*Math.cos(a);
     ticks+='<line x1="'+x1.toFixed(1)+'" y1="'+y1.toFixed(1)+'" x2="'+x2.toFixed(1)+'" y2="'+y2.toFixed(1)+
       '" stroke="#8ab4ff" stroke-width="'+(i%3===0?"3":"1.5")+'"/>';
   }
   return '<div class="clock-digital" id="clockDig">--:--</div>'+
-    '<svg class="alarm" viewBox="0 0 120 124">'+
-    '<path d="M34 26 L20 10" stroke="#8ab4ff" stroke-width="8" stroke-linecap="round"/>'+
-    '<path d="M86 26 L100 10" stroke="#8ab4ff" stroke-width="8" stroke-linecap="round"/>'+
-    '<circle cx="18" cy="8" r="5" fill="#8ab4ff"/><circle cx="102" cy="8" r="5" fill="#8ab4ff"/>'+
-    '<path d="M40 100 L32 116" stroke="#8ab4ff" stroke-width="7" stroke-linecap="round"/>'+
-    '<path d="M80 100 L88 116" stroke="#8ab4ff" stroke-width="7" stroke-linecap="round"/>'+
-    '<circle cx="60" cy="60" r="38" fill="#141a26" stroke="#8ab4ff" stroke-width="5"/>'+
+    '<svg class="clockface" viewBox="0 0 120 120">'+
+    '<circle cx="60" cy="60" r="52" fill="#141a26" stroke="#8ab4ff" stroke-width="5"/>'+
     ticks+
-    '<line id="clkH" x1="60" y1="60" x2="60" y2="42" stroke="#ffffff" stroke-width="5" stroke-linecap="round"/>'+
-    '<line id="clkM" x1="60" y1="60" x2="60" y2="34" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round"/>'+
-    '<line id="clkS" x1="60" y1="66" x2="60" y2="32" stroke="#ff5b5b" stroke-width="2" stroke-linecap="round"/>'+
+    '<line id="clkH" x1="60" y1="60" x2="60" y2="34" stroke="#ffffff" stroke-width="5" stroke-linecap="round"/>'+
+    '<line id="clkM" x1="60" y1="60" x2="60" y2="22" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round"/>'+
+    '<line id="clkS" x1="60" y1="66" x2="60" y2="20" stroke="#ff5b5b" stroke-width="2" stroke-linecap="round"/>'+
     '<circle cx="60" cy="60" r="4.5" fill="#8ab4ff"/>'+
     '</svg>';
 }
@@ -1676,11 +1734,14 @@ function say(text, brain, prosody){
     function(){ // audio started: glow + words together
       speaking=true;
       orb.classList.add("talking");
+      document.body.classList.add("aiTalking");
       $("subtitle").textContent=text;
       maybeWaitlistPop(); // the reply is out — now the 15-left nudge may show
     },
     function(){
       speaking=false; orb.classList.remove("talking");
+      document.body.classList.remove("aiTalking");
+      $("subtitle").textContent=""; // AI done talking: subtitles disappear
       // Question follow-up: if the reply is a question, ding and open a 3s
       // no-wake-word window so the user can answer directly — then reset.
       if(/\?\s*$/.test(stripEmojis(text))){
