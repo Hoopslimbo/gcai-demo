@@ -4,7 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Ondra - Demo</title>
-<!-- GCAI DEMO v30 — 2026-09-23: product renamed Genie -> Ondra (ON-drah)
+<!-- GCAI DEMO v31 — 2026-09-23: demo-only feedback button (top-left, speech-
+     bubble icon): opens a form to recommend a feature or report a bug, sent
+     via the user's email app to thegcaiteam@gmail.com with the demo version
+     attached. Quad-checked.
+     v30: product renamed Genie -> Ondra (ON-drah)
      everywhere user-visible: tab title, welcome card, HUD, default AI name
      and wake hint, upsell lines, export help; spoken as "ondrah" so the
      voice says ON-drah.
@@ -233,6 +237,19 @@
   #setName { width:100%; padding:12px 16px; font-size:17px; border-radius:14px; border:1px solid #2a3140;
              background:#0d1119; color:#fff; text-align:center; outline:none; }
   #setName:focus { border-color:#8ab4ff; }
+  /* ---------- feedback (demo-only): top-left button + form ---------- */
+  #fbBtn { position:fixed; left:12px; top:12px; z-index:60; width:52px; height:52px; border-radius:50%;
+           border:2px solid #2a3140; background:#141a26; cursor:pointer; font-size:24px;
+           display:flex; align-items:center; justify-content:center; transition:border-color .2s ease; }
+  #fbBtn:hover { border-color:#8ab4ff; }
+  .fb-types { display:flex; gap:10px; justify-content:center; margin-bottom:4px; }
+  .fb-type { flex:1; padding:12px 8px; font-size:15px; font-weight:600; border-radius:14px; cursor:pointer;
+             border:2px solid #2a3140; background:#0d1119; color:#9aa3b2; transition:all .2s ease; }
+  .fb-type.sel { border-color:#8ab4ff; color:#fff; background:#1a2740; box-shadow:0 0 16px #8ab4ff33; }
+  #fbText { width:100%; min-height:110px; padding:12px 14px; font-size:15.5px; border-radius:14px;
+            border:1px solid #2a3140; background:#0d1119; color:#fff; outline:none; resize:vertical;
+            font-family:inherit; }
+  #fbText:focus { border-color:#8ab4ff; }
   /* ---------- side popup (weather / recipes / clock) ---------- */
   #orbWrap { transition:transform .55s cubic-bezier(.2,.8,.3,1); }
   /* popup open: orb moves to the middle of the left quadrant (still vertically
@@ -315,6 +332,8 @@
   .welcome-list li:last-child { margin-bottom:0; }
   .welcome-list b { display:block; font-size:15px; margin-bottom:2px; }
   .welcome-list span { color:#9aa3b2; font-size:13.5px; }
+  .welcome-tip { text-align:center; color:#9aa3b2; font-size:13.5px; margin-top:10px; }
+  .welcome-tip b { color:#e6ebf2; }
   @media (max-width:720px) {
     body.hasPopup #orbWrap { transform:none; }
     body.hasPopup #subtitle { position:static; transform:none; width:auto; max-width:640px;
@@ -493,6 +512,8 @@
     <div class="popup-head"><span id="popupTitle"></span><button id="popupClose" data-tip="Close" aria-label="close">✕</button></div>
     <div id="popupBody"></div>
   </div>
+  <!-- 4b. FEEDBACK (demo-only) -->
+  <button id="fbBtn" data-tip="Feedback" aria-label="send feedback">&#128172;</button>
   <div id="edgeBtns">
     <button id="micBtn" data-tip="Microphone" aria-label="mute or unmute microphone"><span class="dot"></span></button>
     <button id="voiceMuteBtn" data-tip="AI voice" aria-label="mute or unmute AI voice"><svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M4 9v6h4l5 5V4L8 9H4z" fill="#8ab4ff"/><path d="M16.5 8.5a5 5 0 010 7" stroke="#8ab4ff" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M19 6a8.5 8.5 0 010 12" stroke="#8ab4ff" stroke-width="2" fill="none" stroke-linecap="round" opacity=".6"/></svg></button>
@@ -520,6 +541,28 @@
   </div>
 </div>
 
+<!-- 5c. FEEDBACK (demo-only) -->
+<div id="fbModal" class="modal hidden">
+  <div class="modal-card">
+    <h2>Feedback</h2>
+    <p class="sub">Recommend a feature or report a bug — it opens your email app with the message addressed to the GCAI team.</p>
+    <div class="trow"><div class="tlabel">Type</div>
+      <div class="fb-types">
+        <button class="fb-type sel" id="fbTypeFeature">&#128161; Feature idea</button>
+        <button class="fb-type" id="fbTypeBug">&#128027; Bug report</button>
+      </div>
+    </div>
+    <div class="trow"><div class="tlabel">Details</div>
+      <textarea id="fbText" maxlength="2000" placeholder="Tell us what's on your mind..."></textarea>
+    </div>
+    <div class="modal-nav">
+      <button class="btn ghost" id="fbCancel">Cancel</button>
+      <button class="btn" id="fbSend">Send feedback</button>
+    </div>
+    <div id="fbErr" class="err"></div>
+  </div>
+</div>
+
 <!-- 5b. WELCOME (first run) -->
 <div id="welcomeModal" class="modal hidden">
   <div class="modal-card welcome-card">
@@ -535,6 +578,7 @@
       <li><b>🗣️ Repeat after me</b><span>"Say hello in a cheery mood"</span></li>
       <li><b>🎨 Make me yours</b><span>Tap the gear to change my name and look</span></li>
     </ul>
+    <p class="welcome-tip">🔖 <b>Tip:</b> bookmark this page so you never lose me — press <b>Ctrl+D</b> (or <b>⌘+D</b> on Mac).</p>
   </div>
 </div>
 
@@ -1975,6 +2019,35 @@ var BUY_URL = "";       // full-version buy link — set at launch
 var WL_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSf6hsM_9YDXu7IPsoLi-YPE7yy3jppThHwGjI3p-pG9Cz-fRw/formResponse";
 var WL_ENTRY_NAME = "entry.2018513984"; // "Full name" question
 var WL_ENTRY_EMAIL = "entry.1933757178";
+/* ---- feedback (demo-only): feature idea / bug report via the user's email app ---- */
+var FEEDBACK_EMAIL = "thegcaiteam@gmail.com";
+var FB_VERSION = "v31";
+function fbSetType(which){
+  $("fbTypeFeature").classList.toggle("sel", which==="feature");
+  $("fbTypeBug").classList.toggle("sel", which==="bug");
+}
+function fbType(){
+  return $("fbTypeBug").classList.contains("sel") ? "Bug report" : "Feature idea";
+}
+function fbMailto(){
+  var msg=$("fbText").value.trim();
+  if(!msg){ $("fbErr").textContent="Tell us a little more first."; $("fbText").focus(); return null; }
+  $("fbErr").textContent="";
+  var subject="[Ondra Demo] "+fbType();
+  var body=msg+"\n\n— sent from Ondra Demo "+FB_VERSION;
+  return "mailto:"+FEEDBACK_EMAIL+"?subject="+encodeURIComponent(subject)+"&body="+encodeURIComponent(body);
+}
+$("fbTypeFeature").onclick=function(){ fbSetType("feature"); };
+$("fbTypeBug").onclick=function(){ fbSetType("bug"); };
+$("fbBtn").onclick=function(){ show("fbModal"); };
+$("fbCancel").onclick=function(){ hide("fbModal"); };
+$("fbSend").onclick=function(){
+  var url=fbMailto();
+  if(!url) return;
+  hide("fbModal"); $("fbText").value="";
+  window.location.href=url;
+  flashHint("Opening your email app…");
+};
 function isLaunched(){
   if(!LAUNCH_DATE) return false;
   return Date.now() >= new Date(LAUNCH_DATE+"T00:00:00").getTime();
