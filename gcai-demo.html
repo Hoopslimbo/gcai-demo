@@ -4,8 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Ondra - Demo</title>
-<!-- GCAI DEMO v32 — 2026-09-23: feedback now submits straight to the
-     "Ondra Demo Feedback" Google Form (Type + Details entry IDs) via
+<!-- GCAI DEMO v33 — 2026-09-23: say the AI's name while it's talking and it
+     stops (voice interrupt); "Kai from Ninjago"-style lookups now pull the
+     character's own section from "List of ... characters" pages instead of
+     showing the show-level summary.
+     v32: feedback submits to the "Ondra Demo Feedback" Google Form via
      fetch no-cors — no email app, no notifications to Liam.
      v31: demo-only feedback button (top-left, speech-bubble icon) + welcome
      bookmark tip.
@@ -1104,8 +1107,12 @@ function wakeMatch(transcript, name){
 }
 // Pure decision for voice input — tested below.
 function voiceAction(fin, name, followUp, isSpeaking){
-  if(isSpeaking) return {type:"ignore"}; // never hear its own voice
   var w=wakeMatch(fin, name);
+  if(isSpeaking){
+    // saying the AI's name while it talks stops it cold
+    if(w.hit) return {type:"stop"};
+    return {type:"ignore"}; // never hear its own voice
+  }
   if(w.hit && w.rest) return {type:"send", query:w.rest};
   if(w.hit) return {type:"ack"}; // bare name: "Yes?" + follow-up window
   if(followUp && fin.trim()) return {type:"send", query:fin.trim()};
@@ -1133,6 +1140,7 @@ function startListening(quiet){
       var a=voiceAction(fin, S.name, Date.now()<followUpUntil, speaking);
       if(a.type==="send") sendMessage(a.query);
       else if(a.type==="ack") ackWake();
+      else if(a.type==="stop") stopTalking(); // name said mid-speech: stop talking
     };
     recog.onend=function(){ if(micOn){ try{recog.start();}catch(e){} } };
     recog.onerror=function(ev){
@@ -1164,7 +1172,7 @@ function ackWake(){
   // final-transcript latency never fit in the old 2s window, so answers
   // spoken after the ding were silently ignored.
   // Mic stays on; anything heard while the AI itself is speaking is ignored
-  // so it can't trigger on its own voice.
+  // so it can't trigger on its own voice — except its name, which stops it.
   pulseOrb();
   var orb=$("orb");
   orb.classList.add("talking");
@@ -1506,8 +1514,37 @@ function doLookup(lq){
         for(var i=0;i<hits.length;i++){
           if(hits[i].title&&ql.indexOf(hits[i].title.toLowerCase())>-1){ best=hits[i]; break; }
         }
+        // "Kai from Ninjago": the top hit is a "List of ... characters" page
+        // whose summary describes the show, not the character. Pull the
+        // character's own section from that page instead.
+        var cm=/^(.+?)\s+(?:from|of|in)\s+(.+)$/.exec(String(title));
+        if(cm && /^list of /i.test(best.title||"")){
+          return wikiCharSection(best.title, cm[1]).catch(function(){ return wikiSummary(best.title); });
+        }
         return wikiSummary(best.title);
       });
+  }
+  function wikiCharSection(page, name){
+    // character lookup inside a "List of ... characters" article: find the
+    // section headed by the character's name and return its text as the extract
+    function wget(u){
+      return withTimeout(fetch(u).then(function(r){ if(!r.ok) throw 0; return r.json(); }),15000);
+    }
+    var base="https://en.wikipedia.org/w/api.php?action=parse&page="+encodeURIComponent(page)+"&format=json&origin=*";
+    return wget(base+"&prop=sections").then(function(j){
+      var secs=(((j||{}).parse||{}).sections||[]), nl=String(name).toLowerCase().trim(), sec=null;
+      for(var i=0;i<secs.length;i++){
+        if(String(secs[i].line||"").toLowerCase().trim()===nl){ sec=secs[i]; break; }
+      }
+      if(!sec) throw 0;
+      return wget(base+"&prop=text&section="+encodeURIComponent(sec.index));
+    }).then(function(j){
+      var html=((((j||{}).parse||{}).text||{})["*"])||"";
+      var txt=String(html).replace(/<[^>]+>/g," ").replace(/\s+/g," ")
+        .replace(/\[\s*\d+\s*\]/g,"").trim().replace(/^.*?\bedit\b\s*/i,"").trim();
+      if(!txt || txt.length<40) throw 0;
+      return {title:String(name).trim(), extract:txt, sectionOf:page};
+    });
   }
   function dictLookup(word){
     return withTimeout(fetch("https://api.dictionaryapi.dev/api/v2/entries/en/"+encodeURIComponent(word))
@@ -1834,6 +1871,15 @@ function doClock(){
   say("It's "+new Date().toLocaleTimeString([], {hour:"numeric",minute:"2-digit"})+".","demo");
   checkLock();
 }
+function stopTalking(){
+  // user said the AI's name while it was speaking: cut the audio and reset
+  // the talking state so it goes quiet immediately
+  try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){}
+  speaking=false;
+  var orb=$("orb"); if(orb) orb.classList.remove("talking");
+  try{ document.body.classList.remove("aiTalking"); }catch(e){}
+  var sub=$("subtitle"); if(sub) sub.textContent="";
+}
 function say(text, brain, prosody){
   pushHist("ai",text);
   var orb=$("orb");
@@ -2024,7 +2070,7 @@ var WL_ENTRY_EMAIL = "entry.1933757178";
 var FB_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSfqeX7pQ0oH1olTzzJL6xRwGJLsvhoIg6KmnVwUQUjwT689jQ/formResponse";
 var FB_ENTRY_TYPE = "entry.1685562403"; // "Type" question
 var FB_ENTRY_DETAILS = "entry.634914939"; // "Details" question
-var FB_VERSION = "v32";
+var FB_VERSION = "v33";
 function fbSetType(which){
   $("fbTypeFeature").classList.toggle("sel", which==="feature");
   $("fbTypeBug").classList.toggle("sel", which==="bug");
