@@ -4,7 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>GCAI — Free Demo</title>
-<!-- GCAI DEMO v14 — 2026-09-22: naming finalized — the demo is "Genie Demo",
+<!-- GCAI DEMO v15 — 2026-09-23: Ace-matched male voice (UK English Male + en-GB,
+     British-male device fallback), Luna-style wake ding (lazy AudioContext),
+     question follow-up (ding + 3s no-wake-word window after a "?" reply),
+     speech cleanup (never speaks emojis/_/-// junk aloud).
+     v14 items kept: naming finalized — the demo is "Genie Demo",
      the paid AI is just "Genie" (gated-feature messages and brain prompt updated;
      was "Full Genie").
      v13 items kept: live weather is a demo feature (Open-Meteo, device location
@@ -599,10 +603,12 @@ function goStep(n){
    gets cut off. Falls back to device speech only if the network voice fails. */
 var NET_TL = "en-US";
 /* Distinct natural internet voices per choice — different voice, pitch and
-   rate for male vs female so the two options never sound the same. */
+   rate for male vs female so the two options never sound the same.
+   Male matches Ace exactly: UK English Male with en-GB. (The old en-US
+   pairing made the endpoint fall back to the default female voice.) */
 var VOICES = {
-  female:{ name:"US English Female", pitch:"0.5", rate:"0.55", devPitch:1.25 },
-  male:{ name:"UK English Male", pitch:"0.5", rate:"0.5", devPitch:0.75 }
+  female:{ name:"US English Female", tl:"en-US", pitch:"0.5", rate:"0.55", devPitch:1.25 },
+  male:{ name:"UK English Male", tl:"en-GB", pitch:"0.5", rate:"0.5", devPitch:0.75 }
 };
 function vcfg(v){ return VOICES[v]||VOICES[S.voice]||VOICES.female; }
 function voiceName(v){ return vcfg(v).name; }
@@ -623,34 +629,27 @@ document.addEventListener("click", unlockAudio);
    Customizable chime when the AI hears its wake word (like LUNA's chime). */
 var actx=null;
 function ensureCtx(){
-  // The wake ding must survive a fresh page load with no taps yet: browsers
-  // start an AudioContext suspended until a user gesture, so we prime it on
-  // the first real gesture and resume-then-play when scheduling.
+  // Luna-style: lazily create one shared AudioContext on first ding. The
+  // first ding can only happen after the user has tapped the mic (user
+  // activation), so the browser creates it in "running" state — no
+  // resume-then-play dance needed, and no silent failures.
   try{
-    actx=actx||new (window.AudioContext||window.webkitAudioContext)();
-    if(actx.state==="suspended") actx.resume();
+    if(!actx) actx=new (window.AudioContext||window.webkitAudioContext)();
+    if(actx.state==="suspended"){ try{ actx.resume(); }catch(e){} }
   }catch(e){}
   return actx;
 }
-document.addEventListener("pointerdown", ensureCtx);
-document.addEventListener("keydown", ensureCtx);
 function beep(freq,dur,delay,type,vol){
-  function run(ctx){
-    try{
-      var t=ctx.currentTime+(delay||0);
-      var o=ctx.createOscillator(), g=ctx.createGain();
-      o.type=type||"sine"; o.frequency.value=freq;
-      g.gain.setValueAtTime(0.0001,t);
-      g.gain.exponentialRampToValueAtTime(vol||0.25,t+0.02);
-      g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
-      o.connect(g); g.connect(actx.destination);
-      o.start(t); o.stop(t+dur+0.05);
-    }catch(e){}
-  }
   try{
     var ctx=ensureCtx(); if(!ctx) return;
-    if(ctx.state==="suspended"){ ctx.resume().then(function(){ run(ctx); },function(){ run(ctx); }); }
-    else run(ctx);
+    var t=ctx.currentTime+(delay||0);
+    var o=ctx.createOscillator(), g=ctx.createGain();
+    o.type=type||"sine"; o.frequency.value=freq;
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(vol||0.25,t+0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    o.connect(g); g.connect(ctx.destination);
+    o.start(t); o.stop(t+dur+0.05);
   }catch(e){}
 }
 var DINGS={
@@ -664,8 +663,21 @@ function playDing(name){ var d=DINGS[name]||DINGS.classic; try{ d.play(); }catch
 /* Emojis show in text but are never read aloud (same rule as LUNA). */
 var EMOJI_RE=/[\u{1F000}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE00}-\u{FE0F}\u{200D}\u{2190}-\u{21FF}\u{2300}-\u{23FF}]/gu;
 function stripEmojis(t){ return String(t||"").replace(EMOJI_RE,"").replace(/[ \t]{2,}/g," ").trim(); }
+/* What the voice actually says: emojis are already stripped above, and this
+   also silences characters TTS likes to read aloud ("underscore", "slash",
+   "asterisk", ...). Displayed text keeps everything — only speech is cleaned. */
+function cleanForSpeech(t){
+  return stripEmojis(t)
+    .replace(/[_]/g," ")                  // never say "underscore"
+    .replace(/[\/\\]/g," ")               // never say "slash"/"backslash"
+    .replace(/[*#~`^|<>=\[\]{}]/g,"")     // markdown-ish junk: drop silently
+    .replace(/(^|\s)-(?=\s|$)/gm,"$1")    // lone dashes (bullets) -> drop
+    .replace(/-{2,}/g,", ")               // -- / --- -> spoken pause
+    .replace(/\s+([,.!?;:])/g,"$1")       // no space before punctuation
+    .replace(/[ \t]{2,}/g," ").trim();
+}
 function speak(text, onStart, onDone, voice){
-  text=stripEmojis(text); // what it says out loud — never emojis
+  text=cleanForSpeech(text); // what it says out loud — never emojis/_/-// junk
   var my = ++speakToken;
   var started=false;
   function fireStart(){ if(started||my!==speakToken) return; started=true; if(onStart){ try{onStart();}catch(e){} } }
@@ -697,7 +709,7 @@ function netSpeak(text, my, onStart, onDone, voice){
     a.onplaying=function(){ onStart(); };
     a.onerror=fallBack;
     a.src="https://code.responsivevoice.org/getvoice.php?t="+encodeURIComponent(chunks[ci])+
-          "&tl="+NET_TL+"&sv=g1&vn="+encodeURIComponent(cfg.name)+
+          "&tl="+(cfg.tl||NET_TL)+"&sv=g1&vn="+encodeURIComponent(cfg.name)+
           "&pitch="+cfg.pitch+"&rate="+cfg.rate+"&vol=1";
     try{ a.load(); }catch(e){}
     try{ var p=a.play(); if(p&&p.catch) p.catch(fallBack); }catch(e){ fallBack(); return; }
@@ -709,10 +721,39 @@ function netSpeak(text, my, onStart, onDone, voice){
   playChunk();
   setTimeout(function(){ if(!finished&&my===speakToken) doneAll(); },180000);
 }
+function pickVoice(){
+  // Ace-style male voice picker for the offline device fallback: prefer a
+  // British male system voice so "Male" never falls back to a female default.
+  try{
+    var all=speechSynthesis.getVoices()||[];
+    var vs=all.filter(function(v){ return /^en/i.test(v.lang||""); });
+    if(!vs.length) return null;
+    var maleNames=["daniel","brian","george","arthur","oliver","harry"];
+    var gb=vs.filter(function(v){ return /^en-GB/i.test(v.lang||""); });
+    var i, n, hit;
+    for(i=0;i<maleNames.length;i++){
+      n=maleNames[i];
+      hit=gb.filter(function(v){ return (v.name||"").toLowerCase().indexOf(n)>=0; });
+      if(hit.length) return hit[0];
+    }
+    hit=gb.filter(function(v){ return /male/i.test(v.name||""); });
+    if(hit.length) return hit[0];
+    if(gb.length) return gb[0];
+    for(i=0;i<maleNames.length;i++){
+      n=maleNames[i];
+      hit=vs.filter(function(v){ return (v.name||"").toLowerCase().indexOf(n)>=0; });
+      if(hit.length) return hit[0];
+    }
+    hit=vs.filter(function(v){ return /male/i.test(v.name||""); });
+    if(hit.length) return hit[0];
+    return vs[0];
+  }catch(e){ return null; }
+}
 function deviceSpeak(text,onStart,onDone,voice){
   // last-resort fallback only; the product voice is the internet voice above
   try{
     var u=new SpeechSynthesisUtterance(text); u.rate=1; u.pitch=vcfg(voice).devPitch;
+    if(voice==="male"){ var pv=pickVoice(); if(pv) u.voice=pv; }
     u.onstart=onStart; u.onend=onDone; u.onerror=onDone;
     speechSynthesis.speak(u);
   }catch(e){ onStart(); onDone(); }
@@ -1125,7 +1166,17 @@ function say(text, brain){
       $("subtitle").textContent=text;
       maybeWaitlistPop(); // the reply is out — now the 15-left nudge may show
     },
-    function(){ speaking=false; orb.classList.remove("talking"); });
+    function(){
+      speaking=false; orb.classList.remove("talking");
+      // Question follow-up: if the reply is a question, ding and open a 3s
+      // no-wake-word window so the user can answer directly — then reset.
+      if(/\?\s*$/.test(stripEmojis(text))){
+        playDing(S.ding);
+        followUpUntil=Date.now()+3000;
+        flashHint("I'm listening — go ahead.");
+        setTimeout(function(){ if(Date.now()>=followUpUntil) followUpUntil=0; },3100);
+      }
+    });
 }
 function checkLock(){
   if(isLocked()){ setTimeout(showComplete, 2500); }
