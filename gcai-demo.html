@@ -4,7 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Ondra - Demo</title>
-<!-- GCAI DEMO v34 — 2026-09-23: no Wikipedia image -> Wikimedia Commons
+<!-- GCAI DEMO v34.1 — 2026-09-23: voice reliability (ding retries, fuzzy wake
+     word, stopTalking kills the internet voice, device-voice sentence
+     chunking), Kirby-style disambiguation fix, "do you know X" lookup,
+     waitlist now says Ondra; no Wikipedia image -> Wikimedia Commons
      (relevance-filtered) then the topic's Fandom wiki ("Kai from Ninjago"
      gets a real Kai image); v33: say the AI's name while it's talking and it
      stops (voice interrupt); "Kai from Ninjago"-style lookups now pull the
@@ -619,7 +622,7 @@
     <h2>Demo complete</h2>
     <p class="sub">You've used your 25 demo requests.</p>
     <div id="wlFinalWrap">
-      <p class="sub">Join the waitlist and you'll get the buy link the day before GCAI launches.</p>
+      <p class="sub">Join the waitlist and you'll get the buy link the day before Ondra launches.</p>
       <input id="wlName2" class="field" maxlength="40" placeholder="Full name" autocomplete="name">
       <input id="wlEmail2" class="field" type="email" placeholder="you@email.com" autocomplete="email">
       <button class="btn" id="wlJoin2">Join the waitlist</button>
@@ -648,7 +651,7 @@
     <button id="wlClose" aria-label="Close">&times;</button>
     <div class="brand">GCAI</div>
     <h2>Want the full version?</h2>
-    <p class="sub">15 requests left. Join the waitlist and you'll get the buy link the day before GCAI launches.</p>
+    <p class="sub">15 requests left. Join the waitlist and you'll get the buy link the day before Ondra launches.</p>
     <input id="wlName" class="field" maxlength="40" placeholder="Full name" autocomplete="name">
     <input id="wlEmail" class="field" type="email" placeholder="you@email.com" autocomplete="email">
     <button class="btn" id="wlJoin">Join the waitlist</button>
@@ -878,29 +881,17 @@ document.addEventListener("click", unlockAudio);
 
 /* ================= WAKE DING =================
    Customizable chime when the AI hears its wake word (like LUNA's chime). */
-var actx=null, dingQueue=[];
+var actx=null;
 function ensureCtx(){
   // One shared AudioContext, created lazily. Mobile browsers (notably iOS
   // Safari) suspend it whenever the OS takes the audio session — e.g. while
-  // the TTS mp3 is playing — so a ding fired at an unlucky moment used to
-  // schedule oscillators on a suspended context and never sound. Fix:
-  // resume() is now issued properly (its promise rejection is caught), and
-  // dings fired while suspended are queued and flush the moment the context
-  // runs again. Stale queued dings (>2.5s old) are dropped so a late flush
-  // never plays a confusing out-of-date ding.
+  // the TTS mp3 is playing — so beep() retries briefly instead of dropping
+  // the chime. After ~1.8s it gives up: a very late ding is worse than none.
   try{
     if(!actx){
       var AC=window.AudioContext||window.webkitAudioContext;
       if(!AC) return null;
       actx=new AC();
-      actx.onstatechange=function(){
-        if(actx.state==="running"&&dingQueue.length){
-          var now=Date.now(), q=dingQueue; dingQueue=[];
-          for(var i=0;i<q.length;i++){
-            if(now-q[i].at<2500){ try{ q[i].fn(); }catch(e){} }
-          }
-        }
-      };
     }
     if(actx.state==="suspended"){
       try{ var p=actx.resume(); if(p&&p.catch) p.catch(function(){}); }catch(e){}
@@ -922,14 +913,14 @@ function beep(freq,dur,delay,type,vol){
       o.start(t); o.stop(t+dur+0.05);
     }catch(e){}
   }
-  try{
-    if(ctx.state==="running") schedule();
-    else{
-      // suspended: queue it — onstatechange flushes when we run again
-      dingQueue.push({at:Date.now(),fn:schedule});
-      if(dingQueue.length>8) dingQueue.shift(); // cap: never hoard dings
-    }
-  }catch(e){}
+  var tries=0;
+  (function attempt(){
+    // Suspended (OS took the audio session, autoplay policy, ...): resume
+    // and retry a few times instead of silently losing the ding.
+    try{ if(ctx.state==="running"){ schedule(); return; } }catch(e){}
+    try{ var p=ctx.resume(); if(p&&p.catch) p.catch(function(){}); }catch(e){}
+    if(++tries<=6) setTimeout(attempt,300);
+  })();
 }
 var DINGS={
   classic:{t:"Classic", d:"Two-tone chime", play:function(){ beep(880,0.14,0); beep(1318,0.2,0.13); }},
@@ -1062,16 +1053,32 @@ function pickVoice(){
   }catch(e){ return null; }
 }
 function deviceSpeak(text,onStart,onDone,voice,prosody){
-  // last-resort fallback only; the product voice is the internet voice above
+  // last-resort fallback only; the product voice is the internet voice above.
+  // Chrome cuts a single long speechSynthesis utterance off mid-sentence, so
+  // a long fallback is spoken as a chain of short sentence utterances.
   try{
-    var u=new SpeechSynthesisUtterance(text); u.rate=1; u.pitch=vcfg(voice).devPitch;
-    if(prosody){
-      if(prosody.rate) u.rate=Math.min(2,Math.max(.5,prosody.rate));
-      if(prosody.pitch) u.pitch=Math.min(2,Math.max(0,vcfg(voice).devPitch*prosody.pitch));
+    var my=speakToken;
+    var parts=String(text).match(/[^.!?]+[.!?]+["'")\]]?|[^.!?]+$/g)||[String(text)];
+    var i=0, started=false;
+    function mk(u){
+      u.rate=1; u.pitch=vcfg(voice).devPitch;
+      if(prosody){
+        if(prosody.rate) u.rate=Math.min(2,Math.max(.5,prosody.rate));
+        if(prosody.pitch) u.pitch=Math.min(2,Math.max(0,vcfg(voice).devPitch*prosody.pitch));
+      }
+      if(voice==="male"){ var pv=pickVoice(); if(pv) u.voice=pv; }
+      return u;
     }
-    if(voice==="male"){ var pv=pickVoice(); if(pv) u.voice=pv; }
-    u.onstart=onStart; u.onend=onDone; u.onerror=onDone;
-    speechSynthesis.speak(u);
+    function next(){
+      if(my!==speakToken) return; // superseded: stay silent
+      if(i>=parts.length){ onDone(); return; }
+      var u=mk(new SpeechSynthesisUtterance(parts[i++].trim()));
+      u.onstart=function(){ if(!started){ started=true; onStart(); } };
+      u.onend=function(){ next(); };
+      u.onerror=function(){ next(); }; // skip the failed piece, keep talking
+      speechSynthesis.speak(u);
+    }
+    next();
   }catch(e){ onStart(); onDone(); }
 }
 
@@ -1095,6 +1102,19 @@ function pulseOrb(){
 }
 var SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
 var recog=null, micOn=false, speaking=false, followUpUntil=0;
+function editDist(a,b){
+  // tiny Levenshtein for the wake-word smear fallback below
+  a=String(a); b=String(b);
+  if(a===b) return 0;
+  var m=a.length, n=b.length;
+  if(!m) return n; if(!n) return m;
+  var d=[], i, j;
+  for(i=0;i<=m;i++) d[i]=[i];
+  for(j=0;j<=n;j++) d[0][j]=j;
+  for(i=1;i<=m;i++) for(j=1;j<=n;j++)
+    d[i][j]=Math.min(d[i-1][j]+1, d[i][j-1]+1, d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));
+  return d[m][n];
+}
 function wakeMatch(transcript, name){
   // robust: lowercase, strip punctuation, "hey <name>" or bare "<name>",
   // any words around it, any accent (we only see the transcribed text)
@@ -1103,9 +1123,22 @@ function wakeMatch(transcript, name){
   if(!nm) return {hit:false, rest:transcript};
   var re=new RegExp("(^|\\s)(hey\\s+)?"+escRe(nm)+"(\\s|$|[,.!?])");
   var m=t.match(re);
-  if(!m) return {hit:false, rest:transcript};
-  var rest=t.replace(re," ").replace(/\s+/g," ").trim();
-  return {hit:true, rest:rest};
+  if(m){
+    var rest=t.replace(re," ").replace(/\s+/g," ").trim();
+    return {hit:true, rest:rest};
+  }
+  // Chrome often smears the wake word into one blob ("heylars") or
+  // mishears a letter ("heylarz"): accept a single word starting with
+  // "hey" whose remainder is within one edit of the name. Kept tight
+  // (hey-prefix required) so ordinary words never false-trigger.
+  var words=transcript.toLowerCase().replace(/[^a-z0-9\s]/g," ").split(/\s+/);
+  var nmc=nm.replace(/\s+/g,"");
+  for(var i=0;i<words.length;i++){
+    var w=words[i];
+    if(w&&w.length>3&&w.indexOf("hey")===0&&editDist(w.slice(3),nmc)<=1)
+      return {hit:true, rest:words.slice(i+1).join(" ").trim()};
+  }
+  return {hit:false, rest:transcript};
 }
 // Pure decision for voice input — tested below.
 function voiceAction(fin, name, followUp, isSpeaking){
@@ -1473,7 +1506,7 @@ function localAnswer(q){
 }
 function lookupQuery(q){
   var s=String(q||"");
-  var m=s.match(/^(?:who is|who was|who were|who's|whos|what is|what was|what were|what are|what's|whats|look up|search for|tell me about)\s+(.+?)[?.!]*$/i);
+  var m=s.match(/^(?:who is|who was|who were|who's|whos|what is|what was|what were|what are|what's|whats|look up|search for|tell me about|tell me who|do you know|have you heard of)\s+(.+?)[?.!]*$/i);
   if(m){
     var topic=m[1].trim();
     if(!topic) return null;
@@ -1500,11 +1533,12 @@ function doLookup(lq){
       {headers:{"Accept":"application/json"}}).then(function(r){
         if(!r.ok) throw 0; return r.json();
       }),15000).then(function(j){
-        if(!j.extract || j.type==="disambiguation") throw 0;
+        if(!j.extract) throw 0;
+        if(j.type==="disambiguation") throw "disambig"; // caller retries search skipping it
         return j;
       });
   }
-  function wikiSearch(title){ // Wikipedia full-text search: prefer the article named in
+  function wikiSearch(title, skipExact){ // Wikipedia full-text search: prefer the article named in
     // the question (e.g. "the character Bugs Bunny" -> "Bugs Bunny", not "Lola Bunny"),
     // then fall back to the top hit
     return withTimeout(fetch("https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch="+
@@ -1512,9 +1546,31 @@ function doLookup(lq){
         if(!r.ok) throw 0; return r.json();
       }),15000).then(function(j){
         var hits=(((j||{}).query||{}).search||[]); if(!hits.length) throw 0;
-        var ql=String(title).toLowerCase(), best=hits[0];
-        for(var i=0;i<hits.length;i++){
-          if(hits[i].title&&ql.indexOf(hits[i].title.toLowerCase())>-1){ best=hits[i]; break; }
+        var ql=String(title).toLowerCase(), best, i, h;
+        if(skipExact){
+          // The exact-title article was a disambiguation page ("Kirby"): never
+          // pick it again or we loop straight back into failure. Prefer a
+          // specific "Query (…)" variant — "(character)" first for who-questions.
+          var cands=[];
+          for(i=0;i<hits.length;i++){
+            h=String(hits[i].title||"").toLowerCase();
+            if(h&&h!==ql) cands.push(hits[i]);
+          }
+          best=null;
+          for(i=0;i<cands.length;i++){
+            h=String(cands[i].title||"").toLowerCase();
+            if(h.indexOf(ql+" (")===0){
+              if(!best) best=cands[i];
+              if(h.indexOf("(character)")>-1){ best=cands[i]; break; }
+            }
+          }
+          if(!best) best=cands[0]||null;
+          if(!best) throw 0;
+        }else{
+          best=hits[0];
+          for(i=0;i<hits.length;i++){
+            if(hits[i].title&&ql.indexOf(hits[i].title.toLowerCase())>-1){ best=hits[i]; break; }
+          }
         }
         // "Kai from Ninjago": the top hit is a "List of ... characters" page
         // whose summary describes the show, not the character. Pull the
@@ -1636,9 +1692,9 @@ function doLookup(lq){
   var singleWord=/^[A-Za-z-]+$/.test(query);
   var chain;
   if(lq.dict && singleWord)
-    chain=dictLookup(query).catch(function(){ return wikiSummary(query).catch(function(){ return wikiSearch(query); }); });
+    chain=dictLookup(query).catch(function(){ return wikiSummary(query).catch(function(e){ return wikiSearch(query, e==="disambig"); }); });
   else
-    chain=wikiSummary(query).catch(function(){ return wikiSearch(query); })
+    chain=wikiSummary(query).catch(function(e){ return wikiSearch(query, e==="disambig"); })
       .catch(function(){ if(singleWord) return dictLookup(query); throw 0; });
   chain.then(function(p){ if(p && p.dict) showDict(p); else showWiki(p); })
        .catch(function(){
@@ -1930,6 +1986,9 @@ function doClock(){
 function stopTalking(){
   // user said the AI's name while it was speaking: cut the audio and reset
   // the talking state so it goes quiet immediately
+  stopNetAudio(); // the internet voice is the normal voice — without this the
+  // reply kept playing orphaned after the UI reset, and the user's next
+  // message then cut it dead mid-sentence
   try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){}
   speaking=false;
   var orb=$("orb"); if(orb) orb.classList.remove("talking");
