@@ -4,7 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Ondra - Demo</title>
-<!-- GCAI DEMO v33 — 2026-09-23: say the AI's name while it's talking and it
+<!-- GCAI DEMO v34 — 2026-09-23: no Wikipedia image -> Wikimedia Commons
+     (relevance-filtered) then the topic's Fandom wiki ("Kai from Ninjago"
+     gets a real Kai image); v33: say the AI's name while it's talking and it
      stops (voice interrupt); "Kai from Ninjago"-style lookups now pull the
      character's own section from "List of ... characters" pages instead of
      showing the show-level summary.
@@ -1557,16 +1559,70 @@ function doLookup(lq){
         return {dict:true, word:e.word||word, pos:pos, def:def};
       });
   }
+  function commonsImage(q){
+    // Wikimedia Commons fallback: only accept a result whose file title
+    // contains every significant word of the query, so we never attach an
+    // unrelated image (e.g. a random person also named Kai)
+    var words=String(q||"").toLowerCase().split(/[^a-z0-9]+/).filter(function(w){ return w.length>2; });
+    return withTimeout(fetch("https://commons.wikimedia.org/w/api.php?action=query&format=json&generator=search&gsrsearch="+
+      encodeURIComponent(q)+"&gsrlimit=8&gsrnamespace=6&prop=imageinfo&iiprop=url&iiurlwidth=500&origin=*").then(function(r){
+        if(!r.ok) throw 0; return r.json();
+      }),15000).then(function(j){
+        var pages=(((j||{}).query||{}).pages)||{}, keys=Object.keys(pages);
+        for(var i=0;i<keys.length;i++){
+          var p=pages[keys[i]], title=String(p.title||"").toLowerCase(), ok=true;
+          for(var k=0;k<words.length;k++){ if(title.indexOf(words[k])<0){ ok=false; break; } }
+          if(!ok) continue;
+          var ii=(p.imageinfo||[])[0]||{};
+          if(ii.thumburl||ii.url) return ii.thumburl||ii.url;
+        }
+        throw 0;
+      });
+  }
+  function fandomImage(name, topic){
+    // "<name> from <topic>": try the topic's Fandom wiki, exact article
+    // match only — e.g. "Kai from Ninjago" -> ninjago.fandom.com "Kai"
+    var wiki=String(topic||"").toLowerCase().replace(/[^a-z0-9]/g,"");
+    if(!wiki || !name) return Promise.reject(new Error("no fandom"));
+    var base="https://"+wiki+".fandom.com/api.php?format=json&origin=*";
+    function fget(u){
+      return withTimeout(fetch(u).then(function(r){ if(!r.ok) throw 0; return r.json(); }),15000);
+    }
+    return fget(base+"&action=query&list=search&srsearch="+encodeURIComponent(name)+"&srlimit=5").then(function(j){
+      var hits=(((j||{}).query||{}).search)||[], nl=String(name).toLowerCase().trim(), hit=null;
+      for(var i=0;i<hits.length;i++){
+        if(String(hits[i].title||"").toLowerCase().trim()===nl){ hit=hits[i]; break; }
+      }
+      if(!hit) throw 0;
+      return fget(base+"&action=query&titles="+encodeURIComponent(hit.title)+"&prop=pageimages&pithumbsize=400");
+    }).then(function(j){
+      var pages=(((j||{}).query||{}).pages)||{};
+      for(var k in pages){
+        var th=pages[k].thumbnail;
+        if(th&&th.source) return th.source;
+      }
+      throw 0;
+    });
+  }
   function showWiki(p){
     thinking=false;
     var img=p.thumbnail&&p.thumbnail.source; // first image from the article
     var sentences=(p.extract.match(/[^.!?]+[.!?]+/g)||[p.extract]).slice(0,3).join(" ").trim();
-    openPopup(p.title||query,
-      (img?'<img class="wiki-img" src="'+escHtml(img)+'" alt="">':'')+
-      '<div class="wx-big" style="font-size:25px;line-height:1.3;">'+escHtml(p.title||query)+'</div>'+
-      '<div class="rcp-inst">'+escHtml(p.extract)+'</div>', true);
-    say("Here's what I found on "+(p.title||query)+": "+sentences,"demo");
-    checkLock();
+    var done=function(url){
+      openPopup(p.title||query,
+        (url?'<img class="wiki-img" src="'+escHtml(url)+'" alt="">':'')+
+        '<div class="wx-big" style="font-size:25px;line-height:1.3;">'+escHtml(p.title||query)+'</div>'+
+        '<div class="rcp-inst">'+escHtml(p.extract)+'</div>', true);
+      say("Here's what I found on "+(p.title||query)+": "+sentences,"demo");
+      checkLock();
+    };
+    if(img){ done(img); return; }
+    // no Wikipedia image: Commons (relevance-filtered), then the topic's
+    // Fandom wiki for "X from Y" queries, then honestly show none
+    var cm=/^(.+?)\s+(?:from|of|in)\s+(.+)$/.exec(query);
+    var fb=commonsImage(p.title||query);
+    if(cm) fb=fb.catch(function(){ return fandomImage(cm[1], cm[2]); });
+    fb.then(done).catch(function(){ done(null); });
   }
   function showDict(d){
     thinking=false;
@@ -2070,7 +2126,7 @@ var WL_ENTRY_EMAIL = "entry.1933757178";
 var FB_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSfqeX7pQ0oH1olTzzJL6xRwGJLsvhoIg6KmnVwUQUjwT689jQ/formResponse";
 var FB_ENTRY_TYPE = "entry.1685562403"; // "Type" question
 var FB_ENTRY_DETAILS = "entry.634914939"; // "Details" question
-var FB_VERSION = "v33";
+var FB_VERSION = "v34";
 function fbSetType(which){
   $("fbTypeFeature").classList.toggle("sel", which==="feature");
   $("fbTypeBug").classList.toggle("sel", which==="bug");
