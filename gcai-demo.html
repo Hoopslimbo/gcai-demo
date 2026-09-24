@@ -4,7 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Ondra - Demo</title>
-<!-- GCAI DEMO v34.3 — 2026-09-23: close button on the computers-only gate goes back to the website
+<!-- GCAI DEMO v34.4 — 2026-09-24: male voice is now US English Male (en-US),
+     deeper pitch (0.25, device 0.5) — dad said the British one sounded
+     feminine; recipes pick the plainest match (fewest extra words beyond
+     what was asked) instead of the service's first result, and the spoken
+     line says so when it's a variation ("the plainest chocolate cake
+     recipe I could find");
+     v34.3 — 2026-09-23: close button on the computers-only gate goes back to the website
      signup form immediately (no need to burn 10 requests to preview it);
      waitlist now says Ondra; no Wikipedia image -> Wikimedia Commons
      (relevance-filtered) then the topic's Fandom wiki ("Kai from Ninjago"
@@ -866,12 +872,12 @@ function goStep(n){
 var NET_TL = "en-US";
 /* Distinct natural internet voices per choice — different voice, pitch and
    rate for male vs female so the two options never sound the same.
-   Male: UK English Male with en-GB, pitched down deeper than Ace.
+   Male: US English Male with en-US, pitched down deep.
    (The old en-US pairing made the endpoint fall back to the default
-   female voice.) */
+   female voice; if that ever recurs, this is the spot to check.) */
 var VOICES = {
   female:{ name:"US English Female", tl:"en-US", pitch:"0.5", rate:"0.55", devPitch:1.25 },
-  male:{ name:"UK English Male", tl:"en-GB", pitch:"0.35", rate:"0.5", devPitch:0.6 }
+  male:{ name:"US English Male", tl:"en-US", pitch:"0.25", rate:"0.5", devPitch:0.5 }
 };
 function vcfg(v){ return VOICES[v]||VOICES[S.voice]||VOICES.female; }
 function voiceName(v){ return vcfg(v).name; }
@@ -1034,23 +1040,23 @@ function netSpeak(text, my, onStart, onDone, voice, prosody){
   setTimeout(function(){ if(!finished&&my===speakToken) doneAll(); },180000);
 }
 function pickVoice(){
-  // Ace-style male voice picker for the offline device fallback: prefer a
-  // British male system voice so "Male" never falls back to a female default.
+  // Male voice picker for the offline device fallback: prefer a US male
+  // system voice so "Male" never falls back to a female default.
   try{
     var all=speechSynthesis.getVoices()||[];
     var vs=all.filter(function(v){ return /^en/i.test(v.lang||""); });
     if(!vs.length) return null;
-    var maleNames=["daniel","brian","george","arthur","oliver","harry"];
-    var gb=vs.filter(function(v){ return /^en-GB/i.test(v.lang||""); });
+    var maleNames=["david","mark","alex","guy","james","john","mike","tom"];
+    var us=vs.filter(function(v){ return /^en-US/i.test(v.lang||""); });
     var i, n, hit;
     for(i=0;i<maleNames.length;i++){
       n=maleNames[i];
-      hit=gb.filter(function(v){ return (v.name||"").toLowerCase().indexOf(n)>=0; });
+      hit=us.filter(function(v){ return (v.name||"").toLowerCase().indexOf(n)>=0; });
       if(hit.length) return hit[0];
     }
-    hit=gb.filter(function(v){ return /male/i.test(v.name||""); });
+    hit=us.filter(function(v){ return /male/i.test(v.name||""); });
     if(hit.length) return hit[0];
-    if(gb.length) return gb[0];
+    if(us.length) return us[0];
     for(i=0;i<maleNames.length;i++){
       n=maleNames[i];
       hit=vs.filter(function(v){ return (v.name||"").toLowerCase().indexOf(n)>=0; });
@@ -1900,8 +1906,24 @@ function extractDish(q){
   s=s.replace(/\b(for|a|an|the|some|please|my|your|of|me|us)\b/g," ");
   return s.replace(/[?.!]+$/,"").replace(/\s+/g," ").trim();
 }
-function doRecipe(q){
-  if(!boostActive()) setUsed(used()+1); updateCounter();
+/* "Plainest match": every word you asked for must appear in the meal name,
+   and the winner is the name with the fewest extra words — so "chocolate
+   cake" picks "Vegan Chocolate Cake" over "Pistachio Kunafa Chocolate Cake
+   and Cupcakes" instead of blindly taking the service's first result.
+   Returns 999 when the meal doesn't contain the requested dish at all. */
+function dishWords(s){
+  return String(s||"").toLowerCase().replace(/[^a-z ]/g," ").split(" ").filter(function(w){
+    return w && !FOOD_FILLER_RE.test(w);
+  }).map(function(w){ return (w.length>3 && /s$/.test(w)) ? w.slice(0,-1) : w; });
+}
+function mealExtras(mealName, dish){
+  var dw=dishWords(dish), mw=dishWords(mealName), i, extra=0;
+  if(!dw.length||!mw.length) return 999;
+  for(i=0;i<dw.length;i++){ if(mw.indexOf(dw[i])<0) return 999; }
+  for(i=0;i<mw.length;i++){ if(dw.indexOf(mw[i])<0) extra++; }
+  return extra;
+}
+function doRecipe(q){  if(!boostActive()) setUsed(used()+1); updateCounter();
   $("subtitle").textContent="Finding a recipe…";
   var dish=extractDish(q);
   function noGood(msg){
@@ -1918,7 +1940,7 @@ function doRecipe(q){
     var c=words.slice(i).join(" ");
     if(c&&!seen[c]){ seen[c]=1; cands.push(c); }
   }
-  function recipePopup(m){
+  function recipePopup(m, variationNote){
     var ings=[];
     for(var i=1;i<=20;i++){
       var ing=String(m["strIngredient"+i]||"").trim(), msr=String(m["strMeasure"+i]||"").trim();
@@ -1930,7 +1952,7 @@ function doRecipe(q){
       ((m.strCategory||m.strArea)?'<div class="wx-cond">'+escHtml([m.strCategory,m.strArea].filter(Boolean).join(" · "))+'</div>':'')+
       (ings.length?'<div class="rcp-sec">Ingredients</div><ul class="rcp-ing">'+ings.map(function(x){ return "<li>"+escHtml(x)+"</li>"; }).join("")+'</ul>':'')+
       (m.strInstructions?'<div class="rcp-sec">Instructions</div><div class="rcp-inst">'+escHtml(m.strInstructions)+'</div>':''));
-    say("Here's "+m.strMeal+" — I put the full recipe in the popup.","demo");
+    say(variationNote || ("Here's "+m.strMeal+" — I put the full recipe in the popup."),"demo");
     checkLock();
   }
   function tryCand(idx){
@@ -1941,10 +1963,18 @@ function doRecipe(q){
     withTimeout(fetch("https://www.themealdb.com/api/json/v1/1/search.php?s="+encodeURIComponent(cands[idx]))
       .then(function(r){ if(!r.ok) throw 0; return r.json(); }),15000)
       .then(function(j){
-        var m=(j.meals||[])[0];
-        if(!m){ tryCand(idx+1); return; } // no hit: shorten and retry
+        // plainest match: every dish word must appear in the meal name;
+        // the fewest extra words wins, never blindly the first result
+        var meals=j.meals||[], m=null, best=999, k, e;
+        for(k=0;k<meals.length;k++){
+          e=mealExtras(meals[k].strMeal, cands[idx]);
+          if(e<best){ best=e; m=meals[k]; }
+        }
+        if(!m){ tryCand(idx+1); return; } // nothing resembling the dish: shorten and retry
         thinking=false;
-        recipePopup(m);
+        recipePopup(m, best>0 ?
+          ("Here's "+m.strMeal+" — the plainest \""+dish+"\" recipe I could find. I put the full recipe in the popup.") :
+          null);
       })
       .catch(function(){ noGood("I couldn't reach the recipe service right now. Give it a few seconds and try again."); });
   }
@@ -2206,7 +2236,7 @@ var WL_ENTRY_EMAIL = "entry.1933757178";
 var FB_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSevTwaq80XdLfW3ohROeCUKSy-Q_0eRrPqmFnwBQ9tkRGqqVg/formResponse";
 var FB_ENTRY_TYPE = "entry.1779123500"; // "Type" question
 var FB_ENTRY_DETAILS = "entry.985579618"; // "Details" question
-var FB_VERSION = "v34.3";
+var FB_VERSION = "v34.4";
 function fbSetType(which){
   $("fbTypeFeature").classList.toggle("sel", which==="feature");
   $("fbTypeBug").classList.toggle("sel", which==="bug");
