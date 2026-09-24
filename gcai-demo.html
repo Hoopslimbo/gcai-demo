@@ -5,11 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Ondra - Demo</title>
 <!-- GCAI DEMO v34.4 — 2026-09-24: male voice is now US English Male (en-US),
-     deeper pitch (0.25, device 0.5) — dad said the British one sounded
-     feminine; recipes pick the plainest match (fewest extra words beyond
-     what was asked) instead of the service's first result, and the spoken
-     line says so when it's a variation ("the plainest chocolate cake
-     recipe I could find");
+     deeper pitch (0.15, device 0.5) — dad said the British one sounded
+     feminine; recipes left the demo — they're a full-version thing now,
+     so recipe asks get the Ondra upsell instead of a lookup;
      v34.3 — 2026-09-23: close button on the computers-only gate goes back to the website
      signup form immediately (no need to burn 10 requests to preview it);
      waitlist now says Ondra; no Wikipedia image -> Wikimedia Commons
@@ -267,7 +265,7 @@
             border:1px solid #2a3140; background:#0d1119; color:#fff; outline:none; resize:vertical;
             font-family:inherit; }
   #fbText:focus { border-color:#8ab4ff; }
-  /* ---------- side popup (weather / recipes / clock) ---------- */
+  /* ---------- side popup (weather / clock) ---------- */
   #orbWrap { transition:transform .55s cubic-bezier(.2,.8,.3,1); }
   /* popup open: orb moves to the middle of the left quadrant (still vertically
      centered), subtitles widen and drop to the bottom, and the popup takes the
@@ -589,7 +587,6 @@
     <p class="sub">Here's what I can do — try asking me:</p>
     <ul class="welcome-list">
       <li><b>🌤️ Live weather</b><span>"What's the weather in Austin?"</span></li>
-      <li><b>🍳 Recipes</b><span>"Give me a recipe for pancakes"</span></li>
       <li><b>⏰ The time</b><span>"What time is it?"</span></li>
       <li><b>📅 The date</b><span>"What day is it today?"</span></li>
       <li><b>🔍 Quick facts</b><span>"Who is...?" or "What is...?"</span></li>
@@ -872,12 +869,12 @@ function goStep(n){
 var NET_TL = "en-US";
 /* Distinct natural internet voices per choice — different voice, pitch and
    rate for male vs female so the two options never sound the same.
-   Male: US English Male with en-US, pitched down deep.
+   Male: US English Male with en-US, pitched down deep (0.15 ≈ 98 Hz).
    (The old en-US pairing made the endpoint fall back to the default
    female voice; if that ever recurs, this is the spot to check.) */
 var VOICES = {
   female:{ name:"US English Female", tl:"en-US", pitch:"0.5", rate:"0.55", devPitch:1.25 },
-  male:{ name:"US English Male", tl:"en-US", pitch:"0.25", rate:"0.5", devPitch:0.5 }
+  male:{ name:"US English Male", tl:"en-US", pitch:"0.15", rate:"0.5", devPitch:0.5 }
 };
 function vcfg(v){ return VOICES[v]||VOICES[S.voice]||VOICES.female; }
 function voiceName(v){ return vcfg(v).name; }
@@ -1352,7 +1349,7 @@ function askBrain(prompt,sys){
 }
 
 /* ================= SIDE POPUP =================
-   Weather, recipes, and the clock open a popup; while one is open the orb
+   Weather and the clock open a popup; while one is open the orb
    moves to the middle of the left quadrant, subtitles widen and drop to the
    bottom, and the popup takes the middle-to-right band (body.hasPopup).
    Only these three ever pop — everything else stays in the subtitle. */
@@ -1435,7 +1432,7 @@ function sysPrompt(){
     "(yes / no / why / tell me more / what about...) — never treat a follow-up as unrelated. "+
     "The demo is chat-only: if asked for lists, images, notes, news, "+
     "opening apps or sites, 3D models, emails, or other full-product features, say those need Ondra. "+
-    "You can also answer time/date questions from the device clock, give live weather, share recipes, and look up general knowledge — those are demo features too.";
+    "You can also answer time/date questions from the device clock, give live weather, and look up general knowledge — those are demo features too.";
   if(S.pers==="cheerful")
     return base+" Personality: cheerful, upbeat, warm, genuinely enthusiastic. Light humor welcome.";
   if(S.pers==="moody")
@@ -1449,8 +1446,9 @@ function lockedReply(q){
   if(/\b(note|notes|notepad)\b/.test(t) || /remember this|take a note|save (this|that|it)/.test(t))
     return "Notes aren't in the demo — Ondra keeps notes for you.";
   /* Full-version features: the demo is chat-only. Anything the real Ondra
-     can do gets an upsell instead of an answer — and never eats quota.
-     (Recipes left this list: they work in the demo now, with a popup.) */
+     can do gets an upsell instead of an answer — and never eats quota. */
+  if(isRecipeQ(t))
+    return "Recipes are a full-version thing \u2014 Ondra has every recipe you could want.";
   if(/\b(give|make|show|send) me\b[\s\S]{0,15}\ba list\b|\blist of\b|\blist\b[\s\S]{0,10}\b(for|things|items)\b/.test(t))
     return "Lists are a full-version thing — Ondra builds proper lists for you.";
   if(/\b(write|draft|compose)\b[\s\S]{0,15}\b(essay|story|poem|email|letter|report|speech|paragraph)\b|\bsend\b[\s\S]{0,15}\b(an? )?(email|text message)\b/.test(t))
@@ -1820,7 +1818,6 @@ function sendMessage(text){
   var sq=parseSay(text); if(sq){ doSay(sq); return; } // "say _____": repeats exactly, free
   thinking=true;
   closePopup(); // a new question clears any stale popup
-  if(isRecipeQ(text)){ doRecipe(text); return; } // recipes work in the demo: one request
   var canned=lockedReply(text);
   if(canned){ thinking=false; say(canned,"demo"); checkLock(); return; }
   if(isTimeQ(text)){ doClock(); return; } // mini clock popup, free
@@ -1841,13 +1838,11 @@ function sendMessage(text){
     say("Every brain is having a moment right now. Give it a few seconds and try again.","offline");
   });
 }
-/* ================= RECIPES (demo feature, with popup) =================
-   Recipes work in the demo — one request, looked up online (TheMealDB, no key).
-   Detection understands slang/shorthand ("2x choc cookie", "dub choc cake",
-   "make me tacos", "i want pancakes", "grilled chicken") and the search falls
-   back through progressively shorter dish names ("double chocolate cookie" ->
-   "chocolate cookie" -> "cookie") so any wording finds something edible.
-   Only food/desserts: a total miss gets an honest reply, never a made-up recipe. */
+/* ================= RECIPE DETECTION (full-version upsell) =================
+   Recipes are a full-version thing now — the demo just detects the ask
+   (slang/shorthand included: "2x choc cookie", "dub choc cake", "make me
+   tacos", "i want pancakes", "grilled chicken") so lockedReply can answer
+   with the Ondra upsell instead of serving a recipe. */
 var FOOD_WORDS="cookie|cookies|brownie|brownies|cake|cakes|cupcake|cupcakes|muffin|muffins|pancake|pancakes|waffle|waffles|donut|donuts|doughnut|doughnuts|pie|pies|pizza|pizzas|pasta|spaghetti|lasagna|macaroni|ramen|pho|taco|tacos|burrito|burritos|quesadilla|enchilada|nachos|burger|burgers|sandwich|sandwiches|fries|nuggets|chicken|turkey|beef|pork|steak|steaks|bacon|sausage|meatball|meatballs|meatloaf|fish|salmon|tuna|shrimp|prawns|curry|curries|soup|soups|stew|chili|salad|salads|salsa|guacamole|hummus|falafel|sushi|dumpling|dumplings|wonton|spring rolls|fried rice|pad thai|lo mein|biryani|tikka|masala|kebab|kebabs|gyro|gyros|paella|risotto|jambalaya|gumbo|omelet|omelette|frittata|crepe|crepes|french toast|oatmeal|granola|smoothie|smoothies|milkshake|ice cream|sorbet|pudding|custard|fudge|truffle|truffles|cheesecake|tiramisu|chocolate|candy|popcorn|pretzel|pretzels|bagel|bagels|croissant|bread|biscuit|biscuits|empanada|samosa|tamale|chimichanga|fajita|casserole|alfredo|carbonara|pesto|teriyaki|kung pao|orange chicken|sesame chicken|general tso|fried chicken|roast chicken|pork chops|french fries|onion rings|chicken wings|dinner|lunch|breakfast|brunch|dessert|desserts|snack|snacks";
 var FOOD_RE=new RegExp("\\b(?:"+FOOD_WORDS+")\\b");
 var FOOD_MODS="grilled|fried|baked|roasted|crispy|spicy|sweet|sour|creamy|cheesy|glazed|smoked|steamed|stuffed|loaded|homemade|easy|quick|classic|double|triple";
@@ -1892,93 +1887,6 @@ function isRecipeQ(q){
     return w==="_food_"||FOOD_RE.test(w)||FOOD_MOD_RE.test(w)||FOOD_FILLER_RE.test(w);
   })) return true;
   return false;
-}
-function extractDish(q){
-  var s=expandFoodSlang(q);
-  s=s.replace(/\b(give|show|find|get|send)\s+me\b/g," ");
-  s=s.replace(/\b(i\s+want|i\s+need|i\s+crave|can\s+i\s+have|could\s+i\s+have|do\s+you\s+have|gimme|lemme\s+(get|have))\b/g," ");
-  s=s.replace(/\b(can\s+you\s+)?(make|cook|bake|prepare|whip\s*up)\s+(me|us|you)\b/g," ");
-  s=s.replace(/\bcan\s+you\s+(make|cook|bake|prepare)\b/g," ");
-  s=s.replace(/\bhow\s+(do|does|can)\s+i\s+(make|cook|bake|prepare)\b/g," ");
-  s=s.replace(/\bhow\s+to\s+(make|cook|bake|prepare)\b/g," ");
-  s=s.replace(/\bingredients\s+for\b/g," ");
-  s=s.replace(/\brecipes?\b/g," ");
-  s=s.replace(/\b(for|a|an|the|some|please|my|your|of|me|us)\b/g," ");
-  return s.replace(/[?.!]+$/,"").replace(/\s+/g," ").trim();
-}
-/* "Plainest match": every word you asked for must appear in the meal name,
-   and the winner is the name with the fewest extra words — so "chocolate
-   cake" picks "Vegan Chocolate Cake" over "Pistachio Kunafa Chocolate Cake
-   and Cupcakes" instead of blindly taking the service's first result.
-   Returns 999 when the meal doesn't contain the requested dish at all. */
-function dishWords(s){
-  return String(s||"").toLowerCase().replace(/[^a-z ]/g," ").split(" ").filter(function(w){
-    return w && !FOOD_FILLER_RE.test(w);
-  }).map(function(w){ return (w.length>3 && /s$/.test(w)) ? w.slice(0,-1) : w; });
-}
-function mealExtras(mealName, dish){
-  var dw=dishWords(dish), mw=dishWords(mealName), i, extra=0;
-  if(!dw.length||!mw.length) return 999;
-  for(i=0;i<dw.length;i++){ if(mw.indexOf(dw[i])<0) return 999; }
-  for(i=0;i<mw.length;i++){ if(dw.indexOf(mw[i])<0) extra++; }
-  return extra;
-}
-function doRecipe(q){  if(!boostActive()) setUsed(used()+1); updateCounter();
-  $("subtitle").textContent="Finding a recipe…";
-  var dish=extractDish(q);
-  function noGood(msg){
-    thinking=false;
-    if(!boostActive()) setUsed(used()-1); updateCounter(); // no usable result: no quota spent
-    say(msg,"demo"); checkLock();
-  }
-  if(!dish){ noGood("What dish do you want a recipe for?"); return; }
-  // try the full dish name, then progressively shorter ("double chocolate
-  // cookie" -> "chocolate cookie" -> "cookie") so any wording lands on food
-  var words=dish.split(" ").filter(Boolean), cands=[dish], seen={};
-  seen[dish]=1;
-  for(var i=1;i<words.length;i++){
-    var c=words.slice(i).join(" ");
-    if(c&&!seen[c]){ seen[c]=1; cands.push(c); }
-  }
-  function recipePopup(m, variationNote){
-    var ings=[];
-    for(var i=1;i<=20;i++){
-      var ing=String(m["strIngredient"+i]||"").trim(), msr=String(m["strMeasure"+i]||"").trim();
-      if(ing) ings.push((msr?msr+" ":"")+ing);
-    }
-    openPopup("Recipe",
-      (m.strMealThumb?'<img class="rcp-img" src="'+escHtml(m.strMealThumb)+'" alt="">':'')+
-      '<div class="wx-big" style="font-size:25px;line-height:1.3;">'+escHtml(m.strMeal)+'</div>'+
-      ((m.strCategory||m.strArea)?'<div class="wx-cond">'+escHtml([m.strCategory,m.strArea].filter(Boolean).join(" · "))+'</div>':'')+
-      (ings.length?'<div class="rcp-sec">Ingredients</div><ul class="rcp-ing">'+ings.map(function(x){ return "<li>"+escHtml(x)+"</li>"; }).join("")+'</ul>':'')+
-      (m.strInstructions?'<div class="rcp-sec">Instructions</div><div class="rcp-inst">'+escHtml(m.strInstructions)+'</div>':''));
-    say(variationNote || ("Here's "+m.strMeal+" — I put the full recipe in the popup."),"demo");
-    checkLock();
-  }
-  function tryCand(idx){
-    if(idx>=cands.length){
-      noGood("I couldn't find a recipe for \""+dish+"\" — I only do food and desserts. Try another dish.");
-      return;
-    }
-    withTimeout(fetch("https://www.themealdb.com/api/json/v1/1/search.php?s="+encodeURIComponent(cands[idx]))
-      .then(function(r){ if(!r.ok) throw 0; return r.json(); }),15000)
-      .then(function(j){
-        // plainest match: every dish word must appear in the meal name;
-        // the fewest extra words wins, never blindly the first result
-        var meals=j.meals||[], m=null, best=999, k, e;
-        for(k=0;k<meals.length;k++){
-          e=mealExtras(meals[k].strMeal, cands[idx]);
-          if(e<best){ best=e; m=meals[k]; }
-        }
-        if(!m){ tryCand(idx+1); return; } // nothing resembling the dish: shorten and retry
-        thinking=false;
-        recipePopup(m, best>0 ?
-          ("Here's "+m.strMeal+" — the plainest \""+dish+"\" recipe I could find. I put the full recipe in the popup.") :
-          null);
-      })
-      .catch(function(){ noGood("I couldn't reach the recipe service right now. Give it a few seconds and try again."); });
-  }
-  tryCand(0);
 }
 /* ================= CLOCK POPUP =================
    "What time is it" opens a mini popup: live digital clock on top, and below
