@@ -4,9 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Ondra - Demo</title>
-<!-- GCAI DEMO v34.1 — 2026-09-23: voice reliability (ding retries, fuzzy wake
-     word, stopTalking kills the internet voice, device-voice sentence
-     chunking), Kirby-style disambiguation fix, "do you know X" lookup,
+<!-- GCAI DEMO v34.2 — 2026-09-23: ?waitlist=1 deep link opens the waitlist
+     signup form immediately (no need to burn 10 requests to preview it);
      waitlist now says Ondra; no Wikipedia image -> Wikimedia Commons
      (relevance-filtered) then the topic's Fandom wiki ("Kai from Ninjago"
      gets a real Kai image); v33: say the AI's name while it's talking and it
@@ -2038,6 +2037,18 @@ function maybeWaitlistPop(){
   lsSet("gcai_wl_seen","1");
   show("waitlistPop");
 }
+function maybeWaitlistDeepLink(search){
+  // ?waitlist=1 : open the waitlist signup form immediately, so the form can
+  // be previewed/shared without spending 10 demo requests first.
+  try{
+    if(isLaunched() || wlJoined()) return false;
+    if(/(?:^|[?&])waitlist=1(?:&|$)/.test(search||"")){
+      setTimeout(function(){ show("waitlistPop"); },400);
+      return true;
+    }
+  }catch(e){}
+  return false;
+}
 
 /* ================= ADD-ONS (BOOSTS) =================
    Demo ships with Limit Break only; the full product lists every add-on here. */
@@ -2332,6 +2343,7 @@ $("q").addEventListener("keydown",function(e){ if(e.key==="Enter"){ var v=$("q")
 // boot: straight into the demo — no email gate at the start
 if(isLocked()){ showComplete(); }
 else { var _boot=settings(); if(_boot){ startHud(_boot, false); } else { startWizard(); } }
+maybeWaitlistDeepLink(location.search);
 
 })();
 </script>
