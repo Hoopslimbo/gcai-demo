@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Ondra - Demo</title>
-<!-- GCAI DEMO v34.2 — 2026-09-23: ?waitlist=1 deep link opens the waitlist
+<!-- GCAI DEMO v34.3 — 2026-09-23: close button on the computers-only gate goes back to the website
      signup form immediately (no need to burn 10 requests to preview it);
      waitlist now says Ondra; no Wikipedia image -> Wikimedia Commons
      (relevance-filtered) then the topic's Fandom wiki ("Kai from Ninjago"
@@ -117,7 +117,10 @@
   #wlClose:hover { color:#fff; }
 
   /* ---------- device gate ---------- */
-  #gate-device .card { text-align:center; max-width:440px; }
+  #gate-device .card { text-align:center; max-width:440px; position:relative; }
+  #gateClose { position:absolute; top:6px; right:10px; background:none; border:none;
+    color:#9aa3b2; font-size:32px; line-height:1; cursor:pointer; padding:8px; }
+  #gateClose:hover { color:#ffffff; }
   #gate-device h1 { font-size:28px; letter-spacing:2px; margin-bottom:14px; color:#8ab4ff; }
   #gate-device p { color:#9aa3b2; line-height:1.6; font-size:16px; }
   #gate-device .logo { font-size:15px; letter-spacing:6px; color:#5b6472; margin-bottom:26px; }
@@ -425,6 +428,7 @@
 <!-- 1. DEVICE GATE -->
 <div id="gate-device" class="screen">
   <div class="card">
+    <button id="gateClose" aria-label="Back to the website">&times;</button>
     <div class="logo">GCAI</div>
     <h1>Computers only</h1>
     <p>This software is only accessible through computers. Please try again on a computer.</p>
@@ -696,6 +700,12 @@ var isMobile = /iphone|ipad|ipod|android|mobile|tablet/i.test(navigator.userAgen
 if(isMobile){
   // phones/tablets get the computers-only screen; nothing else runs
   show("gate-device");
+  // let them close the blocker and go back to the website they came from
+  $("gateClose").onclick=function(){
+    if(document.referrer){ location.href=document.referrer; return; }
+    if(window.history.length>1){ history.back(); return; }
+    location.href="https://gcai.js.org/";
+  };
   return;
 }
 hide("gate-device");
@@ -2196,7 +2206,7 @@ var WL_ENTRY_EMAIL = "entry.1933757178";
 var FB_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSevTwaq80XdLfW3ohROeCUKSy-Q_0eRrPqmFnwBQ9tkRGqqVg/formResponse";
 var FB_ENTRY_TYPE = "entry.1779123500"; // "Type" question
 var FB_ENTRY_DETAILS = "entry.985579618"; // "Details" question
-var FB_VERSION = "v34.2";
+var FB_VERSION = "v34.3";
 function fbSetType(which){
   $("fbTypeFeature").classList.toggle("sel", which==="feature");
   $("fbTypeBug").classList.toggle("sel", which==="bug");
