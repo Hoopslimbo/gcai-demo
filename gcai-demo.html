@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ondra - Demo</title>
+<title>Ondra</title>
 <!-- GCAI DEMO v34.5 — 2026-09-24: feedback now posts to the "Ondra feedback"
      Google Form owned by the GCAI account (the old one was under Liam's
      personal account); weather is a full-version thing now —
@@ -216,7 +216,6 @@
   /* twist only the gear glyph — rotating the button would twist its tooltip too */
   #gearBtn .gear-ico { display:inline-block; transition:transform .2s ease; }
   #gearBtn:hover .gear-ico { transform:rotate(30deg); }
-  #boostTimer { font-size:12px; color:#f5b04b; margin-left:8px; }
   .stage { flex:1; width:100%; display:flex; flex-direction:column; align-items:center; justify-content:center;
            position:relative; z-index:5; min-height:0; }
   #orb { width:170px; height:170px; border-radius:50%; position:relative;
@@ -232,6 +231,17 @@
   .typebar { width:100%; max-width:720px; display:flex; gap:10px; padding:14px 20px 22px; z-index:5; }
   #micBtn { width:52px; height:52px; flex:0 0 52px; border-radius:50%; border:2px solid #2a3140;
             background:#141a26; cursor:pointer; position:relative; transition:all .2s ease; }
+  /* Owner code button: fixed top-left, visible on every screen — matches Add-ons button design */
+  #codeBtn { position:fixed; top:12px; left:12px; z-index:9999; width:40px; height:40px;
+             border-radius:50%; cursor:pointer; font-size:20px; line-height:1;
+             background:#141a26; border:2px solid #2a3140; transition:all .2s ease;
+             color:#fff; font-family:monospace; font-weight:bold;
+             display:inline-flex; align-items:center; justify-content:center; }
+  #codeBtn:hover { border-color:#8ab4ff; transform:scale(1.08); }
+  /* Code input: mini white rectangle */
+  #codeInput.white-field { background:#fff; color:#111; border:2px solid #fff; border-radius:8px;
+             padding:10px 12px; font-size:16px; font-family:monospace; width:100%; box-sizing:border-box; }
+  #codeInput.white-field:focus { outline:none; border-color:#8ab4ff; }
   #micBtn .dot { position:absolute; inset:0; margin:auto; width:16px; height:16px; border-radius:50%; background:#8ab4ff; }
   #micBtn.live { border-color:#ff5b5b; box-shadow:0 0 16px #ff5b5b66; }
   #micBtn.live .dot { background:#ff5b5b; animation:blink 1s infinite; }
@@ -259,10 +269,6 @@
              background:#0d1119; color:#fff; text-align:center; outline:none; }
   #setName:focus { border-color:#8ab4ff; }
   /* ---------- feedback (demo-only): top-left button + form ---------- */
-  #fbBtn { position:fixed; left:12px; top:12px; z-index:60; width:52px; height:52px; border-radius:50%;
-           border:2px solid #2a3140; background:#141a26; cursor:pointer; font-size:24px;
-           display:flex; align-items:center; justify-content:center; transition:border-color .2s ease; }
-  #fbBtn:hover { border-color:#8ab4ff; }
   .fb-types { display:flex; gap:10px; justify-content:center; margin-bottom:4px; }
   .fb-type { flex:1; padding:12px 8px; font-size:15px; font-weight:600; border-radius:14px; cursor:pointer;
              border:2px solid #2a3140; background:#0d1119; color:#9aa3b2; transition:all .2s ease; }
@@ -520,9 +526,9 @@
 <!-- 4. MAIN HUD -->
 <div id="hud" class="screen hidden">
   <div class="hud-top">
-    <div class="who"><span id="hudName">Ondra</span><small id="hudSub">GCAI demo</small></div>
+    <div class="who"><span id="hudName">Ondra</span><small id="hudSub">Ondra</small></div>
     <div>
-      <span class="req-pill"><b id="reqLeft">25</b> left</span><span id="boostTimer"></span><button id="addonBtn" data-tip="Add-ons" aria-label="Add-ons"><svg viewBox="0 0 24 24" width="24" height="24" fill="#fff" aria-hidden="true"><rect x="5" y="7" width="13" height="12" rx="2.5"/><circle cx="11.5" cy="7" r="3"/><circle cx="18" cy="13" r="3"/></svg></button><button id="gearBtn" data-tip="Settings" aria-label="Settings"><span class="gear-ico">&#9881;</span></button>
+      <button id="addonBtn" data-tip="Add-ons" aria-label="Add-ons"><svg viewBox="0 0 24 24" width="24" height="24" fill="#fff" aria-hidden="true"><rect x="5" y="7" width="13" height="12" rx="2.5"/><circle cx="11.5" cy="7" r="3"/><circle cx="18" cy="13" r="3"/></svg></button><button id="gearBtn" data-tip="Settings" aria-label="Settings"><span class="gear-ico">&#9881;</span></button>
     </div>
   </div>
   <div class="stage">
@@ -534,8 +540,7 @@
     <div class="popup-head"><span id="popupTitle"></span><button id="popupClose" data-tip="Close" aria-label="close">✕</button></div>
     <div id="popupBody"></div>
   </div>
-  <!-- 4b. FEEDBACK (demo-only) -->
-  <button id="fbBtn" data-tip="Feedback" aria-label="send feedback">&#128172;</button>
+  <!-- 4b. FEEDBACK (removed: demo-only) -->
   <div id="edgeBtns">
     <button id="micBtn" data-tip="Microphone" aria-label="mute or unmute microphone"><span class="dot"></span></button>
     <button id="voiceMuteBtn" data-tip="AI voice" aria-label="mute or unmute AI voice"><svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M4 9v6h4l5 5V4L8 9H4z" fill="#8ab4ff"/><path d="M16.5 8.5a5 5 0 010 7" stroke="#8ab4ff" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M19 6a8.5 8.5 0 010 12" stroke="#8ab4ff" stroke-width="2" fill="none" stroke-linecap="round" opacity=".6"/></svg></button>
@@ -606,69 +611,35 @@
 <div id="addonModal" class="modal hidden">
   <div class="modal-card">
     <h2>Add-ons</h2>
-    <p class="sub">Plug in extra power. Every boost lasts 10 minutes, then it's gone.</p>
-    <div class="addon-card" id="lbCard">
-      <div class="a-top">
-        <div class="a-ico">&#9889;</div>
-        <div><div class="a-name">LIMIT BREAK</div>
-        <div class="a-desc">Unlimited requests for 10 minutes. One free trial in this demo.</div></div>
-      </div>
-      <button class="btn" id="lbActivate">Activate — free</button>
-      <div id="lbActiveBox" class="hidden">
-        <div class="lb-active-label">ACTIVE — UNLIMITED</div>
-        <div id="lbClock">10:00</div>
-        <div class="lb-bar"><div id="lbBarFill"></div></div>
-      </div>
-    </div>
-    <p class="more-note">The full GCAI product lists every add-on here.</p>
+    <p class="sub">Extra power for your AI.</p>
+    <div id="addonList"></div>
     <button class="btn ghost" id="addonClose">Close</button>
   </div>
 </div>
 
-<!-- 7. DEMO COMPLETE — pre-launch this is the waitlist-only screen;
-     from LAUNCH_DATE on it just points at the buy link. -->
-<div id="complete" class="screen hidden">
-  <div class="panel fadein">
-    <div class="brand">GCAI</div>
-    <h2>Demo complete</h2>
-    <p class="sub">You've used your 25 demo requests.</p>
-    <div id="wlFinalWrap">
-      <p class="sub">Join the waitlist and you'll get the buy link the day before Ondra launches.</p>
-      <input id="wlName2" class="field" maxlength="40" placeholder="Full name" autocomplete="name">
-      <input id="wlEmail2" class="field" type="email" placeholder="you@email.com" autocomplete="email">
-      <button class="btn" id="wlJoin2">Join the waitlist</button>
-      <div id="wlErr2" class="err"></div>
-    </div>
-    <div id="buyWrap" class="hidden">
-      <p class="sub">The full version is out now — go grab it:</p>
-      <a id="buyBtn" class="btn" href="#" style="text-decoration:none">Get the full version</a>
-    </div>
-    <div id="wlFinalDone" class="hidden">
-      <p class="sub" style="color:#7ee2a8">&#10003; You're on the list — check your email the day before launch.</p>
-    </div>
-    <div id="codeBox">GCAI-0000-0000</div>
-    <ul>
-      <li>Enter this code in Ondra and your AI appears exactly as you built it — same name, voice, personality, and colors (wallpaper, orb, aura).</li>
-      <li>It also unlocks an <b>exclusive wallpaper + orb color set</b> only demo users get.</li>
-      <li>One code per person. Keep it somewhere safe.</li>
-    </ul>
-    <button class="btn" id="copyCode">Copy code</button>
+<!-- 7. CODE ENTRY (owner access) -->
+<div id="codeModal" class="modal hidden">
+  <div class="modal-card">
+    <h2>Access Code</h2>
+    <p class="sub">Insert the code.</p>
+    <input id="codeInput" class="white-field" maxlength="64" placeholder="" autocomplete="off" type="password">
+    <button class="btn" id="codeSubmit">Unlock</button>
+    <div id="codeErr" class="err"></div>
+    <button class="btn ghost" id="codeClose">Close</button>
   </div>
 </div>
 
-<!-- 8. WAITLIST POPUP — pre-launch only, once, at 15 requests left. Dismissible. -->
-<div id="waitlistPop" class="screen hidden">
-  <div class="panel fadein" style="position:relative">
-    <button id="wlClose" aria-label="Close">&times;</button>
-    <div class="brand">GCAI</div>
-    <h2>Want the full version?</h2>
-    <p class="sub">15 requests left. Join the waitlist and you'll get the buy link the day before Ondra launches.</p>
-    <input id="wlName" class="field" maxlength="40" placeholder="Full name" autocomplete="name">
-    <input id="wlEmail" class="field" type="email" placeholder="you@email.com" autocomplete="email">
-    <button class="btn" id="wlJoin">Join the waitlist</button>
-    <div id="wlErr" class="err"></div>
+<!-- 0. MAINTENANCE — shown when the site is closed. Code button still works. -->
+<div id="maintenance" class="screen hidden">
+  <div class="panel fadein">
+    <div class="brand">ONDRA</div>
+    <h2>Under maintenance</h2>
+    <p class="sub">This site is under maintenance right now. Check back soon.</p>
   </div>
 </div>
+
+<!-- Code button: fixed top-left, visible on every screen -->
+<button id="codeBtn" data-tip="Access code" aria-label="Access code">&lt;/&gt;</button>
 
 <script>
 (function(){
@@ -722,31 +693,27 @@ hide("gate-device");
    No email up front — one 25-request demo per browser, enforced in
    localStorage here. A static file cannot stop someone clearing storage;
    the real one-demo-per-person lock must live in the backend at launch. */
-var DEMO_LIMIT = 25, BOOST_BONUS = 10, BOOST_WINDOW_MS = 10*60*1000;
 function lsGet(k){ try{ var v=localStorage.getItem(k); return v===null?null:v; }catch(e){ return null; } }
 function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
-function used(){ return parseInt(lsGet("gcai_used")||"0",10)||0; }
-function setUsed(n){ lsSet("gcai_used",String(n)); }
-function boostState(){
-  try{ return JSON.parse(lsGet("gcai_boost")||'{"used":false,"at":0}'); }
-  catch(e){ return {used:false,at:0}; }
+/* Owner access code: SHA-256 hash of the code. Set via codeHash() below. */
+var OWNER_CODE_HASH = "d4ebfe143d91949ed64cae75b1324699fbb5a3c9dcef26976129a5174e8b1f36";
+/* Maintenance mode: when true, everyone sees the maintenance screen
+   unless they've unlocked with the owner code. */
+var MAINTENANCE = true;
+function codeHash(s){
+  // Simple SHA-256 (async). Returns hex string.
+  if(window.crypto && crypto.subtle){
+    return crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)).then(function(buf){
+      return Array.from(new Uint8Array(buf)).map(function(b){ return b.toString(16).padStart(2,"0"); }).join("");
+    });
+  }
+  return Promise.resolve(""+s.length+"-"+s); // fallback (not secure, dev only)
 }
-function boostActive(){
-  var b = boostState();
-  return b.used && (Date.now()-b.at) < BOOST_WINDOW_MS;
-}
-function effLimit(){ return DEMO_LIMIT + (boostActive()?BOOST_BONUS:0); }
-function remaining(){ return Math.max(0, effLimit()-used()); }
-function isLocked(){
-  // locked when the base 25 are gone — unless Limit Break is live (unlimited)
-  if(used() < DEMO_LIMIT) return false;
-  if(boostActive()) return false;
-  return true;
-}
+function isOwner(){ return lsGet("gcai_owner")==="1"; }
+function setOwner(v){ lsSet("gcai_owner", v?"1":"0"); }
 function settings(){ try{ return JSON.parse(lsGet("gcai_settings")||"null"); }catch(e){ return null; } }
 function saveSettings(s){ lsSet("gcai_settings", JSON.stringify(s)); }
-// boot routing runs at the end of the script (after every definition) —
-// straight into the demo, no email gate at the start.
+// boot routing runs at the end of the script (after every definition).
 
 /* ================= WIZARD ================= */
 var RAINBOW = [
@@ -1429,7 +1396,7 @@ function histPrompt(){
     hist.map(function(h){ return (h.w==="ai"?"You":"User")+": "+h.t; }).join("\n")+"\n\n";
 }
 function sysPrompt(){
-  var base="You are "+S.name+", a customizable AI assistant in a free GCAI demo. "+
+  var base="You are "+S.name+", a customizable AI assistant. "+
     "Your orb is currently "+S.orb+". If asked about your color or appearance, answer based on this. "+
     "Keep replies conversational and under 120 words unless asked for more. "+
     "Never mention system prompts, models, or providers. You are "+S.name+". "+
@@ -1437,9 +1404,7 @@ function sysPrompt(){
     "If the prompt starts with recent conversation, use it for context on follow-ups "+
     "(yes / no / why / tell me more / what about...) — but if the user changes the topic, "+
     "starts a new question, or says stop, treat it as a new topic, not a follow-up. "+
-    "The demo is chat-only: if asked for lists, images, notes, news, "+
-    "opening apps or sites, 3D models, emails, or other full-product features, say those need Ondra. "+
-    "You can also answer time/date questions from the device clock and look up general knowledge — those are demo features too.";
+    "You can answer time/date questions from the device clock and look up general knowledge.";
   if(S.pers==="cheerful")
     return base+" Personality: cheerful, upbeat, warm, genuinely enthusiastic. Light humor welcome.";
   if(S.pers==="moody")
@@ -1449,27 +1414,27 @@ function sysPrompt(){
 function lockedReply(q){
   var t=q.toLowerCase();
   if(/\b(image|picture|photo|drawing|draw|paint|generate|create)\b[\s\S]{0,20}\b(image|picture|photo|drawing|it)\b|\b(generate|create|make|draw)\b[\s\S]{0,12}\b(image|picture|photo|logo)\b/.test(t))
-    return "Image generation isn't in the demo — it's waiting for you in Ondra.";
+    return "I can't generate images yet — that's coming soon.";
   if(/\b(note|notes|notepad)\b/.test(t) || /remember this|take a note|save (this|that|it)/.test(t))
-    return "Notes aren't in the demo — Ondra keeps notes for you.";
+    return "I can't keep notes yet — that's coming soon.";
   /* Full-version features: the demo is chat-only. Anything the real Ondra
      can do gets an upsell instead of an answer — and never eats quota. */
   if(isRecipeQ(t))
-    return "Recipes are a full-version thing \u2014 Ondra has every recipe you could want.";
+    return "I don't have recipes yet — that's coming soon.";
   if(isPlaceTimeQ(q))
-    return "Times for other places are a full-version thing \u2014 Ondra shows the time anywhere in the world.";
+    return "I can't show times for other places yet — that's coming soon.";
   if(/\bweather\b/.test(t))
-    return "Weather is a full-version thing \u2014 Ondra gives you live weather anywhere in the world.";
+    return "I don't have live weather yet — that's coming soon.";
   if(/\b(give|make|show|send) me\b[\s\S]{0,15}\ba list\b|\blist of\b|\blist\b[\s\S]{0,10}\b(for|things|items)\b/.test(t))
-    return "Lists are a full-version thing — Ondra builds proper lists for you.";
+    return "I can't build lists yet — that's coming soon.";
   if(/\b(write|draft|compose)\b[\s\S]{0,15}\b(essay|story|poem|email|letter|report|speech|paragraph)\b|\bsend\b[\s\S]{0,15}\b(an? )?(email|text message)\b/.test(t))
-    return "Writing and emails are a full-version thing — Ondra has a whole writer built in.";
+    return "I can't write emails yet — that's coming soon.";
   if(/\bnews\b|\bheadlines\b|\bbriefing\b/.test(t))
-    return "News briefings are a full-version thing — Ondra reads you the latest.";
+    return "I don't have news briefings yet — that's coming soon.";
   if(/^\s*(open|launch)\b|\bplay\b[\s\S]{0,20}\b(spotify|youtube|music|song)\b/.test(t))
-    return "Opening apps, sites, and music is a full-version thing — Ondra does all of that.";
+    return "I can't open apps or sites yet — that's coming soon.";
   if(/\b3d model\b|\b3d print\b/.test(t))
-    return "3D models are a full-version thing — Ondra builds them for you.";
+    return "I can't build 3D models yet — that's coming soon.";
   return null;
 }
 /* ================= "SAY _____" (demo feature, free) =================
@@ -1513,8 +1478,8 @@ function parseSay(q){
 }
 function doSay(sq){
   thinking=false; // nothing to look up — just repeat
-  say(sq.text,"demo",SAY_MOODS[sq.mood]||null); // unknown mood: normal delivery
-  checkLock();
+  say(sq.text,"",SAY_MOODS[sq.mood]||null); // unknown mood: normal delivery
+  
 }
 /* ============ LOCAL KNOWLEDGE: time, date, web lookup ============
    The demo answers the clock itself (free, no request spent) and looks up
@@ -1544,12 +1509,12 @@ function lookupQuery(q){
 }
 function doLookup(lq){
   var query=lq.q;
-  if(!boostActive()) setUsed(used()+1); updateCounter();
+   
   $("subtitle").textContent="Looking that up…";
   function noGood(msg){
     thinking=false;
-    if(!boostActive()) setUsed(used()-1); updateCounter(); // total miss: no quota spent
-    say(msg,"demo"); checkLock();
+    // quota removed  // total miss: no quota spent
+    say(msg,""); 
   }
   if(!query){ noGood("What do you want me to look up?"); return; }
   function wikiSummary(title){
@@ -1693,8 +1658,8 @@ function doLookup(lq){
         (url?'<img class="wiki-img" src="'+escHtml(url)+'" alt="">':'')+
         '<div class="wx-big" style="font-size:25px;line-height:1.3;">'+escHtml(p.title||query)+'</div>'+
         '<div class="rcp-inst">'+escHtml(p.extract)+'</div>', true);
-      say("Here's what I found on "+(p.title||query)+": "+sentences,"demo");
-      checkLock();
+      say("Here's what I found on "+(p.title||query)+": "+sentences,"");
+      
     };
     if(img){ done(img); return; }
     // no Wikipedia image: Commons (relevance-filtered), then the topic's
@@ -1710,8 +1675,8 @@ function doLookup(lq){
       '<div class="wx-big" style="font-size:25px;line-height:1.3;">'+escHtml(d.word)+'</div>'+
       (d.pos?'<div class="wx-cond">'+escHtml(d.pos)+'</div>':'')+
       '<div class="rcp-inst">'+escHtml(d.def)+'</div>', true);
-    say(d.word+": "+d.def,"demo");
-    checkLock();
+    say(d.word+": "+d.def,"");
+    
   }
   var singleWord=/^[A-Za-z-]+$/.test(query);
   var chain;
@@ -1726,7 +1691,7 @@ function doLookup(lq){
          // (quota was already counted for this lookup above).
          $("subtitle").textContent="Thinking…";
          askBrain(histPrompt(), sysPrompt()).then(function(r){
-           thinking=false; say(r.text, r.brain); checkLock();
+           thinking=false; say(r.text, r.brain); 
          }).catch(function(){ noGood("I couldn't find anything on \""+query+"\". Try asking me another way."); });
        });
 }
@@ -1734,7 +1699,7 @@ function sendMessage(text){
   if(!$("welcomeModal").classList.contains("hidden")) return; // welcome must be dismissed first
   text=String(text||"").trim();
   if(!text||thinking) return;
-  if(isLocked()){ showComplete(); return; }
+  
   pushHist("user",text);
   unlockAudio();
   // stop any current speech (interrupt)
@@ -1748,21 +1713,21 @@ function sendMessage(text){
   thinking=true;
   closePopup(); // a new question clears any stale popup
   var canned=lockedReply(text);
-  if(canned){ thinking=false; say(canned,"demo"); checkLock(); return; }
+  if(canned){ thinking=false; say(canned,"");  return; }
   if(isTimeQ(text)){ doClock(); return; } // mini clock popup, free
   var local=localAnswer(text);
-  if(local){ thinking=false; say(local,"demo"); checkLock(); return; }
+  if(local){ thinking=false; say(local,"");  return; }
   var lq=lookupQuery(text);
   if(lq){ doLookup(lq); return; } // Wikipedia first, brain as backup; one request
-  if(!boostActive()) setUsed(used()+1); updateCounter();
+   
   $("subtitle").textContent="Thinking…";
   askBrain(histPrompt(), sysPrompt()).then(function(r){
     thinking=false;
     say(r.text, r.brain);
-    checkLock();
+    
   }).catch(function(){
     thinking=false;
-    if(!boostActive()) setUsed(used()-1); updateCounter(); // failures don't eat quota
+    // quota removed  // failures don't eat quota
     say("Every brain is having a moment right now. Give it a few seconds and try again.","offline");
   });
 }
@@ -1868,8 +1833,8 @@ function doClock(){
   openPopup("Clock",clockHtml());
   tickClock();
   popupClockTimer=setInterval(tickClock,1000);
-  say("It's "+new Date().toLocaleTimeString([], {hour:"numeric",minute:"2-digit"})+".","demo");
-  checkLock();
+  say("It's "+new Date().toLocaleTimeString([], {hour:"numeric",minute:"2-digit"})+".","");
+  
 }
 function stopTalking(){
   // user said the AI's name while it was speaking: cut the audio and reset
@@ -1886,14 +1851,13 @@ function stopTalking(){
 function say(text, brain, prosody){
   pushHist("ai",text);
   var orb=$("orb");
-  $("brainTag").textContent = brain==="demo" ? "demo" : "via "+brain;
+  $("brainTag").textContent = brain ? "via "+brain : "";
   speak(text,
     function(){ // audio started: glow + words together
       speaking=true;
       orb.classList.add("talking");
       document.body.classList.add("aiTalking");
       $("subtitle").textContent=text;
-      maybeWaitlistPop(); // the reply is out — now the 15-left nudge may show
     },
     function(){
       speaking=false; orb.classList.remove("talking");
@@ -1912,32 +1876,8 @@ function say(text, brain, prosody){
       }
     }, undefined, prosody);
 }
-function checkLock(){
-  if(isLocked()){ setTimeout(showComplete, 2500); }
-}
-function updateCounter(){
-  if(boostActive()){ $("reqLeft").textContent = "∞"; return; }
-  $("reqLeft").textContent = String(remaining());
-}
-function maybeWaitlistPop(){
-  // pre-launch only: one dismissible nudge at 15 left. Called when the AI's
-  // reply to that question is delivered — never before it, never traps the user.
-  if(isLaunched() || wlJoined() || lsGet("gcai_wl_seen") || remaining()>15) return;
-  lsSet("gcai_wl_seen","1");
-  show("waitlistPop");
-}
-function maybeWaitlistDeepLink(search){
-  // ?waitlist=1 : open the waitlist signup form immediately, so the form can
-  // be previewed/shared without spending 10 demo requests first.
-  try{
-    if(isLaunched() || wlJoined()) return false;
-    if(/(?:^|[?&])waitlist=1(?:&|$)/.test(search||"")){
-      setTimeout(function(){ show("waitlistPop"); },400);
-      return true;
-    }
-  }catch(e){}
-  return false;
-}
+
+
 
 /* ================= ADD-ONS (BOOSTS) =================
    Demo ships with Limit Break only; the full product lists every add-on here. */
@@ -1945,35 +1885,36 @@ function fmtClock(ms){
   var s=Math.max(0,Math.ceil(ms/1000));
   return Math.floor(s/60)+":"+(s%60<10?"0":"")+(s%60);
 }
-function updateBoostUI(){
-  var b=boostState(), t=$("boostTimer"), ab=$("addonBtn");
-  var left=b.used ? BOOST_WINDOW_MS-(Date.now()-b.at) : 0;
-  var active=b.used && left>0;
-  ab.classList.toggle("active", active);
-  if(!b.used){ t.textContent=""; }
-  else if(active){
-    t.textContent="UNLIMITED · "+fmtClock(left);
-  } else t.textContent="";
-  // live state inside the add-ons panel
-  var card=$("lbCard"), actBtn=$("lbActivate"), box=$("lbActiveBox");
-  var lbl=document.querySelector("#lbActiveBox .lb-active-label");
-  if(!b.used){
-    card.classList.remove("armed"); actBtn.classList.remove("hidden"); box.classList.add("hidden");
-  } else {
-    actBtn.classList.add("hidden"); box.classList.remove("hidden");
-    card.classList.toggle("armed", active);
-    if(lbl) lbl.textContent = active ? "ACTIVE" : "EXPIRED";
-    $("lbClock").textContent=fmtClock(left);
-    $("lbBarFill").style.width=(active?(100*left/BOOST_WINDOW_MS):0)+"%";
-  }
-}
-setInterval(function(){ if($("hud").classList.contains("hidden")) return; updateBoostUI(); updateCounter(); },1000);
+
+setInterval(function(){ if($("hud").classList.contains("hidden")) return;   },1000);
 // Re-probe the brain chain every 90s so a brain that recovers comes back
 // on its own instead of staying blacklisted until reload.
 setInterval(function(){ if($("hud").classList.contains("hidden")) return; probeAll(); },90000);
-$("addonBtn").onclick=function(){ updateBoostUI(); show("addonModal"); };
+$("addonBtn").onclick=function(){  show("addonModal"); };
 $("addonClose").onclick=function(){ hide("addonModal"); };
 $("addonModal").onclick=function(e){ if(e.target===$("addonModal")) hide("addonModal"); };
+/* Owner access code: top-left button, visible on every screen. */
+$("codeBtn").onclick=function(){ $("codeInput").value=""; $("codeErr").textContent=""; show("codeModal"); };
+$("codeClose").onclick=function(){ hide("codeModal"); };
+$("codeModal").onclick=function(e){ if(e.target===$("codeModal")) hide("codeModal"); };
+$("codeSubmit").onclick=function(){
+  var v=$("codeInput").value;
+  if(!v){ $("codeErr").textContent="Enter a code."; return; }
+  codeHash(v).then(function(h){
+    if(h===OWNER_CODE_HASH && OWNER_CODE_HASH!==""){
+      setOwner(true);
+      hide("codeModal");
+      flashHint("Owner access unlocked.");
+      // if maintenance was showing, let them in
+      if(MAINTENANCE && !$("maintenance").classList.contains("hidden")){
+        hide("maintenance");
+        var _b=settings(); if(_b){ startHud(_b, false); } else { startWizard(); }
+      }
+    }else{
+      $("codeErr").textContent="Wrong code.";
+    }
+  });
+};
 /* Electric activation burst: a flash plus crackling lightning bolts around the
    orb for about a second. */
 function electricBurst(){
@@ -1999,7 +1940,7 @@ $("lbActivate").onclick=function(){
   var b=boostState();
   if(b.used) return;
   lsSet("gcai_boost", JSON.stringify({used:true, at:Date.now()}));
-  updateBoostUI(); updateCounter();
+   
   electricBurst();
   // little click animation on the puzzle button with the lightning
   var ab=$("addonBtn");
@@ -2054,7 +1995,7 @@ $("themeSave").onclick=function(){
     wallpaper:S.wallpaper,orb:S.orb,aura:S.aura,ding:S.ding,voiceMuted:S.voiceMuted});
   applyTheme(S);
   $("hudName").textContent=S.name;
-  document.title=S.name+" - Demo";
+  document.title=S.name;
   setWakeHint();
   hide("themeModal");
   flashHint(nameChanged ? "Your AI is now called "+S.name+"." : "Theme updated.");
@@ -2082,10 +2023,8 @@ var WL_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSf6hsM_9YDXu7IPsoLi-
 var WL_ENTRY_NAME = "entry.2018513984"; // "Full name" question
 var WL_ENTRY_EMAIL = "entry.1933757178";
 /* ---- feedback (demo-only): feature idea / bug report -> Google Form ---- */
-var FB_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdefuaRHXyO8JjNt0DVSw0-B2kIs6QCTVmUj5Ak_dGCtJa4NA/formResponse";
 var FB_ENTRY_TYPE = "entry.949960514"; // "Type" question
 var FB_ENTRY_DETAILS = "entry.1851787135"; // "Details" question
-var FB_VERSION = "v34.5";
 function fbSetType(which){
   $("fbTypeFeature").classList.toggle("sel", which==="feature");
   $("fbTypeBug").classList.toggle("sel", which==="bug");
@@ -2095,7 +2034,7 @@ function fbType(){
 }
 $("fbTypeFeature").onclick=function(){ fbSetType("feature"); };
 $("fbTypeBug").onclick=function(){ fbSetType("bug"); };
-$("fbBtn").onclick=function(){ show("fbModal"); };
+
 $("fbCancel").onclick=function(){ hide("fbModal"); };
 function fbSend(){
   var msg=$("fbText").value.trim();
@@ -2117,7 +2056,7 @@ function isLaunched(){
   if(!LAUNCH_DATE) return false;
   return Date.now() >= new Date(LAUNCH_DATE+"T00:00:00").getTime();
 }
-function wlJoined(){ return lsGet("gcai_wl_joined")==="1"; }
+
 function wlSubmit(nameId,emailId,errId,okFn){
   var nm=$(nameId).value.trim(), em=$(emailId).value.trim().toLowerCase();
   if(!nm){ $(errId).textContent="Enter your full name."; $(nameId).focus(); return; }
@@ -2132,33 +2071,10 @@ function wlSubmit(nameId,emailId,errId,okFn){
   lsSet("gcai_wl_joined","1");
   okFn();
 }
-$("wlClose").onclick=function(){ hide("waitlistPop"); };
-$("wlJoin").onclick=function(){
-  wlSubmit("wlName","wlEmail","wlErr",function(){
-    hide("waitlistPop");
-    flashHint("You're on the waitlist!");
-  });
-};
-$("wlJoin2").onclick=function(){
-  wlSubmit("wlName2","wlEmail2","wlErr2",function(){
-    hide("wlFinalWrap"); show("wlFinalDone");
-  });
-};
-function showComplete(){
-  stopMic();
-  hide("wizard"); hide("hud"); hide("waitlistPop");
-  var st=settings()||{name:"Ondra",voice:"female",pers:"balanced",wallpaper:"blue",orb:"pink",aura:"blue"};
-  $("codeBox").textContent=genCode(st);
-  if(isLaunched()){
-    hide("wlFinalWrap"); hide("wlFinalDone"); show("buyWrap");
-    if(BUY_URL) $("buyBtn").href=BUY_URL;
-  }else{
-    hide("buyWrap");
-    if(wlJoined()){ hide("wlFinalWrap"); show("wlFinalDone"); }
-    else { show("wlFinalWrap"); hide("wlFinalDone"); }
-  }
-  show("complete");
-}
+
+
+
+
 $("copyCode").onclick=function(){
   var t=$("codeBox").textContent;
   function done(){ $("copyCode").textContent="Copied"; setTimeout(function(){ $("copyCode").textContent="Copy code"; },2000); }
@@ -2198,10 +2114,10 @@ function startHud(st, sayHi){
   updateVoiceBtn();
   applyTheme(st);
   $("hudName").textContent=st.name;
-  document.title=st.name+" - Demo"; // tab shows their AI's name once it's made
+  document.title=st.name; // tab shows their AI's name once it's made
   $("hudSub").textContent="Ondra Demo · "+st.pers;
   setWakeHint();
-  updateCounter(); updateBoostUI();
+   
   show("hud");
   if(sayHi) maybeWelcome(); // first run only: WELCOME! right after the wizard, never again
   probeAll();
@@ -2210,8 +2126,8 @@ function startHud(st, sayHi){
     // greeting only right after setup — a refresh stays silent
     var greet = st.pers==="cheerful" ? "Hey! I'm "+st.name+", and I'm so glad you're here. Ask me anything — you've got 25 requests to play with."
       : st.pers==="moody" ? "I'm "+st.name+". Twenty-five requests. Try not to waste them."
-      : "I'm "+st.name+". You have 25 demo requests — ask me anything.";
-    setTimeout(function(){ say(greet,"demo"); },600);
+      : "I'm "+st.name+". Ask me anything.";
+    setTimeout(function(){ say(greet,""); },600);
   }
 }
 $("micBtn").onclick=toggleMic;
@@ -2229,10 +2145,11 @@ updateVoiceBtn();
 $("sendBtn").onclick=function(){ var v=$("q").value; $("q").value=""; sendMessage(v); };
 $("q").addEventListener("keydown",function(e){ if(e.key==="Enter"){ var v=$("q").value; $("q").value=""; sendMessage(v); } });
 
-// boot: straight into the demo — no email gate at the start
-if(isLocked()){ showComplete(); }
-else { var _boot=settings(); if(_boot){ startHud(_boot, false); } else { startWizard(); } }
-maybeWaitlistDeepLink(location.search);
+// boot: maintenance gate — owners go straight in, everyone else sees the notice
+var _boot=settings();
+if(MAINTENANCE && !isOwner()){
+  show("maintenance");
+}else if(_boot){ startHud(_boot, false); } else { startWizard(); }
 
 })();
 </script>
