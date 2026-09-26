@@ -3,87 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ondra - Demo</title>
-<!-- GCAI DEMO v34.5 — 2026-09-24: feedback now posts to the "Ondra feedback"
-     Google Form owned by the GCAI account (the old one was under Liam's
-     personal account); weather is a full-version thing now —
-     every weather ask gets the Ondra upsell instead of a lookup (the live
-     weather code left the demo); "what time is it in <place>" gets the Ondra
-     upsell too — the clock popup is for your own time only;
-     v34.4 — 2026-09-24: male voice is now US English Male (en-US),
-     deeper pitch (0.15, device 0.5) — dad said the British one sounded
-     feminine; recipes left the demo — they're a full-version thing now,
-     so recipe asks get the Ondra upsell instead of a lookup;
-     v34.3 — 2026-09-23: close button on the computers-only gate goes back to the website
-     signup form immediately (no need to burn 10 requests to preview it);
-     waitlist now says Ondra; no Wikipedia image -> Wikimedia Commons
-     (relevance-filtered) then the topic's Fandom wiki ("Kai from Ninjago"
-     gets a real Kai image); v33: say the AI's name while it's talking and it
-     stops (voice interrupt); "Kai from Ninjago"-style lookups now pull the
-     character's own section from "List of ... characters" pages instead of
-     showing the show-level summary.
-     v32: feedback submits to the "Ondra Demo Feedback" Google Form via
-     fetch no-cors — no email app, no notifications to Liam.
-     v31: demo-only feedback button (top-left, speech-bubble icon) + welcome
-     bookmark tip.
-     v30: product renamed Genie -> Ondra (ON-drah)
-     everywhere user-visible: tab title, welcome card, HUD, default AI name
-     and wake hint, upsell lines, export help; spoken as "ondrah" so the
-     voice says ON-drah.
-     v29: side-state subtitles are bare bold text with no
-     window (white, black on white wallpapers); welcome X tooltip stays inside
-     the card so hovering it never summons a horizontal scrollbar; gear hover
-     twists only the glyph so its tooltip stays level and still; lookup popups
-     close themselves when the AI finishes talking (orb + subtitles return to
-     the middle); lookup popup images show fully, never cropped; follow-up ding
-     fires on any "?" in a reply, not just a trailing one; TTS preloads the
-     next speech piece and retries a failed piece once so network blips can't
-     cut the audio; brain instructed to never invent facts.
-     v28: Wikipedia search prefers the article actually named
-     in your question ("the character Bugs Bunny" -> Bugs Bunny, not Lola Bunny),
-     so lookups land on the right article and the right image.
-     v27: lookups understand "what's"/"who's"; Wikipedia
-     full-text search finds the article from your raw phrasing ("the pokemon
-     gengar" -> Gengar) with the Wikipedia-style popup + image; brain answers
-     as backup instead of "couldn't find anything".
-     v26: popup X always clickable (header pinned, only the body scrolls); subtitles disappear when the AI is done talking; popups are
-     draggable by the header; while a window is up and the AI talks, subtitles
-     bundle up small under the orb (moved left) so they never cover the window.
-     v25: voice card titles "Female"/"Male" with "Average ..." descriptions;
-     clock popup — bigger plain face, no alarm bells/legs, digital on top.
-     v24: ding always sounds (suspended-AudioContext queue
-     flush); popup layout — orb to left-quadrant middle, subtitles wide at the
-     bottom, popup spans screen-middle to right-middle; recipe detection
-     understands slang ("2x choc cookie", "dub choc cake") with search fallback
-     through shorter dish names; voice cards renamed "Average female/male voice";
-     device gate — phones and iPads (incl. iPadOS) get "This software is only
-     accessible through computers. Please try again on a computer".
-     v23: "say _____" moods understand multi-word phrases, synonyms, "manner".
-     v21 — 2026-09-23: side popups for weather, recipes, and the clock —
-     the orb slides aside and keeps animating while a popup is open. Recipes
-     now work in the demo (one request, looked up online via TheMealDB —
-     food/desserts only, with photo, ingredients, and instructions; lists stay
-     Ondra-only). The clock popup is free: live digital readout on top, analog
-     clock face below. First run shows a WELCOME! card listing what to
-     ask (X to close, once ever). Hover tooltips under every icon button
-     (beneath the button, except Send which sits at the very bottom so its
-     tip goes above); the settings modal (gear) is now "Settings" and lets
-     the user rename their AI — the HUD name, tab title, and wake-word hint
-     all update, and the name saves. Also fixed: saving settings no longer
-     wiped the voice-mute choice.
-     v20: the wake-word follow-up window is 8s (was 2s) — answers spoken
-     after the ding were arriving after the window closed and being ignored.
-     Left-edge controls: mic mute (middle) + AI voice mute below it; the
-     voice mute skips audio but keeps the conversation flowing.
-     v19: greeting ("Hey! I'm ... 25 requests") now only plays right after
-     setup — refreshing the page stays silent.
-     v18: fixed missing flashHint (mic errors crashed silently) and pulseOrb
-     (bare wake word crashed before the ding). Deeper male voice
-     (UK English Male pitch 0.35); iOS mic explains itself.
-     Luna-style wake ding (lazy AudioContext),
-     question follow-up (ding + 3s no-wake-word window after a "?" reply),
-     speech cleanup (never speaks emojis/_/-// junk aloud).
-     v14 items kept: naming finalized — the demo is "Genie Demo",
+<title>GCAI — Free Demo</title>
+<!-- GCAI DEMO v15 — 2026-09-26: ported from the full build — rainbow swatch in all
+     color pickers; customizable browser tab icon (wizard step 7 + Customization
+     tab, 18 icons); oval app rail (Add-ons, Customization, Settings); new
+     Settings panel with live mic/audio mute status indicator + voice mute.
+     v14 — 2026-09-22: naming finalized — the demo is "Genie Demo",
      the paid AI is just "Genie" (gated-feature messages and brain prompt updated;
      was "Full Genie").
      v13 items kept: live weather is a demo feature (Open-Meteo, device location
@@ -127,10 +52,7 @@
   #wlClose:hover { color:#fff; }
 
   /* ---------- device gate ---------- */
-  #gate-device .card { text-align:center; max-width:440px; position:relative; }
-  #gateClose { position:absolute; top:6px; right:10px; background:none; border:none;
-    color:#9aa3b2; font-size:32px; line-height:1; cursor:pointer; padding:8px; }
-  #gateClose:hover { color:#ffffff; }
+  #gate-device .card { text-align:center; max-width:440px; }
   #gate-device h1 { font-size:28px; letter-spacing:2px; margin-bottom:14px; color:#8ab4ff; }
   #gate-device p { color:#9aa3b2; line-height:1.6; font-size:16px; }
   #gate-device .logo { font-size:15px; letter-spacing:6px; color:#5b6472; margin-bottom:26px; }
@@ -212,17 +134,12 @@
   @keyframes btnClick { 0% { transform:scale(1); } 40% { transform:scale(.82); } 100% { transform:scale(1); } }
   #gearBtn { margin-left:8px; width:40px; height:40px; border-radius:50%; cursor:pointer; font-size:19px;
              background:#141a26; border:2px solid #2a3140; color:#c7d0e0; transition:all .2s ease; line-height:1; }
-  #gearBtn:hover { border-color:#8ab4ff; }
-  /* twist only the gear glyph — rotating the button would twist its tooltip too */
-  #gearBtn .gear-ico { display:inline-block; transition:transform .2s ease; }
-  #gearBtn:hover .gear-ico { transform:rotate(30deg); }
+  #gearBtn:hover { border-color:#8ab4ff; transform:rotate(30deg); }
   #boostTimer { font-size:12px; color:#f5b04b; margin-left:8px; }
   .stage { flex:1; width:100%; display:flex; flex-direction:column; align-items:center; justify-content:center;
            position:relative; z-index:5; min-height:0; }
   #orb { width:170px; height:170px; border-radius:50%; position:relative;
          animation:orbPulse 3.2s ease-in-out infinite; transition:box-shadow .3s ease; }
-  #orb.pulseOnce { animation:orbPop .55s ease-out; }
-  @keyframes orbPop { 0% { transform:scale(1); } 35% { transform:scale(1.12); } 100% { transform:scale(1); } }
   #orb.talking { animation:orbTalk .5s ease-in-out infinite; }
   @keyframes orbTalk { 0%,100% { transform:scale(1); } 50% { transform:scale(1.09); } }
   #subtitle { margin-top:26px; max-width:640px; padding:0 28px; text-align:center; font-size:17px;
@@ -236,134 +153,6 @@
   #micBtn.live { border-color:#ff5b5b; box-shadow:0 0 16px #ff5b5b66; }
   #micBtn.live .dot { background:#ff5b5b; animation:blink 1s infinite; }
   @keyframes blink { 50% { opacity:.35; } }
-  /* left-edge controls: mic mute (middle) + AI voice mute (below it) */
-  #edgeBtns { position:fixed; left:12px; top:50%; transform:translateY(-50%); z-index:60;
-              display:flex; flex-direction:column; gap:14px; }
-  #voiceMuteBtn { width:52px; height:52px; border-radius:50%; border:2px solid #2a3140;
-            background:#141a26; cursor:pointer; position:relative; transition:all .2s ease;
-            display:flex; align-items:center; justify-content:center; }
-  #voiceMuteBtn.muted { border-color:#ff5b5b; }
-  #voiceMuteBtn.muted svg { opacity:.35; }
-  #voiceMuteBtn.muted::after, #micBtn:not(.live)::after { content:""; position:absolute;
-            left:9px; right:9px; top:50%; height:3px; margin-top:-1.5px;
-            background:#ff5b5b; transform:rotate(-45deg); border-radius:2px; }
-  /* hover tooltips: icon buttons name themselves just beneath them */
-  [data-tip]{ position:relative; }
-  [data-tip]:hover::before{ content:attr(data-tip); position:absolute; top:calc(100% + 8px); left:50%;
-            transform:translateX(-50%); background:#0d1119; border:1px solid #2a3140; color:#dfe5ef;
-            font-size:12.5px; font-weight:600; letter-spacing:.5px; padding:6px 12px; border-radius:10px;
-            white-space:nowrap; z-index:200; pointer-events:none; }
-  [data-tip-pos="above"]:hover::before{ top:auto; bottom:calc(100% + 8px); }
-  #edgeBtns [data-tip]:hover::before{ left:0; transform:none; }
-  #setName { width:100%; padding:12px 16px; font-size:17px; border-radius:14px; border:1px solid #2a3140;
-             background:#0d1119; color:#fff; text-align:center; outline:none; }
-  #setName:focus { border-color:#8ab4ff; }
-  /* ---------- feedback (demo-only): top-left button + form ---------- */
-  #fbBtn { position:fixed; left:12px; top:12px; z-index:60; width:52px; height:52px; border-radius:50%;
-           border:2px solid #2a3140; background:#141a26; cursor:pointer; font-size:24px;
-           display:flex; align-items:center; justify-content:center; transition:border-color .2s ease; }
-  #fbBtn:hover { border-color:#8ab4ff; }
-  .fb-types { display:flex; gap:10px; justify-content:center; margin-bottom:4px; }
-  .fb-type { flex:1; padding:12px 8px; font-size:15px; font-weight:600; border-radius:14px; cursor:pointer;
-             border:2px solid #2a3140; background:#0d1119; color:#9aa3b2; transition:all .2s ease; }
-  .fb-type.sel { border-color:#8ab4ff; color:#fff; background:#1a2740; box-shadow:0 0 16px #8ab4ff33; }
-  #fbText { width:100%; min-height:110px; padding:12px 14px; font-size:15.5px; border-radius:14px;
-            border:1px solid #2a3140; background:#0d1119; color:#fff; outline:none; resize:vertical;
-            font-family:inherit; }
-  #fbText:focus { border-color:#8ab4ff; }
-  /* ---------- side popup (weather / clock) ---------- */
-  #orbWrap { transition:transform .55s cubic-bezier(.2,.8,.3,1); }
-  /* popup open: orb moves to the middle of the left quadrant (still vertically
-     centered), subtitles widen and drop to the bottom, and the popup takes the
-     band from the middle of the screen to the middle of the right side */
-  body.hasPopup #orbWrap { transform:translateX(calc(18vw - 50vw)); }
-  body.hasPopup #subtitle { position:fixed; left:50%; transform:translateX(-50%); bottom:134px;
-             max-width:1100px; width:calc(100vw - 56px); margin:0; z-index:6; }
-  body.hasPopup #popup { left:50vw; right:auto; width:34vw; min-width:340px; max-width:560px;
-             max-height:66vh; }
-  /* Liquid Glass popup: frosted translucency, bright glass edge, soft sheen */
-  #popup { position:fixed; right:18px; top:50%; transform:translateY(-50%); width:350px; max-width:calc(100vw - 36px);
-           max-height:72vh; overflow:hidden; display:flex; flex-direction:column; z-index:80; border-radius:24px;
-           background:
-             linear-gradient(160deg, rgba(255,255,255,.16) 0%, rgba(255,255,255,.03) 28%, rgba(255,255,255,0) 55%),
-             rgba(16,20,29,.58);
-           -webkit-backdrop-filter:blur(24px) saturate(1.7);
-           backdrop-filter:blur(24px) saturate(1.7);
-           border:1px solid rgba(255,255,255,.2);
-           box-shadow:0 16px 56px rgba(0,0,0,.5),
-                      inset 0 1px 1px rgba(255,255,255,.35),
-                      inset 0 -1px 1px rgba(255,255,255,.08);
-           padding:18px 20px 22px; animation:popIn .32s ease; text-align:center; }
-  #popup.hidden { display:none; }
-  @keyframes popIn { from { opacity:0; transform:translateY(-50%) translateX(24px); } to { opacity:1; transform:translateY(-50%); } }
-  .popup-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;
-                cursor:grab; touch-action:none; user-select:none; -webkit-user-select:none; }
-  /* the X stays pinned: only the body scrolls, never the header */
-  #popupBody { overflow-y:auto; min-height:0; }
-  body.popDragging, body.popDragging .popup-head { cursor:grabbing; }
-  body.popDragging { user-select:none; -webkit-user-select:none; }
-  /* popup open + AI talking: subtitles sit bare under the orb (which is
-     moved to the left) — no window, just bold text; white, or black on a
-     white wallpaper */
-  @media (min-width:721px){
-    body.hasPopup.aiTalking #subtitle { left:18vw; right:auto; transform:translateX(-50%);
-      top:calc(50% + 108px); bottom:auto; width:max-content; max-width:30vw; margin:0;
-      font-size:14.5px; line-height:1.5; padding:0; min-height:0;
-      font-weight:700; color:#fff; text-shadow:0 2px 10px rgba(0,0,0,.6);
-      background:none; border:none; border-radius:0;
-      -webkit-backdrop-filter:none; backdrop-filter:none; }
-    body.light-wall.hasPopup.aiTalking #subtitle { color:#000;
-      text-shadow:0 1px 0 rgba(255,255,255,.65); }
-  }
-  #popupTitle { font-size:15px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:#8ab4ff; }
-  #popupClose { width:34px; height:34px; border-radius:50%; border:2px solid #2a3140; background:#141a26; color:#c7d0e0;
-                cursor:pointer; font-size:14px; line-height:1; transition:all .2s ease; position:relative; }
-  #popupClose:hover { border-color:#ff5b5b; color:#ff5b5b; transform:scale(1.08); }
-  .wx-big { font-size:52px; font-weight:700; }
-  .wx-cond { font-size:16px; color:#dfe5ef; margin:2px 0 14px; text-transform:capitalize; }
-  .wx-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-  .wx-cell { background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); border-radius:12px; padding:10px; }
-  .wx-cell .k { font-size:10.5px; letter-spacing:1.5px; text-transform:uppercase; color:#8ab4ff; }
-  .wx-cell .v { font-size:18px; font-weight:700; margin-top:3px; }
-  .rcp-sec { font-size:12px; letter-spacing:2px; text-transform:uppercase; color:#8ab4ff; margin:16px 0 8px; }
-  .rcp-ing { text-align:left; font-size:14.5px; line-height:1.7; margin:0; padding-left:22px; }
-  .rcp-ing li { margin-bottom:2px; }
-  .rcp-steps { text-align:left; font-size:14.5px; line-height:1.7; padding-left:22px; margin:0; }
-  .rcp-steps li { margin-bottom:8px; }
-  .rcp-img { width:100%; max-height:180px; object-fit:cover; border-radius:14px; margin-bottom:10px; }
-  /* lookup popups show the whole image, never a cropped band */
-  .wiki-img { width:100%; height:auto; max-height:52vh; display:block;
-              border-radius:14px; margin-bottom:10px; }
-  .rcp-inst { text-align:left; font-size:14px; line-height:1.7; color:#dfe5ef; white-space:pre-wrap; }
-  .clock-digital { font-size:42px; font-weight:700; font-variant-numeric:tabular-nums; letter-spacing:2px; margin:2px 0 12px; }
-  .clockface { width:230px; height:230px; }
-  /* ---------- welcome ---------- */
-  .welcome-card { position:relative; text-align:left; }
-  .welcome-card h2 { text-align:center; font-size:30px; letter-spacing:3px; margin-bottom:4px; font-weight:800; }
-  .welcome-card .sub { text-align:center; }
-  #welcomeClose { position:absolute; top:14px; right:14px; width:34px; height:34px; border-radius:50%;
-                  border:2px solid #2a3140; background:#141a26; color:#c7d0e0; cursor:pointer; font-size:14px;
-                  line-height:1; transition:all .2s ease; }
-  #welcomeClose:hover { border-color:#ff5b5b; color:#ff5b5b; transform:scale(1.08); }
-  /* keep the "Close" tooltip inside the card: centered it spills past the right
-     edge on hover and summons a horizontal scrollbar */
-  #welcomeClose[data-tip]:hover::before { left:auto; right:0; transform:none; }
-  .welcome-list { list-style:none; margin:0; padding:0; }
-  .welcome-list li { background:#0d1119; border:1px solid #2a3140; border-radius:12px; padding:10px 14px; margin-bottom:8px; }
-  .welcome-list li:last-child { margin-bottom:0; }
-  .welcome-list b { display:block; font-size:15px; margin-bottom:2px; }
-  .welcome-list span { color:#9aa3b2; font-size:13.5px; }
-  .welcome-tip { text-align:center; color:#9aa3b2; font-size:13.5px; margin-top:10px; }
-  .welcome-tip b { color:#e6ebf2; }
-  @media (max-width:720px) {
-    body.hasPopup #orbWrap { transform:none; }
-    body.hasPopup #subtitle { position:static; transform:none; width:auto; max-width:640px;
-      margin:26px 0 0; z-index:5; }
-    /* same specificity as the desktop hasPopup rule so the bottom sheet wins on mobile */
-    body.hasPopup #popup { left:16px; right:16px; width:auto; min-width:0; top:auto; bottom:104px;
-      transform:none; max-height:46vh; }
-    @keyframes popIn { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:none; } }
-  }
   #q { flex:1; padding:14px 18px; font-size:16px; border-radius:26px; border:1px solid #2a3140;
        background:#12161f; color:#eef1f6; outline:none; }
   #q:focus { border-color:#8ab4ff; }
@@ -383,6 +172,86 @@
   .trow { margin-bottom:16px; }
   .tlabel { font-size:13px; letter-spacing:2px; text-transform:uppercase; color:#8ab4ff; margin-bottom:10px; }
   .swatches.sm .sw { width:42px; height:42px; }
+  .sw-clear { background:linear-gradient(135deg, rgba(255,255,255,.5), rgba(255,255,255,.06) 55%, rgba(255,255,255,.22)) !important;
+              backdrop-filter:blur(4px);
+              border:1px solid rgba(255,255,255,.65) !important;
+              box-shadow:inset 0 2px 3px rgba(255,255,255,.7), inset 0 -3px 6px rgba(0,0,0,.18), 0 0 0 1px rgba(0,0,0,.2) !important; }
+  /* tab icon stepper */
+  .icon-grid { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
+  .icon-grid .ic { width:44px; height:44px; border-radius:12px; cursor:pointer;
+                   border:2px solid rgba(255,255,255,.12); background:rgba(255,255,255,.05);
+                   display:flex; align-items:center; justify-content:center; transition:all .15s ease; }
+  .icon-grid .ic svg { width:24px; height:24px; }
+  .icon-grid .ic:hover { border-color:#8ab4ff; transform:scale(1.08); }
+  .icon-grid .ic.sel { border-color:#8ab4ff; box-shadow:0 0 12px rgba(138,180,255,.4); }
+  .tistep-nav { display:flex; align-items:center; justify-content:center; gap:18px; margin-bottom:16px; }
+  .tistep-arrow { width:40px; height:40px; border-radius:50%; border:1px solid rgba(255,255,255,.2);
+                  background:rgba(255,255,255,.06); color:#eef1f6; font-size:18px; cursor:pointer;
+                  display:flex; align-items:center; justify-content:center; transition:all .15s ease; }
+  .tistep-arrow:hover { border-color:#8ab4ff; color:#8ab4ff; transform:scale(1.1); }
+  .tistep-name { font-size:15px; font-weight:600; letter-spacing:2px; text-transform:uppercase; color:#8ab4ff;
+                 min-width:140px; text-align:center; }
+  .tistep-body { min-height:120px; margin-bottom:18px; }
+  .tistep-preview { display:flex; flex-direction:column; align-items:center; gap:10px; margin:6px 0 18px; }
+  .tistep-prevbig { width:88px; height:88px; border-radius:22px; display:flex; align-items:center; justify-content:center;
+                    border:1px solid rgba(255,255,255,.2); box-shadow:0 8px 28px rgba(0,0,0,.4);
+                    background:#141922; }
+  .tistep-prevbig svg { width:60px; height:60px; }
+  .tistep-prevlabel { font-size:12px; letter-spacing:2px; text-transform:uppercase; color:#8a93a6; }
+  .theme-tabs { display:flex; gap:8px; justify-content:center; margin-bottom:20px; }
+  .theme-tab { padding:8px 20px; border-radius:20px; border:1px solid rgba(255,255,255,.14);
+               background:rgba(255,255,255,.05); color:#9aa3b2; font-size:14px; font-weight:600;
+               cursor:pointer; transition:all .15s ease; }
+  .theme-tab.sel { background:rgba(138,180,255,.18); border-color:#8ab4ff; color:#eef1f6; }
+  .theme-tabpane.hidden { display:none; }
+  .setStatus { font-size:15px; font-weight:600; }
+  .setStatus .on { color:#34c759; }
+  .setStatus .off { color:#ff5b5b; }
+  /* oval app rail */
+  #menuBtn { position:fixed; top:16px; right:22px; z-index:96; width:64px; height:64px; border-radius:50%;
+              cursor:pointer; background:rgba(18,22,32,.72);
+              -webkit-backdrop-filter:blur(28px) saturate(1.8); backdrop-filter:blur(28px) saturate(1.8);
+              border:1px solid rgba(255,255,255,.1);
+              box-shadow:0 8px 24px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.12);
+              display:inline-flex; align-items:center; justify-content:center;
+              transition:all .2s ease; }
+  #menuBtn:hover { transform:scale(1.08); border-color:#8ab4ff; }
+  #menuBtn svg { transition:transform .25s ease; }
+  #menuBtn.open { border-radius:28px 28px 0 0; border-bottom:none; }
+  #menuBtn.open svg { transform:rotate(180deg); }
+  #menuBar { position:fixed; top:80px; right:22px; bottom:24px; z-index:95; display:flex; flex-direction:column;
+           align-items:center; gap:10px; padding:18px 10px 16px; width:64px;
+           border-radius:0 0 32px 32px;
+           background:rgba(18,22,32,.72);
+           -webkit-backdrop-filter:blur(28px) saturate(1.8);
+           backdrop-filter:blur(28px) saturate(1.8);
+           border:1px solid rgba(255,255,255,.1); border-top:none;
+           box-shadow:0 20px 60px rgba(0,0,0,.55);
+           transform-origin:top center; will-change:transform,opacity;
+           animation:menuSlide .35s cubic-bezier(.2,.9,.3,1.1); }
+  #menuBar.hidden { display:none; }
+  #menuBar.closing { animation:menuRetract .25s cubic-bezier(.4,.6,1); }
+  @keyframes menuSlide { from { opacity:0; transform:scaleY(.2); } to { opacity:1; transform:scaleY(1); } }
+  @keyframes menuRetract { from { transform:scaleY(1); } to { transform:scaleY(.05); } }
+  #menuBar button { display:flex; align-items:center; justify-content:center;
+           width:48px; height:48px; border-radius:50%;
+           border:1px solid rgba(255,255,255,.14);
+           background:linear-gradient(160deg, rgba(255,255,255,.1) 0%, rgba(255,255,255,.03) 100%);
+           -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px);
+           color:#eef1f6; cursor:pointer; transition:all .2s cubic-bezier(.2,.9,.3,1.3); position:relative;
+           pointer-events:auto; flex-shrink:0; }
+  #menuBar button:hover { background:linear-gradient(160deg, rgba(138,180,255,.25) 0%, rgba(138,180,255,.08) 100%);
+           border-color:#8ab4ff; transform:scale(1.15);
+           box-shadow:0 0 20px rgba(138,180,255,.35); }
+  #menuBar button:active { transform:scale(1.02); }
+  #menuBar button svg { opacity:.9; }
+  #menuBar button .tip { position:absolute; right:54px; top:50%; transform:translateY(-50%) translateX(8px);
+           background:rgba(18,22,32,.92); border:1px solid rgba(255,255,255,.14);
+           -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px);
+           color:#eef1f6; font-size:13px; font-weight:500; padding:7px 14px; border-radius:12px;
+           white-space:nowrap; opacity:0; pointer-events:none;
+           transition:all .2s cubic-bezier(.2,.9,.3,1.2); }
+  #menuBar button:hover .tip { opacity:1; transform:translateY(-50%) translateX(0); }
   .modal-nav { display:flex; gap:10px; margin-top:6px; }
   .modal-nav .btn { margin:0; }
   .addon-card { background:#0d1119; border:2px solid #2a3140; border-radius:16px; padding:18px; margin-bottom:14px;
@@ -438,10 +307,9 @@
 <!-- 1. DEVICE GATE -->
 <div id="gate-device" class="screen">
   <div class="card">
-    <button id="gateClose" aria-label="Back to the website">&times;</button>
     <div class="logo">GCAI</div>
     <h1>Computers only</h1>
-    <p>This software is only accessible through computers. Please try again on a computer.</p>
+    <p>The GCAI demo needs a desktop or laptop computer — a bigger stage for a bigger AI.<br><br>Please come back on a computer to try it.</p>
   </div>
 </div>
 
@@ -459,16 +327,16 @@
     <div class="step" data-step="1">
       <h2>Name your AI</h2>
       <p class="hint">This is the name you'll call it by.</p>
-      <input id="aiName" class="field" maxlength="20" value="Ondra" placeholder="e.g. Ondra" style="max-width:320px;margin:0 auto 20px;">
-      <p class="hint">Call it by name any time — "Hey Ondra" or just "Ondra". Both always work.</p>
+      <input id="aiName" class="field" maxlength="20" value="Genie" placeholder="e.g. Genie" style="max-width:320px;margin:0 auto 20px;">
+      <p class="hint">Call it by name any time — "Hey Genie" or just "Genie". Both always work.</p>
     </div>
 
     <div class="step" data-step="2">
       <h2>Pick a voice</h2>
       <p class="hint">Tap a voice to hear it.</p>
       <div class="cards" id="voiceCards">
-        <div class="card-opt sel" data-voice="female"><div class="t">Female</div><div class="d">Average female voice</div></div>
-        <div class="card-opt" data-voice="male"><div class="t">Male</div><div class="d">Average male voice</div></div>
+        <div class="card-opt sel" data-voice="female"><div class="t">Female</div><div class="d">Warm, natural feminine voice</div></div>
+        <div class="card-opt" data-voice="male"><div class="t">Male</div><div class="d">Natural masculine voice</div></div>
       </div>
       <div style="margin:26px 0 12px;font-size:19px;font-weight:600">Wake ding</div>
       <p class="hint">The sound it makes when it hears its wake word. Tap to hear each one.</p>
@@ -510,6 +378,21 @@
       <div class="swatches" id="auraSwatches"></div>
     </div>
 
+    <div class="step" data-step="7">
+      <h2>Tab icon</h2>
+      <p class="hint">Your AI's browser tab icon — make it yours. Use ‹ › to switch between outline, icon, and color.</p>
+      <div class="tistep-nav">
+        <button class="tistep-arrow" id="wTiPrev" aria-label="previous">‹</button>
+        <span class="tistep-name" id="wTiName">Outline</span>
+        <button class="tistep-arrow" id="wTiNext" aria-label="next">›</button>
+      </div>
+      <div class="tistep-body" id="wTiBody"></div>
+      <div class="tistep-preview">
+        <div class="tistep-prevbig" id="wTiPreview"></div>
+        <div class="tistep-prevlabel">Your tab icon</div>
+      </div>
+    </div>
+
     <div class="wiz-nav">
       <button class="btn ghost" id="wizBack">Back</button>
       <button class="btn" id="wizNext">Next</button>
@@ -520,29 +403,20 @@
 <!-- 4. MAIN HUD -->
 <div id="hud" class="screen hidden">
   <div class="hud-top">
-    <div class="who"><span id="hudName">Ondra</span><small id="hudSub">GCAI demo</small></div>
+    <div class="who"><span id="hudName">Genie</span><small id="hudSub">GCAI demo</small></div>
     <div>
-      <span class="req-pill"><b id="reqLeft">25</b> left</span><span id="boostTimer"></span><button id="addonBtn" data-tip="Add-ons" aria-label="Add-ons"><svg viewBox="0 0 24 24" width="24" height="24" fill="#fff" aria-hidden="true"><rect x="5" y="7" width="13" height="12" rx="2.5"/><circle cx="11.5" cy="7" r="3"/><circle cx="18" cy="13" r="3"/></svg></button><button id="gearBtn" data-tip="Settings" aria-label="Settings"><span class="gear-ico">&#9881;</span></button>
+      <span class="req-pill"><b id="reqLeft">25</b> left</span><span id="boostTimer"></span>
     </div>
   </div>
   <div class="stage">
-    <div id="orbWrap"><div id="orb"></div></div>
+    <div id="orb"></div>
     <div id="subtitle">Tap the mic or type below to talk.</div>
     <div id="brainTag"></div>
   </div>
-  <div id="popup" class="hidden">
-    <div class="popup-head"><span id="popupTitle"></span><button id="popupClose" data-tip="Close" aria-label="close">✕</button></div>
-    <div id="popupBody"></div>
-  </div>
-  <!-- 4b. FEEDBACK (demo-only) -->
-  <button id="fbBtn" data-tip="Feedback" aria-label="send feedback">&#128172;</button>
-  <div id="edgeBtns">
-    <button id="micBtn" data-tip="Microphone" aria-label="mute or unmute microphone"><span class="dot"></span></button>
-    <button id="voiceMuteBtn" data-tip="AI voice" aria-label="mute or unmute AI voice"><svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M4 9v6h4l5 5V4L8 9H4z" fill="#8ab4ff"/><path d="M16.5 8.5a5 5 0 010 7" stroke="#8ab4ff" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M19 6a8.5 8.5 0 010 12" stroke="#8ab4ff" stroke-width="2" fill="none" stroke-linecap="round" opacity=".6"/></svg></button>
-  </div>
   <div class="typebar">
+    <button id="micBtn" aria-label="microphone"><span class="dot"></span></button>
     <input id="q" placeholder="Ask anything..." autocomplete="off">
-    <button id="sendBtn" data-tip="Send" data-tip-pos="above" aria-label="send">&#10148;</button>
+    <button id="sendBtn" aria-label="send">&#10148;</button>
   </div>
   <div id="wakeHint"></div>
 </div>
@@ -550,57 +424,60 @@
 <!-- 5. THEME SETTINGS -->
 <div id="themeModal" class="modal hidden">
   <div class="modal-card">
-    <h2>Settings</h2>
-    <p class="sub">Change your AI's name and look any time.</p>
-    <div class="trow"><div class="tlabel">AI name</div><input id="setName" maxlength="24" autocomplete="off"></div>
-    <div class="trow"><div class="tlabel">Wallpaper</div><div class="swatches sm" id="setWall"></div></div>
-    <div class="trow"><div class="tlabel">Orb</div><div class="swatches sm" id="setOrb"></div></div>
-    <div class="trow"><div class="tlabel">Aura</div><div class="swatches sm" id="setAura"></div></div>
-    <div class="modal-nav">
-      <button class="btn ghost" id="themeCancel">Cancel</button>
-      <button class="btn" id="themeSave">Save theme</button>
+    <h2>Customization</h2>
+    <p class="sub">Change your AI's look any time. It saves to this email.</p>
+    <div class="theme-tabs">
+      <button class="theme-tab sel" id="themeTabBtnA">Appearance</button>
+      <button class="theme-tab" id="themeTabBtnI">Tab Icon</button>
     </div>
-  </div>
-</div>
-
-<!-- 5c. FEEDBACK (demo-only) -->
-<div id="fbModal" class="modal hidden">
-  <div class="modal-card">
-    <h2>Feedback</h2>
-    <p class="sub">Recommend a feature or report a bug — it goes straight to the GCAI team.</p>
-    <div class="trow"><div class="tlabel">Type</div>
-      <div class="fb-types">
-        <button class="fb-type sel" id="fbTypeFeature">&#128161; Feature idea</button>
-        <button class="fb-type" id="fbTypeBug">&#128027; Bug report</button>
+    <div class="theme-tabpane" id="themeTabA">
+      <div class="trow"><div class="tlabel">Wallpaper</div><div class="swatches sm" id="setWall"></div></div>
+      <div class="trow"><div class="tlabel">Orb</div><div class="swatches sm" id="setOrb"></div></div>
+      <div class="trow"><div class="tlabel">Aura</div><div class="swatches sm" id="setAura"></div></div>
+      <div class="modal-nav">
+        <button class="btn ghost" id="themeCancel">Cancel</button>
+        <button class="btn" id="themeSave">Save theme</button>
       </div>
     </div>
-    <div class="trow"><div class="tlabel">Details</div>
-      <textarea id="fbText" maxlength="2000" placeholder="Tell us what's on your mind..."></textarea>
+    <div class="theme-tabpane hidden" id="themeTabI">
+      <div class="tistep-nav">
+        <button class="tistep-arrow" id="mTiPrev" aria-label="previous">‹</button>
+        <span class="tistep-name" id="mTiName">Outline</span>
+        <button class="tistep-arrow" id="mTiNext" aria-label="next">›</button>
+      </div>
+      <div class="tistep-body" id="mTiBody"></div>
+      <div class="tistep-preview">
+        <div class="tistep-prevbig" id="mTiPreview"></div>
+        <div class="tistep-prevlabel">Your tab icon</div>
+      </div>
+      <div class="modal-nav" style="justify-content:center">
+        <button class="btn" id="tabIconSave">Save tab icon</button>
+      </div>
     </div>
-    <div class="modal-nav">
-      <button class="btn ghost" id="fbCancel">Cancel</button>
-      <button class="btn" id="fbSend">Send feedback</button>
-    </div>
-    <div id="fbErr" class="err"></div>
   </div>
 </div>
 
-<!-- 5b. WELCOME (first run) -->
-<div id="welcomeModal" class="modal hidden">
-  <div class="modal-card welcome-card">
-    <button id="welcomeClose" data-tip="Close" aria-label="close">✕</button>
-    <h2>WELCOME!</h2>
-    <p class="sub">Here's what I can do — try asking me:</p>
-    <ul class="welcome-list">
-      <li><b>⏰ The time</b><span>"What time is it?"</span></li>
-      <li><b>📅 The date</b><span>"What day is it today?"</span></li>
-      <li><b>🔍 Quick facts</b><span>"Who is...?" or "What is...?"</span></li>
-      <li><b>🗣️ Repeat after me</b><span>"Say hello in a cheery mood"</span></li>
-      <li><b>🎨 Make me yours</b><span>Tap the gear to change my name and look</span></li>
-    </ul>
-    <p class="welcome-tip">🔖 <b>Tip:</b> bookmark this page so you never lose me — press <b>Ctrl+D</b> (or <b>⌘+D</b> on Mac).</p>
+<!-- 5b. SETTINGS -->
+<div id="settingsModal" class="modal hidden">
+  <div class="modal-card">
+    <h2>Settings</h2>
+    <p class="sub">How your AI behaves.</p>
+    <div class="trow"><div class="tlabel">Status</div><div class="setStatus" id="setStatus"></div></div>
+    <div class="trow"><div class="tlabel">Microphone</div><button class="btn" id="setMic">Toggle mic</button></div>
+    <div class="trow"><div class="tlabel">Voice</div><button class="btn" id="setVoice">Toggle voice</button></div>
+    <div class="modal-nav">
+      <button class="btn ghost" id="settingsClose">Close</button>
+    </div>
   </div>
 </div>
+
+<!-- 5c. APP RAIL (oval) -->
+<div id="menuBar" class="hidden">
+  <button id="menuAddon" aria-label="Add-ons"><svg viewBox="0 0 24 24" width="22" height="22" fill="#fff" aria-hidden="true"><rect x="5" y="7" width="13" height="12" rx="2.5"/><circle cx="11.5" cy="7" r="3"/><circle cx="18" cy="13" r="3"/></svg><span class="tip">Add-ons</span></button>
+  <button id="menuCustom" aria-label="Customization"><svg viewBox="0 0 24 24" width="22" height="22" fill="#fff" aria-hidden="true"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.93 0 1.65-.75 1.65-1.69 0-.44-.18-.84-.44-1.13-.26-.29-.43-.68-.43-1.12 0-.94.76-1.7 1.7-1.7h2.34c2.86 0 5.18-2.32 5.18-5.18C22 6.5 17.5 2 12 2zm-6.5 9a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm4-3.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm4.5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm3.5 4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/></svg><span class="tip">Customization</span></button>
+  <button id="menuSettings" aria-label="Settings" style="margin-top:auto"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span class="tip">Settings</span></button>
+</div>
+<button id="menuBtn" aria-label="Menu"><svg viewBox="0 0 24 24" width="24" height="24" fill="#fff" aria-hidden="true"><path d="M7 10l5 5 5-5z"/></svg></button>
 
 <!-- 6. ADD-ONS -->
 <div id="addonModal" class="modal hidden">
@@ -633,7 +510,7 @@
     <h2>Demo complete</h2>
     <p class="sub">You've used your 25 demo requests.</p>
     <div id="wlFinalWrap">
-      <p class="sub">Join the waitlist and you'll get the buy link the day before Ondra launches.</p>
+      <p class="sub">Join the waitlist and you'll get the buy link the day before GCAI launches.</p>
       <input id="wlName2" class="field" maxlength="40" placeholder="Full name" autocomplete="name">
       <input id="wlEmail2" class="field" type="email" placeholder="you@email.com" autocomplete="email">
       <button class="btn" id="wlJoin2">Join the waitlist</button>
@@ -648,7 +525,7 @@
     </div>
     <div id="codeBox">GCAI-0000-0000</div>
     <ul>
-      <li>Enter this code in Ondra and your AI appears exactly as you built it — same name, voice, personality, and colors (wallpaper, orb, aura).</li>
+      <li>Enter this code in Genie and your AI appears exactly as you built it — same name, voice, personality, and colors (wallpaper, orb, aura).</li>
       <li>It also unlocks an <b>exclusive wallpaper + orb color set</b> only demo users get.</li>
       <li>One code per person. Keep it somewhere safe.</li>
     </ul>
@@ -662,7 +539,7 @@
     <button id="wlClose" aria-label="Close">&times;</button>
     <div class="brand">GCAI</div>
     <h2>Want the full version?</h2>
-    <p class="sub">15 requests left. Join the waitlist and you'll get the buy link the day before Ondra launches.</p>
+    <p class="sub">15 requests left. Join the waitlist and you'll get the buy link the day before GCAI launches.</p>
     <input id="wlName" class="field" maxlength="40" placeholder="Full name" autocomplete="name">
     <input id="wlEmail" class="field" type="email" placeholder="you@email.com" autocomplete="email">
     <button class="btn" id="wlJoin">Join the waitlist</button>
@@ -700,20 +577,11 @@ function djb2(s){
   return h;
 }
 
-/* ================= DEVICE GATE =================
-   Computers only — no phones, no iPads. iPadOS reports a desktop UA, so it
-   is caught via MacIntel + touch points. */
-var isMobile = /iphone|ipad|ipod|android|mobile|tablet/i.test(navigator.userAgent||"") ||
-  (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
+/* ================= DEVICE GATE ================= */
+var isMobile = /iphone|ipad|ipod|android|mobile|tablet/i.test(navigator.userAgent||"");
 if(isMobile){
   // phones/tablets get the computers-only screen; nothing else runs
   show("gate-device");
-  // let them close the blocker and go back to the website they came from
-  $("gateClose").onclick=function(){
-    if(document.referrer){ location.href=document.referrer; return; }
-    if(window.history.length>1){ history.back(); return; }
-    location.href="https://gcai.js.org/";
-  };
   return;
 }
 hide("gate-device");
@@ -755,8 +623,148 @@ var RAINBOW = [
   {n:"pink",c:"#ff375f"},
   {n:"black",c:"#111111"},{n:"white",c:"#ffffff"},{n:"gray",c:"#6e747c"}
 ];
-var wiz = { step:1, name:"", voice:"female", pers:"balanced", wallpaper:"blue", orb:"pink", aura:"blue", ding:"classic" };
+var RB_CSS="linear-gradient(135deg,#ff3b30,#ff9500,#ffcc00,#34c759,#0a84ff,#bf5af2,#ff375f)";
+var RB_CONIC="conic-gradient(from 210deg,#ff3b30,#ff9500,#ffcc00,#34c759,#0a84ff,#bf5af2,#ff375f,#ff3b30)";
+function isRainbow(n){ return n==="rainbow"; }
+function appendRainbowSwatch(box, isSel, onPick){
+  var d=document.createElement("div");
+  d.className="sw"+(isSel?" sel":"");
+  d.title="rainbow"; d.style.background=RB_CONIC;
+  d.onclick=function(){
+    var kids=box.children;
+    for(var k=0;k<kids.length;k++) kids[k].classList.remove("sel");
+    d.classList.add("sel");
+    onPick("rainbow");
+  };
+  box.appendChild(d);
+}
+var wiz = { step:1, name:"", voice:"female", pers:"balanced", wallpaper:"blue", orb:"pink", aura:"blue", ding:"classic",
+            tabIcon:"o", tabOutline:"rainbow", tabColor:"clear" };
 var wizStarted = false;
+
+/* ---- customizable browser tab icon (ported from the full build) ---- */
+var TAB_ICONS = [
+  {n:"o", label:"Ondra O", path:"M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"},
+  {n:"sparkle", label:"Sparkle", path:"M12 2c.8 5.4 2.6 7.2 8 8-5.4.8-7.2 2.6-8 8-.8-5.4-2.6-7.2-8-8 5.4-.8 7.2-2.6 8-8z"},
+  {n:"bolt", label:"Bolt", path:"M13 2L4.5 13.5H11L9.5 22 19 10h-6.5L13 2z"},
+  {n:"heart", label:"Heart", path:"M12 21C6 16.5 2.5 13 2.5 9.3 2.5 6.4 4.8 4 7.7 4c1.7 0 3.3.9 4.3 2.4C13 4.9 14.6 4 16.3 4c2.9 0 5.2 2.4 5.2 5.3 0 3.7-3.5 7.2-9.5 11.7z"},
+  {n:"chat", label:"Chat", path:"M3 4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H9l-6 5V4z"},
+  {n:"star", label:"Star", path:"M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.2 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8L12 2z"},
+  {n:"moon", label:"Moon", path:"M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z"},
+  {n:"orb", label:"Orb", path:"M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"},
+  {n:"diamond", label:"Diamond", path:"M12 2L2 9l10 13L22 9 12 2z"},
+  {n:"crown", label:"Crown", path:"M2 8l4 3.5L12 5l6 6.5L22 8l-2 11H4L2 8z"},
+  {n:"ghost", label:"Ghost", path:"M12 2a7 7 0 0 0-7 7v10l2.5-2.5L10 19l2-2.5L14 19l2.5-2.5L19 19V9a7 7 0 0 0-7-7z"},
+  {n:"music", label:"Music", path:"M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"},
+  {n:"flame", label:"Flame", path:"M12 2s5 4.6 5 10a5 5 0 0 1-10 0c0-2 1-3.6 2-5 .3 1 1 1.9 2 2.3C11 7.2 11.5 4.6 12 2z"},
+  {n:"leaf", label:"Leaf", path:"M20 4C12 4 5 11 4 20c9-1 16-8 16-16z"},
+  {n:"smiley", label:"Smiley", path:"M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM8.5 9h2v3h-2V9zm5 0h2v3h-2V9zM12 17.5c-2.2 0-4-1.2-5-3l1.6-1c.7 1.2 1.9 2 3.4 2s2.7-.8 3.4-2l1.6 1c-1 1.8-2.8 3-5 3z", rule:"evenodd"},
+  {n:"cloud", label:"Cloud", path:"M6.5 18a4.5 4.5 0 0 1-.42-8.98 6 6 0 0 1 11.6-1.4A4.75 4.75 0 0 1 17.5 18h-11z"},
+  {n:"rocket", label:"Rocket", path:"M12 2c4 3 6 7 6 11l3 4-4 1c-1 2-3 3.6-5 4.2-2-.6-4-2.2-5-4.2l-4-1 3-4c0-4 2-8 6-11z"},
+  {n:"paw", label:"Paw", path:"M12 12.5c-3 0-5.5 2.2-5.5 4.5 0 1.5 1.2 2.5 2.8 2.5 1 0 1.8-.4 2.7-.4s1.7.4 2.7.4c1.6 0 2.8-1 2.8-2.5 0-2.3-2.5-4.5-5.5-4.5zM6.2 7.4a1.7 1.7 0 1 0 3.4 0 1.7 1.7 0 1 0-3.4 0zM9.8 4.6a1.7 1.7 0 1 0 3.4 0 1.7 1.7 0 1 0-3.4 0zM14.2 4.6a1.7 1.7 0 1 0 3.4 0 1.7 1.7 0 1 0-3.4 0zM17.8 7.4a1.7 1.7 0 1 0 3.4 0 1.7 1.7 0 1 0-3.4 0z"}
+];
+var RB_STOPS=[["0","#ff3b30"],["0.17","#ff9500"],["0.33","#ffcc00"],["0.5","#34c759"],
+              ["0.67","#0a84ff"],["0.83","#bf5af2"],["1","#ff375f"]];
+function tabIconSVG(iconName, outlineName, fgName, size){
+  var ic = TAB_ICONS.filter(function(t){ return t.n===iconName; })[0] || TAB_ICONS[0];
+  var rule = ic.rule ? ' fill-rule="'+ic.rule+'"' : '';
+  var needRb = isRainbow(outlineName)||isRainbow(fgName);
+  var defs = needRb ? '<defs><linearGradient id="tirb" x1="0" y1="0" x2="1" y2="1">' +
+    RB_STOPS.map(function(s){ return '<stop offset="'+s[0]+'" stop-color="'+s[1]+'"/>'; }).join("") +
+    '</linearGradient></defs>' : '';
+  function tc(n){
+    if(isRainbow(n)) return "url(#tirb)";
+    if(n==="clear") return "none";
+    return rainColor(n, RAINBOW[8]).c;
+  }
+  var sw = (iconName==="o") ? 1.8 : 2.4;
+  var tf = (iconName==="o") ? "translate(3,3) scale(2.4167)" : "translate(6,6) scale(2.1667)";
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="'+size+'" height="'+size+'">'
+    + defs
+    + '<g transform="'+tf+'" fill="'+tc(fgName)+'" stroke="'+tc(outlineName)+'" stroke-width="'+sw+'" stroke-linejoin="round">'
+    + '<path d="'+ic.path+'"'+rule+'/></g></svg>';
+}
+function setFavicon(url){
+  var l = document.querySelector('link[rel="icon"]');
+  if(!l){ l = document.createElement('link'); l.rel = 'icon'; document.head.appendChild(l); }
+  l.type = 'image/png'; l.href = url;
+}
+function makeFavicon(iconName, outlineName, fgName){
+  var svg = tabIconSVG(iconName, outlineName||"white", fgName||"white", 64);
+  var img = new Image();
+  img.onload = function(){
+    try{
+      var c = document.createElement('canvas'); c.width = 64; c.height = 64;
+      c.getContext('2d').drawImage(img, 0, 0, 64, 64);
+      setFavicon(c.toDataURL('image/png'));
+    }catch(e){}
+  };
+  img.src = 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+}
+function applyTabIcon(){
+  makeFavicon(S.tabIcon||"o", S.tabOutline||"rainbow", S.tabColor||"clear");
+}
+/* shared tab-icon stepper: < > arrows cycle Outline -> Icon -> Icon color,
+   big live preview always at the bottom. p = element id prefix, state = obj
+   holding tabIcon/tabOutline/tabColor */
+function initTabIconStepper(p, state){
+  var stepIdx=0;
+  var names=["Outline","Icon","Icon color"];
+  function preview(){
+    var pv=$(p+"Preview");
+    pv.innerHTML=tabIconSVG(state.tabIcon||"o", state.tabOutline||"rainbow", state.tabColor||"clear", 60);
+  }
+  function render(){
+    $(p+"Name").textContent=names[stepIdx];
+    var body=$(p+"Body"); body.innerHTML="";
+    if(stepIdx===1){
+      var grid=document.createElement("div"); grid.className="icon-grid";
+      TAB_ICONS.forEach(function(ic){
+        var d=document.createElement("div");
+        d.className="ic"+(state.tabIcon===ic.n?" sel":"");
+        d.title=ic.label;
+        d.innerHTML='<svg viewBox="0 0 24 24" fill="#fff"><path d="'+ic.path+'"'+(ic.rule?' fill-rule="'+ic.rule+'"':'')+'/></svg>';
+        d.onclick=function(){
+          state.tabIcon=ic.n;
+          var kids=grid.children;
+          for(var k=0;k<kids.length;k++) kids[k].classList.remove("sel");
+          d.classList.add("sel"); preview();
+        };
+        grid.appendChild(d);
+      });
+      body.appendChild(grid);
+    }else{
+      var key=stepIdx===0?"tabOutline":"tabColor";
+      var box=document.createElement("div"); box.className="swatches sm";
+      function markSel(el){
+        var kids=box.children;
+        for(var k=0;k<kids.length;k++) kids[k].classList.remove("sel");
+        el.classList.add("sel"); preview();
+      }
+      RAINBOW.forEach(function(r){
+        var d=document.createElement("div");
+        d.className="sw"+(state[key]===r.n?" sel":"");
+        d.title=r.n; d.style.background=r.c;
+        d.onclick=function(){ state[key]=r.n; markSel(d); };
+        box.appendChild(d);
+      });
+      appendRainbowSwatch(box, state[key]==="rainbow", function(name){
+        state[key]=name; preview();
+      });
+      var cd=document.createElement("div");
+      cd.className="sw sw-clear"+(state[key]==="clear"?" sel":"");
+      cd.title="clear";
+      cd.onclick=function(){ state[key]="clear"; markSel(cd); };
+      box.appendChild(cd);
+      body.appendChild(box);
+    }
+    preview();
+  }
+  $(p+"Prev").onclick=function(){ stepIdx=(stepIdx+2)%3; render(); };
+  $(p+"Next").onclick=function(){ stepIdx=(stepIdx+1)%3; render(); };
+  render();
+  return { refresh:render };
+}
 
 function startWizard(){
   show("wizard");
@@ -764,7 +772,9 @@ function startWizard(){
   wizStarted = true;
   // progress dots
   var p = $("progress");
-  for(var i=1;i<=6;i++){ var d=document.createElement("div"); d.className="pdot"+(i===1?" on":""); p.appendChild(d); }
+  for(var i=1;i<=7;i++){ var d=document.createElement("div"); d.className="pdot"+(i===1?" on":""); p.appendChild(d); }
+  // tab icon stepper on step 7 (shares the live wizard state)
+  initTabIconStepper("wTi", wiz);
   // floating particles (little animated flourishes)
   var pc = $("particles");
   for(var j=0;j<26;j++){
@@ -781,24 +791,28 @@ function startWizard(){
   // swatches
   function buildSwatches(elId, key, onPick){
     var box = $(elId);
+    function pick(name){
+      wiz[key]=name;
+      var kids=box.children;
+      for(var k=0;k<kids.length;k++) kids[k].classList.remove("sel");
+      for(var j=0;j<kids.length;j++){ if(kids[j].title===name){ kids[j].classList.add("sel"); break; } }
+      if(onPick) onPick(name);
+    }
     RAINBOW.forEach(function(r){
       var d=document.createElement("div");
       d.className="sw"+(wiz[key]===r.n?" sel":"");
       d.title=r.n; d.style.background=r.c; d.setAttribute("data-c",r.n);
-      d.onclick=function(){
-        wiz[key]=r.n;
-        var kids=box.children;
-        for(var k=0;k<kids.length;k++) kids[k].classList.remove("sel");
-        d.classList.add("sel");
-        if(onPick) onPick(r);
-      };
+      d.onclick=function(){ pick(r.n); };
       box.appendChild(d);
     });
+    appendRainbowSwatch(box, wiz[key]==="rainbow", function(){ pick("rainbow"); });
   }
   buildSwatches("wallSwatches","wallpaper");
-  buildSwatches("orbSwatches","orb",function(r){ $("orbPreview").style.background=orbBg(r.c); });
-  buildSwatches("auraSwatches","aura",function(r){
-    $("auraPreview").style.boxShadow="0 0 46px 14px "+rgba(r.c,0.55);
+  buildSwatches("orbSwatches","orb",function(n){ $("orbPreview").style.background=isRainbow(n)?RB_CONIC:orbBg(rainColor(n,RAINBOW[6]).c); });
+  buildSwatches("auraSwatches","aura",function(n){
+    $("auraPreview").style.boxShadow=isRainbow(n)?
+      "0 0 18px 4px rgba(255,59,48,.55), 0 0 36px 9px rgba(255,204,0,.45), 0 0 54px 14px rgba(10,132,255,.45)":
+      "0 0 46px 14px "+rgba(rainColor(n,RAINBOW[4]).c,0.55);
   });
   $("orbPreview").style.background=orbBg("#ff375f");
   // option cards
@@ -837,12 +851,13 @@ function startWizard(){
       $("aiName").style.borderColor="";
       wiz.name=nm;
     }
-    if(wiz.step<6){ goStep(wiz.step+1); }
+    if(wiz.step<7){ goStep(wiz.step+1); }
     else {
-      var done={name:wiz.name,voice:wiz.voice,pers:wiz.pers,wallpaper:wiz.wallpaper,orb:wiz.orb,aura:wiz.aura,ding:wiz.ding};
+      var done={name:wiz.name,voice:wiz.voice,pers:wiz.pers,wallpaper:wiz.wallpaper,orb:wiz.orb,aura:wiz.aura,ding:wiz.ding,
+        tabIcon:wiz.tabIcon||"o",tabOutline:wiz.tabOutline||"rainbow",tabColor:wiz.tabColor||"clear"};
       saveSettings(done);
       hide("wizard");
-      startHud(done, true); // first run: greet out loud
+      startHud(done);
     }
   };
   goStep(1);
@@ -856,13 +871,14 @@ function goStep(n){
   var dots=document.querySelectorAll("#progress .pdot");
   for(var j=0;j<dots.length;j++) dots[j].classList.toggle("on", j<n);
   $("wizBack").style.visibility = n===1 ? "hidden" : "visible";
-  $("wizNext").textContent = n===6 ? "Meet my AI" : "Next";
+  $("wizNext").textContent = n===7 ? "Meet my AI" : "Next";
   if(n===6){
     // aura step preview: current orb body + current aura glow
-    var oc=rainColor(wiz.orb,RAINBOW[6]), ac=rainColor(wiz.aura,RAINBOW[4]);
     var ap=$("auraPreview");
-    ap.style.background=orbBg(oc.c);
-    ap.style.boxShadow="0 0 46px 14px "+rgba(ac.c,0.55);
+    ap.style.background=isRainbow(wiz.orb)?RB_CONIC:orbBg(rainColor(wiz.orb,RAINBOW[6]).c);
+    ap.style.boxShadow=isRainbow(wiz.aura)?
+      "0 0 18px 4px rgba(255,59,48,.55), 0 0 36px 9px rgba(255,204,0,.45), 0 0 54px 14px rgba(10,132,255,.45)":
+      "0 0 46px 14px "+rgba(rainColor(wiz.aura,RAINBOW[4]).c,0.55);
   }
 }
 
@@ -873,14 +889,10 @@ function goStep(n){
    gets cut off. Falls back to device speech only if the network voice fails. */
 var NET_TL = "en-US";
 /* Distinct natural internet voices per choice — different voice, pitch and
-   rate for male vs female so the two options never sound the same.
-   Male: US English Male with en-US, pitched to a deep natural range
-   (0.35 — extreme pitch shifts like 0.15 cause robotic distortion).
-   (The old en-US pairing made the endpoint fall back to the default
-   female voice; if that ever recurs, this is the spot to check.) */
+   rate for male vs female so the two options never sound the same. */
 var VOICES = {
-  female:{ name:"US English Female", tl:"en-US", pitch:"0.5", rate:"0.55", devPitch:1.25 },
-  male:{ name:"US English Male", tl:"en-US", pitch:"0.18", rate:"0.6", devPitch:0.6 }
+  female:{ name:"US English Female", pitch:"0.5", rate:"0.55", devPitch:1.25 },
+  male:{ name:"UK English Male", pitch:"0.5", rate:"0.5", devPitch:0.75 }
 };
 function vcfg(v){ return VOICES[v]||VOICES[S.voice]||VOICES.female; }
 function voiceName(v){ return vcfg(v).name; }
@@ -901,44 +913,35 @@ document.addEventListener("click", unlockAudio);
    Customizable chime when the AI hears its wake word (like LUNA's chime). */
 var actx=null;
 function ensureCtx(){
-  // One shared AudioContext, created lazily. Mobile browsers (notably iOS
-  // Safari) suspend it whenever the OS takes the audio session — e.g. while
-  // the TTS mp3 is playing — so beep() retries briefly instead of dropping
-  // the chime. After ~1.8s it gives up: a very late ding is worse than none.
+  // The wake ding must survive a fresh page load with no taps yet: browsers
+  // start an AudioContext suspended until a user gesture, so we prime it on
+  // the first real gesture and resume-then-play when scheduling.
   try{
-    if(!actx){
-      var AC=window.AudioContext||window.webkitAudioContext;
-      if(!AC) return null;
-      actx=new AC();
-    }
-    if(actx.state==="suspended"){
-      try{ var p=actx.resume(); if(p&&p.catch) p.catch(function(){}); }catch(e){}
-    }
+    actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+    if(actx.state==="suspended") actx.resume();
   }catch(e){}
   return actx;
 }
+document.addEventListener("pointerdown", ensureCtx);
+document.addEventListener("keydown", ensureCtx);
 function beep(freq,dur,delay,type,vol){
-  var ctx=ensureCtx(); if(!ctx) return;
-  function schedule(){
+  function run(ctx){
     try{
-      var t=ctx.currentTime+(delay||0)+0.03;
+      var t=ctx.currentTime+(delay||0);
       var o=ctx.createOscillator(), g=ctx.createGain();
       o.type=type||"sine"; o.frequency.value=freq;
       g.gain.setValueAtTime(0.0001,t);
       g.gain.exponentialRampToValueAtTime(vol||0.25,t+0.02);
       g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
-      o.connect(g); g.connect(ctx.destination);
+      o.connect(g); g.connect(actx.destination);
       o.start(t); o.stop(t+dur+0.05);
     }catch(e){}
   }
-  var tries=0;
-  (function attempt(){
-    // Suspended (OS took the audio session, autoplay policy, ...): resume
-    // and retry a few times instead of silently losing the ding.
-    try{ if(ctx.state==="running"){ schedule(); return; } }catch(e){}
-    try{ var p=ctx.resume(); if(p&&p.catch) p.catch(function(){}); }catch(e){}
-    if(++tries<=6) setTimeout(attempt,300);
-  })();
+  try{
+    var ctx=ensureCtx(); if(!ctx) return;
+    if(ctx.state==="suspended"){ ctx.resume().then(function(){ run(ctx); },function(){ run(ctx); }); }
+    else run(ctx);
+  }catch(e){}
 }
 var DINGS={
   classic:{t:"Classic", d:"Two-tone chime", play:function(){ beep(880,0.14,0); beep(1318,0.2,0.13); }},
@@ -951,22 +954,8 @@ function playDing(name){ var d=DINGS[name]||DINGS.classic; try{ d.play(); }catch
 /* Emojis show in text but are never read aloud (same rule as LUNA). */
 var EMOJI_RE=/[\u{1F000}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE00}-\u{FE0F}\u{200D}\u{2190}-\u{21FF}\u{2300}-\u{23FF}]/gu;
 function stripEmojis(t){ return String(t||"").replace(EMOJI_RE,"").replace(/[ \t]{2,}/g," ").trim(); }
-/* What the voice actually says: emojis are already stripped above, and this
-   also silences characters TTS likes to read aloud ("underscore", "slash",
-   "asterisk", ...). Displayed text keeps everything — only speech is cleaned. */
-function cleanForSpeech(t){
-  return stripEmojis(t)
-    .replace(/\bOndra\b/g,"ondrah")        // product name: say it ON-drah
-    .replace(/[_]/g," ")                  // never say "underscore"
-    .replace(/[\/\\]/g," ")               // never say "slash"/"backslash"
-    .replace(/[*#~`^|<>=\[\]{}]/g,"")     // markdown-ish junk: drop silently
-    .replace(/(^|\s)-(?=\s|$)/gm,"$1")    // lone dashes (bullets) -> drop
-    .replace(/-{2,}/g,", ")               // -- / --- -> spoken pause
-    .replace(/\s+([,.!?;:])/g,"$1")       // no space before punctuation
-    .replace(/[ \t]{2,}/g," ").trim();
-}
-function speak(text, onStart, onDone, voice, prosody){
-  text=cleanForSpeech(text); // what it says out loud — never emojis/_/-// junk
+function speak(text, onStart, onDone, voice){
+  text=stripEmojis(text); // what it says out loud — never emojis
   var my = ++speakToken;
   var started=false;
   function fireStart(){ if(started||my!==speakToken) return; started=true; if(onStart){ try{onStart();}catch(e){} } }
@@ -980,14 +969,10 @@ function speak(text, onStart, onDone, voice, prosody){
   setTimeout(fireStart, 15000); // backstop: never leave the UI hanging
   try{ if(window.speechSynthesis && (speechSynthesis.speaking||speechSynthesis.pending)) speechSynthesis.cancel(); }catch(e){}
   stopNetAudio();
-  netSpeak(text, my, fireStart, fireDone, voice, prosody);
+  netSpeak(text, my, fireStart, fireDone, voice);
 }
-function netSpeak(text, my, onStart, onDone, voice, prosody){
-  var cfg = Object.assign({}, vcfg(voice));
-  if(prosody){ // mood multipliers (e.g. cheery = higher/faster) on top of the chosen voice
-    if(prosody.pitch) cfg.pitch=(parseFloat(cfg.pitch)*prosody.pitch).toFixed(2);
-    if(prosody.rate) cfg.rate=(parseFloat(cfg.rate)*prosody.rate).toFixed(2);
-  }
+function netSpeak(text, my, onStart, onDone, voice){
+  var cfg = vcfg(voice);
   var parts = String(text).match(/[^.!?]+[.!?]+["'")\]]?|[^.!?]+$/g) || [String(text)];
   var chunks=[], cur="";
   for(var i=0;i<parts.length;i++){
@@ -995,45 +980,23 @@ function netSpeak(text, my, onStart, onDone, voice, prosody){
     else cur = cur ? cur+" "+parts[i] : parts[i];
   }
   if(cur.trim()) chunks.push(cur.trim());
-  var ci=0, finished=false, retried=false;
-  // The reply plays in pieces; the next piece preloads while the current one
-  // plays, so a slow network never leaves a gap — or a cut — mid-sentence.
-  var preA=null, preIdx=-1;
-  function chunkUrl(c){
-    return "https://code.responsivevoice.org/getvoice.php?t="+encodeURIComponent(c)+
-      "&tl="+(cfg.tl||NET_TL)+"&sv=g1&vn="+encodeURIComponent(cfg.name)+
-      "&pitch="+cfg.pitch+"&rate="+cfg.rate+"&vol=1";
-  }
-  function preload(i){
-    if(i>=chunks.length||i===preIdx) return;
-    preIdx=i;
-    try{ preA=new Audio(); preA.preload="auto"; preA.src=chunkUrl(chunks[i]); preA.load(); }
-    catch(e){ preA=null; preIdx=-1; }
-  }
-  function doneAll(){ if(finished||my!==speakToken) return; finished=true; netAudio=null; preA=null; onStart(); onDone(); }
-  function fallBack(){ if(finished||my!==speakToken) return; finished=true; netAudio=null; preA=null; deviceSpeak(text,onStart,onDone,voice,prosody); }
+  var ci=0, finished=false;
+  function doneAll(){ if(finished||my!==speakToken) return; finished=true; netAudio=null; onStart(); onDone(); }
+  function fallBack(){ if(finished||my!==speakToken) return; finished=true; netAudio=null; deviceSpeak(text,onStart,onDone,voice); }
   function playChunk(){
     if(finished||my!==speakToken) return;
     if(ci>=chunks.length){ doneAll(); return; }
-    // reuse the preloaded piece when it's the one we need
-    var usePre=(preIdx===ci&&preA);
-    var a=usePre?preA:((audioUnlocked&&ttsAudio)?ttsAudio:new Audio());
-    preA=null; preIdx=-1;
+    var a = (audioUnlocked&&ttsAudio) ? ttsAudio : new Audio();
     try{ a.pause(); }catch(e){}
     netAudio=a;
-    a.onended=function(){ if(finished||my!==speakToken) return; ci++; retried=false; playChunk(); };
-    a.onplaying=function(){ onStart(); preload(ci+1); };
-    a.onerror=function(){
-      // one retry of the same piece before falling back to the device voice —
-      // a momentary network blip shouldn't cut the reply off
-      if(!retried&&!finished&&my===speakToken){
-        retried=true; playChunk(); return;
-      }
-      fallBack();
-    };
-    if(!usePre) a.src=chunkUrl(chunks[ci]); // preloaded already has the right URL
+    a.onended=function(){ if(finished||my!==speakToken) return; ci++; playChunk(); };
+    a.onplaying=function(){ onStart(); };
+    a.onerror=fallBack;
+    a.src="https://code.responsivevoice.org/getvoice.php?t="+encodeURIComponent(chunks[ci])+
+          "&tl="+NET_TL+"&sv=g1&vn="+encodeURIComponent(cfg.name)+
+          "&pitch="+cfg.pitch+"&rate="+cfg.rate+"&vol=1";
     try{ a.load(); }catch(e){}
-    try{ var p=a.play(); if(p&&p.catch) p.catch(function(){ a.onerror(); }); }catch(e){ fallBack(); return; }
+    try{ var p=a.play(); if(p&&p.catch) p.catch(fallBack); }catch(e){ fallBack(); return; }
     setTimeout(function(){
       if(!finished&&my===speakToken&&(a.paused||a.currentTime===0)) fallBack();
     },10000);
@@ -1042,97 +1005,18 @@ function netSpeak(text, my, onStart, onDone, voice, prosody){
   playChunk();
   setTimeout(function(){ if(!finished&&my===speakToken) doneAll(); },180000);
 }
-function pickVoice(){
-  // Male voice picker for the offline device fallback: prefer a US male
-  // system voice so "Male" never falls back to a female default.
+function deviceSpeak(text,onStart,onDone,voice){
+  // last-resort fallback only; the product voice is the internet voice above
   try{
-    var all=speechSynthesis.getVoices()||[];
-    var vs=all.filter(function(v){ return /^en/i.test(v.lang||""); });
-    if(!vs.length) return null;
-    var maleNames=["david","mark","alex","guy","james","john","mike","tom"];
-    var us=vs.filter(function(v){ return /^en-US/i.test(v.lang||""); });
-    var i, n, hit;
-    for(i=0;i<maleNames.length;i++){
-      n=maleNames[i];
-      hit=us.filter(function(v){ return (v.name||"").toLowerCase().indexOf(n)>=0; });
-      if(hit.length) return hit[0];
-    }
-    hit=us.filter(function(v){ return /male/i.test(v.name||""); });
-    if(hit.length) return hit[0];
-    if(us.length) return us[0];
-    for(i=0;i<maleNames.length;i++){
-      n=maleNames[i];
-      hit=vs.filter(function(v){ return (v.name||"").toLowerCase().indexOf(n)>=0; });
-      if(hit.length) return hit[0];
-    }
-    hit=vs.filter(function(v){ return /male/i.test(v.name||""); });
-    if(hit.length) return hit[0];
-    return vs[0];
-  }catch(e){ return null; }
-}
-function deviceSpeak(text,onStart,onDone,voice,prosody){
-  // last-resort fallback only; the product voice is the internet voice above.
-  // Chrome cuts a single long speechSynthesis utterance off mid-sentence, so
-  // a long fallback is spoken as a chain of short sentence utterances.
-  try{
-    var my=speakToken;
-    var parts=String(text).match(/[^.!?]+[.!?]+["'")\]]?|[^.!?]+$/g)||[String(text)];
-    var i=0, started=false;
-    function mk(u){
-      u.rate=1; u.pitch=vcfg(voice).devPitch;
-      if(prosody){
-        if(prosody.rate) u.rate=Math.min(2,Math.max(.5,prosody.rate));
-        if(prosody.pitch) u.pitch=Math.min(2,Math.max(0,vcfg(voice).devPitch*prosody.pitch));
-      }
-      if(voice==="male"){ var pv=pickVoice(); if(pv) u.voice=pv; }
-      return u;
-    }
-    function next(){
-      if(my!==speakToken) return; // superseded: stay silent
-      if(i>=parts.length){ onDone(); return; }
-      var u=mk(new SpeechSynthesisUtterance(parts[i++].trim()));
-      u.onstart=function(){ if(!started){ started=true; onStart(); } };
-      u.onend=function(){ next(); };
-      u.onerror=function(){ next(); }; // skip the failed piece, keep talking
-      speechSynthesis.speak(u);
-    }
-    next();
+    var u=new SpeechSynthesisUtterance(text); u.rate=1; u.pitch=vcfg(voice).devPitch;
+    u.onstart=onStart; u.onend=onDone; u.onerror=onDone;
+    speechSynthesis.speak(u);
   }catch(e){ onStart(); onDone(); }
 }
 
 /* ================= SPEECH RECOGNITION + WAKE WORD ================= */
-/* flashHint was called in 11 places but never defined — every mic error
-   message crashed silently instead of showing. Now it shows in #wakeHint
-   and auto-restores the default hint. */
-var hintTimer=null;
-function flashHint(msg,ms){
-  var el=$("wakeHint"); if(!el) return;
-  el.textContent=msg;
-  if(hintTimer) clearTimeout(hintTimer);
-  hintTimer=setTimeout(function(){ hintTimer=null; setWakeHint(); }, ms||4000);
-}
-/* pulseOrb was called by ackWake and the limit-break but never defined —
-   saying the bare wake word crashed before the ding. Quick orb pop. */
-function pulseOrb(){
-  var orb=$("orb"); if(!orb) return;
-  orb.classList.remove("pulseOnce"); void orb.offsetWidth; orb.classList.add("pulseOnce");
-  setTimeout(function(){ orb.classList.remove("pulseOnce"); },600);
-}
 var SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
 var recog=null, micOn=false, speaking=false, followUpUntil=0;
-function editDist(a,b){
-  // tiny Levenshtein for the wake-word smear fallback below
-  a=String(a); b=String(b);
-  if(a===b) return 0;
-  var m=a.length, n=b.length;
-  if(!m) return n; if(!n) return m;
-  var d=[], i, j;
-  for(i=0;i<=m;i++) d[i]=[i];
-  for(j=0;j<=n;j++) d[0][j]=j;
-  for(i=1;i<=m;i++) for(j=1;j<=n;j++)
-    d[i][j]=Math.min(d[i-1][j]+1, d[i][j-1]+1, d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));
-  return d[m][n];
-}
 function wakeMatch(transcript, name){
   // robust: lowercase, strip punctuation, "hey <name>" or bare "<name>",
   // any words around it, any accent (we only see the transcribed text)
@@ -1141,44 +1025,21 @@ function wakeMatch(transcript, name){
   if(!nm) return {hit:false, rest:transcript};
   var re=new RegExp("(^|\\s)(hey\\s+)?"+escRe(nm)+"(\\s|$|[,.!?])");
   var m=t.match(re);
-  if(m){
-    var rest=t.replace(re," ").replace(/\s+/g," ").trim();
-    return {hit:true, rest:rest};
-  }
-  // Chrome often smears the wake word into one blob ("heylars") or
-  // mishears a letter ("heylarz"): accept a single word starting with
-  // "hey" whose remainder is within one edit of the name. Kept tight
-  // (hey-prefix required) so ordinary words never false-trigger.
-  var words=transcript.toLowerCase().replace(/[^a-z0-9\s]/g," ").split(/\s+/);
-  var nmc=nm.replace(/\s+/g,"");
-  for(var i=0;i<words.length;i++){
-    var w=words[i];
-    if(w&&w.length>3&&w.indexOf("hey")===0&&editDist(w.slice(3),nmc)<=1)
-      return {hit:true, rest:words.slice(i+1).join(" ").trim()};
-  }
-  return {hit:false, rest:transcript};
+  if(!m) return {hit:false, rest:transcript};
+  var rest=t.replace(re," ").replace(/\s+/g," ").trim();
+  return {hit:true, rest:rest};
 }
 // Pure decision for voice input — tested below.
 function voiceAction(fin, name, followUp, isSpeaking){
+  if(isSpeaking) return {type:"ignore"}; // never hear its own voice
   var w=wakeMatch(fin, name);
-  if(isSpeaking){
-    // saying the AI's name while it talks stops it cold
-    if(w.hit) return {type:"stop"};
-    return {type:"ignore"}; // never hear its own voice
-  }
   if(w.hit && w.rest) return {type:"send", query:w.rest};
   if(w.hit) return {type:"ack"}; // bare name: "Yes?" + follow-up window
   if(followUp && fin.trim()) return {type:"send", query:fin.trim()};
   return {type:"ignore"}; // no wake word: not for us
 }
-function startListening(quiet){
-  if(micOn) return;
-  if(!SR){
-    // iOS Safari/Chrome/Firefox don't implement speech recognition at all —
-    // say so instead of leaving the mic button looking dead.
-    if(!quiet) flashHint("Voice input isn't supported in this browser — iPhones and iPads can't do speech recognition, so type instead.");
-    return;
-  }
+function startListening(){
+  if(!SR || micOn) return;
   unlockAudio();
   try{
     recog=new SR();
@@ -1193,7 +1054,6 @@ function startListening(quiet){
       var a=voiceAction(fin, S.name, Date.now()<followUpUntil, speaking);
       if(a.type==="send") sendMessage(a.query);
       else if(a.type==="ack") ackWake();
-      else if(a.type==="stop") stopTalking(); // name said mid-speech: stop talking
     };
     recog.onend=function(){ if(micOn){ try{recog.start();}catch(e){} } };
     recog.onerror=function(ev){
@@ -1216,16 +1076,14 @@ function startListening(quiet){
     flashHint('Listening — say "Hey '+S.name+'" or just "'+S.name+'".');
   }catch(e){ flashHint("Couldn't start the mic — type instead."); }
 }
-function toggleMic(){ if(micOn) stopMic(); else startListening(false); }
+function toggleMic(){ if(micOn) stopMic(); else startListening(); }
 function stopMic(){ micOn=false; try{ if(recog) recog.stop(); }catch(e){} $("micBtn").classList.remove("live"); }
 function ackWake(){
   // Bare name with no command: play the chosen wake ding (chime only, like
   // LUNA), then a short follow-up window where the wake word isn't needed —
-  // 8 seconds: the ding + the user's reaction + their question + Chrome's
-  // final-transcript latency never fit in the old 2s window, so answers
-  // spoken after the ding were silently ignored.
+  // 2 seconds, matching LUNA's followUpUntil window.
   // Mic stays on; anything heard while the AI itself is speaking is ignored
-  // so it can't trigger on its own voice — except its name, which stops it.
+  // so it can't trigger on its own voice.
   pulseOrb();
   var orb=$("orb");
   orb.classList.add("talking");
@@ -1233,10 +1091,9 @@ function ackWake(){
   flashHint("I'm listening — go ahead.");
   playDing(S.ding);
   setTimeout(function(){ orb.classList.remove("talking"); setWakeHint(); }, 900);
-  followUpUntil=Date.now()+8000;
+  followUpUntil=Date.now()+2000;
 }
 function setWakeHint(){
-  if(hintTimer){ clearTimeout(hintTimer); hintTimer=null; }
   if(!S.name) return;
   // both wake phrases always work — no setup choice
   $("wakeHint").textContent = 'Say "Hey '+S.name+'" or just "'+S.name+'" — either works. Or type below.';
@@ -1354,63 +1211,9 @@ function askBrain(prompt,sys){
   return next();
 }
 
-/* ================= SIDE POPUP =================
-   Weather and the clock open a popup; while one is open the orb
-   moves to the middle of the left quadrant, subtitles widen and drop to the
-   bottom, and the popup takes the middle-to-right band (body.hasPopup).
-   Only these three ever pop — everything else stays in the subtitle. */
-var popupClockTimer=null;
-var popupAutoClose=false; // lookup popups dismiss themselves when the AI is done talking
-function escHtml(s){ return String(s||"").replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
-function openPopup(title, html, autoClose){
-  if(popupClockTimer){ clearInterval(popupClockTimer); popupClockTimer=null; }
-  popupAutoClose=!!autoClose;
-  $("popupTitle").textContent=title;
-  $("popupBody").innerHTML=html;
-  show("popup");
-  document.body.classList.add("hasPopup");
-}
-function closePopup(){
-  if(popupClockTimer){ clearInterval(popupClockTimer); popupClockTimer=null; }
-  popupAutoClose=false;
-  hide("popup");
-  document.body.classList.remove("hasPopup");
-  // a dragged window reopens in its default spot next time
-  var p=$("popup");
-  p.style.left=""; p.style.top=""; p.style.right=""; p.style.transform="";
-}
-$("popupClose").onclick=function(){ closePopup(); };
-
-/* draggable popup: grab the header to move the window anywhere.
-   The X is excluded so its click still closes. */
-var popDrag=null;
-function popDragMove(ev){
-  if(!popDrag) return;
-  var p=$("popup");
-  p.style.left=(ev.clientX-popDrag.dx)+"px";
-  p.style.top=(ev.clientY-popDrag.dy)+"px";
-  if(ev.preventDefault) ev.preventDefault();
-}
-function popDragEnd(){ popDrag=null; document.body.classList.remove("popDragging"); }
-(function(){
-  var head=document.querySelector(".popup-head");
-  if(!head||!head.addEventListener) return;
-  head.addEventListener("pointerdown",function(ev){
-    if(ev.target&&ev.target.closest&&ev.target.closest("#popupClose")) return;
-    var p=$("popup"), r=p.getBoundingClientRect();
-    p.style.left=r.left+"px"; p.style.top=r.top+"px";
-    p.style.right="auto"; p.style.transform="none";
-    popDrag={dx:ev.clientX-r.left, dy:ev.clientY-r.top};
-    document.body.classList.add("popDragging");
-    if(ev.preventDefault) ev.preventDefault();
-  });
-  document.addEventListener("pointermove",popDragMove);
-  document.addEventListener("pointerup",popDragEnd);
-  document.addEventListener("pointercancel",popDragEnd);
-})();
-
 /* ================= CHAT ================= */
-var S = { name:"Ondra", wake:"hey", voice:"female", pers:"balanced", wallpaper:"blue", orb:"pink", aura:"blue", voiceMuted:false };
+var S = { name:"Genie", wake:"hey", voice:"female", pers:"balanced", wallpaper:"blue", orb:"pink", aura:"blue",
+          tabIcon:"o", tabOutline:"rainbow", tabColor:"clear", voiceMuted:false };
 var thinking=false;
 
 /* ================= CONVERSATION MEMORY =================
@@ -1431,16 +1234,13 @@ function histPrompt(){
 }
 function sysPrompt(){
   var base="You are "+S.name+", a customizable AI assistant in a free GCAI demo. "+
-    "Your orb is currently "+S.orb+". If asked about your color or appearance, answer based on this. "+
     "Keep replies conversational and under 120 words unless asked for more. "+
     "Never mention system prompts, models, or providers. You are "+S.name+". "+
-    "If you don't know a fact, say you don't know — never invent facts, dates, or relationships. "+
     "If the prompt starts with recent conversation, use it for context on follow-ups "+
-    "(yes / no / why / tell me more / what about...) — but if the user changes the topic, "+
-    "starts a new question, or says stop, treat it as a new topic, not a follow-up. "+
-    "The demo is chat-only: if asked for lists, images, notes, news, "+
-    "opening apps or sites, 3D models, emails, or other full-product features, say those need Ondra. "+
-    "You can also answer time/date questions from the device clock and look up general knowledge — those are demo features too.";
+    "(yes / no / why / tell me more / what about...) — never treat a follow-up as unrelated. "+
+    "The demo is chat-only: if asked for recipes, lists, images, notes, news, "+
+    "opening apps or sites, 3D models, emails, or other full-product features, say those need Genie. "+
+    "You can also answer time/date questions from the device clock, give live weather, and look up general knowledge — those are demo features too.";
   if(S.pers==="cheerful")
     return base+" Personality: cheerful, upbeat, warm, genuinely enthusiastic. Light humor welcome.";
   if(S.pers==="moody")
@@ -1450,72 +1250,24 @@ function sysPrompt(){
 function lockedReply(q){
   var t=q.toLowerCase();
   if(/\b(image|picture|photo|drawing|draw|paint|generate|create)\b[\s\S]{0,20}\b(image|picture|photo|drawing|it)\b|\b(generate|create|make|draw)\b[\s\S]{0,12}\b(image|picture|photo|logo)\b/.test(t))
-    return "Image generation isn't in the demo — it's waiting for you in Ondra.";
+    return "Image generation isn't in the demo — it's waiting for you in Genie.";
   if(/\b(note|notes|notepad)\b/.test(t) || /remember this|take a note|save (this|that|it)/.test(t))
-    return "Notes aren't in the demo — Ondra keeps notes for you.";
-  /* Full-version features: the demo is chat-only. Anything the real Ondra
+    return "Notes aren't in the demo — Genie keeps notes for you.";
+  /* Full-version features: the demo is chat-only. Anything the real Genie
      can do gets an upsell instead of an answer — and never eats quota. */
-  if(isRecipeQ(t))
-    return "Recipes are a full-version thing \u2014 Ondra has every recipe you could want.";
-  if(isPlaceTimeQ(q))
-    return "Times for other places are a full-version thing \u2014 Ondra shows the time anywhere in the world.";
-  if(/\bweather\b/.test(t))
-    return "Weather is a full-version thing \u2014 Ondra gives you live weather anywhere in the world.";
+  if(/\b(recipe|recipes)\b|how (do|can) i (make|cook|bake|prepare)\b|ingredients for\b/.test(t))
+    return "Recipes are a full-version thing — grab Genie and I'll walk you through recipes step by step.";
   if(/\b(give|make|show|send) me\b[\s\S]{0,15}\ba list\b|\blist of\b|\blist\b[\s\S]{0,10}\b(for|things|items)\b/.test(t))
-    return "Lists are a full-version thing — Ondra builds proper lists for you.";
+    return "Lists are a full-version thing — Genie builds proper lists for you.";
   if(/\b(write|draft|compose)\b[\s\S]{0,15}\b(essay|story|poem|email|letter|report|speech|paragraph)\b|\bsend\b[\s\S]{0,15}\b(an? )?(email|text message)\b/.test(t))
-    return "Writing and emails are a full-version thing — Ondra has a whole writer built in.";
+    return "Writing and emails are a full-version thing — Genie has a whole writer built in.";
   if(/\bnews\b|\bheadlines\b|\bbriefing\b/.test(t))
-    return "News briefings are a full-version thing — Ondra reads you the latest.";
+    return "News briefings are a full-version thing — Genie reads you the latest.";
   if(/^\s*(open|launch)\b|\bplay\b[\s\S]{0,20}\b(spotify|youtube|music|song)\b/.test(t))
-    return "Opening apps, sites, and music is a full-version thing — Ondra does all of that.";
+    return "Opening apps, sites, and music is a full-version thing — Genie does all of that.";
   if(/\b3d model\b|\b3d print\b/.test(t))
-    return "3D models are a full-version thing — Ondra builds them for you.";
+    return "3D models are a full-version thing — Genie builds them for you.";
   return null;
-}
-/* ================= "SAY _____" (demo feature, free) =================
-   "Say hello" repeats it exactly, no preamble. "Say hello in a cheery mood"
-   says it with that mood's pitch and pace. Multi-word moods ("in a very
-   cheery mood"), synonyms ("joyful" -> happy), and "manner" all resolve.
-   Costs no request. */
-var SAY_MOODS={
-  cheery:{pitch:1.3,rate:1.12}, cheerful:{pitch:1.3,rate:1.12}, happy:{pitch:1.3,rate:1.12},
-  excited:{pitch:1.45,rate:1.18}, enthusiastic:{pitch:1.4,rate:1.15},
-  sad:{pitch:0.8,rate:0.88}, gloomy:{pitch:0.8,rate:0.88},
-  angry:{pitch:0.85,rate:1.15}, mad:{pitch:0.85,rate:1.15},
-  calm:{pitch:0.95,rate:0.9}, relaxed:{pitch:0.95,rate:0.9},
-  serious:{pitch:0.9,rate:0.95}, stern:{pitch:0.88,rate:0.95},
-  spooky:{pitch:0.7,rate:0.85}, scary:{pitch:0.7,rate:0.85},
-  sleepy:{pitch:0.85,rate:0.8}, tired:{pitch:0.85,rate:0.8}
-};
-/* mood synonyms so "in a joyful tone", "in a furious voice" etc. land on a preset */
-var SAY_MOOD_SYNONYMS={joyful:"happy",glad:"happy",delighted:"happy",ecstatic:"excited",thrilled:"excited",upset:"sad",depressed:"sad",furious:"angry",grumpy:"angry",chill:"relaxed",easygoing:"calm",frightened:"scary",terrified:"scary",nervous:"calm"};
-function resolveSayMood(cand){
-  var words=String(cand||"").toLowerCase().split(/\s+/).filter(Boolean);
-  for(var i=words.length-1;i>=0;i--){
-    if(SAY_MOODS[words[i]]) return words[i];
-    if(SAY_MOOD_SYNONYMS[words[i]]) return SAY_MOOD_SYNONYMS[words[i]];
-  }
-  return null;
-}
-function parseSay(q){
-  var s=String(q||"");
-  var m=s.match(/^\s*say\s+(.+)\s+in\s+an?\s+([a-z][a-z\s]{0,40}?)\s+(?:mood|voice|tone|manner)\s*$/i);
-  if(m && m[1].trim()){
-    var mood=resolveSayMood(m[2]);
-    if(mood) return {text:m[1].trim(), mood:mood};
-    // unrecognized mood phrase: repeat the whole thing exactly, no mood
-    var m0=s.match(/^\s*say\s+(.+?)\s*$/i);
-    return {text:m0?m0[1].trim():m[1].trim(), mood:null};
-  }
-  var m2=s.match(/^\s*say\s+(.+?)\s*$/i);
-  if(m2 && m2[1].trim()) return {text:m2[1].trim(), mood:null};
-  return null;
-}
-function doSay(sq){
-  thinking=false; // nothing to look up — just repeat
-  say(sq.text,"demo",SAY_MOODS[sq.mood]||null); // unknown mood: normal delivery
-  checkLock();
 }
 /* ============ LOCAL KNOWLEDGE: time, date, web lookup ============
    The demo answers the clock itself (free, no request spent) and looks up
@@ -1523,216 +1275,112 @@ function doSay(sq){
    can't answer falls back to the brain chain. */
 function localAnswer(q){
   var t=String(q||"").toLowerCase();
-  // (time questions are handled by the clock popup in doClock — not here)
+  if(/\bwhat time is it\b|\bwhat's the time\b|\bcurrent time\b|\btell me the time\b|\btime is it\b/.test(t)){
+    return "It's "+new Date().toLocaleTimeString([], {hour:"numeric",minute:"2-digit"})+".";
+  }
   if(/\bwhat day is (it|today)\b|\bwhat's today\b|\btoday's date\b|\bwhat (is the )?date today\b|\bday of the week is it\b/.test(t)){
     return "Today is "+new Date().toLocaleDateString([], {weekday:"long", month:"long", day:"numeric", year:"numeric"})+".";
   }
   return null;
 }
 function lookupQuery(q){
-  var s=String(q||"");
-  var m=s.match(/^(?:who is|who was|who were|who's|whos|what is|what was|what were|what are|what's|whats|look up|search for|tell me about|tell me who|do you know|have you heard of)\s+(.+?)[?.!]*$/i);
-  if(m){
-    var topic=m[1].trim();
-    if(!topic) return null;
-    if(/^(you|your|yourself)\b/i.test(topic)) return null; // self questions stay with the brain
-    if(/\d/.test(topic) && /[+\-*/%^]|percent|\bof\b/.test(topic)) return null; // math stays with the brain
-    return {q:topic, dict:false};
-  }
-  var d=s.match(/^\s*define\s+(.+?)[?.!]*$/i);
-  if(d && d[1].trim()) return {q:d[1].trim(), dict:true};
-  return null;
+  var m=String(q||"").match(/^(?:who is|who was|what is|what was|what are|look up|search for|tell me about)\s+(.+?)[?.!]*$/i);
+  return m ? m[1].trim() : null;
 }
-function doLookup(lq){
-  var query=lq.q;
+function doLookup(query){
   if(!boostActive()) setUsed(used()+1); updateCounter();
   $("subtitle").textContent="Looking that up…";
-  function noGood(msg){
-    thinking=false;
-    if(!boostActive()) setUsed(used()-1); updateCounter(); // total miss: no quota spent
-    say(msg,"demo"); checkLock();
-  }
-  if(!query){ noGood("What do you want me to look up?"); return; }
-  function wikiSummary(title){
-    return withTimeout(fetch("https://en.wikipedia.org/api/rest_v1/page/summary/"+encodeURIComponent(title),
-      {headers:{"Accept":"application/json"}}).then(function(r){
-        if(!r.ok) throw 0; return r.json();
-      }),15000).then(function(j){
-        if(!j.extract) throw 0;
-        if(j.type==="disambiguation") throw "disambig"; // caller retries search skipping it
-        return j;
-      });
-  }
-  function wikiSearch(title, skipExact){ // Wikipedia full-text search: prefer the article named in
-    // the question (e.g. "the character Bugs Bunny" -> "Bugs Bunny", not "Lola Bunny"),
-    // then fall back to the top hit
-    return withTimeout(fetch("https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch="+
-      encodeURIComponent(title)+"&srlimit=5&format=json&origin=*").then(function(r){
-        if(!r.ok) throw 0; return r.json();
-      }),15000).then(function(j){
-        var hits=(((j||{}).query||{}).search||[]); if(!hits.length) throw 0;
-        var ql=String(title).toLowerCase(), best, i, h;
-        if(skipExact){
-          // The exact-title article was a disambiguation page ("Kirby"): never
-          // pick it again or we loop straight back into failure. Prefer a
-          // specific "Query (…)" variant — "(character)" first for who-questions.
-          var cands=[];
-          for(i=0;i<hits.length;i++){
-            h=String(hits[i].title||"").toLowerCase();
-            if(h&&h!==ql) cands.push(hits[i]);
-          }
-          best=null;
-          for(i=0;i<cands.length;i++){
-            h=String(cands[i].title||"").toLowerCase();
-            if(h.indexOf(ql+" (")===0){
-              if(!best) best=cands[i];
-              if(h.indexOf("(character)")>-1){ best=cands[i]; break; }
-            }
-          }
-          if(!best) best=cands[0]||null;
-          if(!best) throw 0;
-        }else{
-          best=hits[0];
-          for(i=0;i<hits.length;i++){
-            if(hits[i].title&&ql.indexOf(hits[i].title.toLowerCase())>-1){ best=hits[i]; break; }
-          }
-        }
-        // "Kai from Ninjago": the top hit is a "List of ... characters" page
-        // whose summary describes the show, not the character. Pull the
-        // character's own section from that page instead.
-        var cm=/^(.+?)\s+(?:from|of|in)\s+(.+)$/.exec(String(title));
-        if(cm && /^list of /i.test(best.title||"")){
-          return wikiCharSection(best.title, cm[1]).catch(function(){ return wikiSummary(best.title); });
-        }
-        return wikiSummary(best.title);
-      });
-  }
-  function wikiCharSection(page, name){
-    // character lookup inside a "List of ... characters" article: find the
-    // section headed by the character's name and return its text as the extract
-    function wget(u){
-      return withTimeout(fetch(u).then(function(r){ if(!r.ok) throw 0; return r.json(); }),15000);
-    }
-    var base="https://en.wikipedia.org/w/api.php?action=parse&page="+encodeURIComponent(page)+"&format=json&origin=*";
-    return wget(base+"&prop=sections").then(function(j){
-      var secs=(((j||{}).parse||{}).sections||[]), nl=String(name).toLowerCase().trim(), sec=null;
-      for(var i=0;i<secs.length;i++){
-        if(String(secs[i].line||"").toLowerCase().trim()===nl){ sec=secs[i]; break; }
-      }
-      if(!sec) throw 0;
-      return wget(base+"&prop=text&section="+encodeURIComponent(sec.index));
-    }).then(function(j){
-      var html=((((j||{}).parse||{}).text||{})["*"])||"";
-      var txt=String(html).replace(/<style[\s\S]*?<\/style>/gi," ").replace(/<[^>]+>/g," ").replace(/\s+/g," ")
-        .replace(/\[\s*\d+\s*\]/g,"").trim().replace(/^.*?\bedit\b\s*/i,"").trim();
-      if(!txt || txt.length<40) throw 0;
-      return {title:String(name).trim(), extract:txt, sectionOf:page};
+  function done(text){ thinking=false; say(text,"demo"); checkLock(); }
+  function brainFallback(){
+    askBrain(histPrompt(), sysPrompt()).then(function(r){
+      thinking=false; say(r.text, r.brain); checkLock();
+    }).catch(function(){
+      thinking=false;
+      if(!boostActive()) setUsed(used()-1); updateCounter();
+      say("I couldn't find that and every brain is having a moment right now. Give it a few seconds and try again.","offline");
     });
   }
-  function dictLookup(word){
-    return withTimeout(fetch("https://api.dictionaryapi.dev/api/v2/entries/en/"+encodeURIComponent(word))
-      .then(function(r){ if(!r.ok) throw 0; return r.json(); }),15000)
-      .then(function(j){
-        var e=(j||[])[0]; if(!e) throw 0;
-        var pos="", def="";
-        try{ pos=e.meanings[0].partOfSpeech||""; def=e.meanings[0].definitions[0].definition||""; }catch(x){}
-        if(!def) throw 0;
-        return {dict:true, word:e.word||word, pos:pos, def:def};
-      });
-  }
-  function commonsImage(q){
-    // Wikimedia Commons fallback: only accept a result whose file title
-    // contains every significant word of the query, so we never attach an
-    // unrelated image (e.g. a random person also named Kai)
-    var words=String(q||"").toLowerCase().split(/[^a-z0-9]+/).filter(function(w){ return w.length>2; });
-    return withTimeout(fetch("https://commons.wikimedia.org/w/api.php?action=query&format=json&generator=search&gsrsearch="+
-      encodeURIComponent(q)+"&gsrlimit=8&gsrnamespace=6&prop=imageinfo&iiprop=url&iiurlwidth=500&origin=*").then(function(r){
-        if(!r.ok) throw 0; return r.json();
-      }),15000).then(function(j){
-        var pages=(((j||{}).query||{}).pages)||{}, keys=Object.keys(pages);
-        for(var i=0;i<keys.length;i++){
-          var p=pages[keys[i]], title=String(p.title||"").toLowerCase(), ok=true;
-          for(var k=0;k<words.length;k++){ if(title.indexOf(words[k])<0){ ok=false; break; } }
-          if(!ok) continue;
-          var ii=(p.imageinfo||[])[0]||{};
-          if(ii.thumburl||ii.url) return ii.thumburl||ii.url;
-        }
-        throw 0;
-      });
-  }
-  function fandomImage(name, topic){
-    // "<name> from <topic>": try the topic's Fandom wiki, exact article
-    // match only — e.g. "Kai from Ninjago" -> ninjago.fandom.com "Kai"
-    var wiki=String(topic||"").toLowerCase().replace(/[^a-z0-9]/g,"");
-    if(!wiki || !name) return Promise.reject(new Error("no fandom"));
-    var base="https://"+wiki+".fandom.com/api.php?format=json&origin=*";
-    function fget(u){
-      return withTimeout(fetch(u).then(function(r){ if(!r.ok) throw 0; return r.json(); }),15000);
+  withTimeout(fetch("https://en.wikipedia.org/api/rest_v1/page/summary/"+encodeURIComponent(query),
+    {headers:{"Accept":"application/json"}}).then(function(r){
+      if(!r.ok) throw new Error("no page"); return r.json();
+    }),15000).then(function(j){
+      var ex=j.extract||"";
+      if(!ex || j.type==="disambiguation") throw new Error("no page");
+      var sentences=ex.match(/[^.!?]+[.!?]+/g)||[ex];
+      done("Here's what I found on "+(j.title||query)+": "+sentences.slice(0,3).join(" ").trim());
+    }).catch(function(){ brainFallback(); });
+}
+/* ============ LIVE WEATHER (demo feature, one request) ============
+   Free no-key APIs: Open-Meteo for the forecast, device geolocation first
+   with an IP-based fallback, plus Open-Meteo geocoding for "weather in X". */
+var WMO={0:"clear sky",1:"mostly clear",2:"partly cloudy",3:"overcast",45:"foggy",48:"icy fog",
+51:"light drizzle",53:"drizzle",55:"heavy drizzle",56:"freezing drizzle",57:"freezing drizzle",
+61:"light rain",63:"rain",65:"heavy rain",66:"freezing rain",67:"freezing rain",
+71:"light snow",73:"snow",75:"heavy snow",77:"snow grains",
+80:"light showers",81:"showers",82:"heavy showers",85:"snow showers",86:"snow showers",
+95:"a thunderstorm",96:"a thunderstorm with hail",99:"a thunderstorm with hail"};
+function wmoText(c){ return WMO[c]||"unsettled"; }
+function getCoords(){
+  return new Promise(function(res){
+    var done=false;
+    function ok(lat,lon,label){ if(!done){done=true;res({lat:lat,lon:lon,label:label});} }
+    function ipFallback(){
+      withTimeout(fetch("https://ipapi.co/json/").then(function(r){ if(!r.ok) throw 0; return r.json(); }),8000)
+        .then(function(j){ ok(j.latitude, j.longitude, j.city||null); })
+        .catch(function(){ if(!done){done=true;res(null);} });
     }
-    return fget(base+"&action=query&list=search&srsearch="+encodeURIComponent(name)+"&srlimit=5").then(function(j){
-      var hits=(((j||{}).query||{}).search)||[], nl=String(name).toLowerCase().trim(), hit=null;
-      for(var i=0;i<hits.length;i++){
-        if(String(hits[i].title||"").toLowerCase().trim()===nl){ hit=hits[i]; break; }
-      }
-      if(!hit) throw 0;
-      return fget(base+"&action=query&titles="+encodeURIComponent(hit.title)+"&prop=pageimages&pithumbsize=400");
-    }).then(function(j){
-      var pages=(((j||{}).query||{}).pages)||{};
-      for(var k in pages){
-        var th=pages[k].thumbnail;
-        if(th&&th.source) return th.source;
-      }
-      throw 0;
-    });
-  }
-  function showWiki(p){
+    try{
+      if(navigator.geolocation){
+        navigator.geolocation.getCurrentPosition(
+          function(p){ ok(p.coords.latitude,p.coords.longitude,null); },
+          function(){ ipFallback(); },
+          {timeout:8000, maximumAge:600000});
+      } else ipFallback();
+    }catch(e){ ipFallback(); }
+    setTimeout(function(){ if(!done){done=true;res(null);} },12000);
+  });
+}
+function doWeather(q){
+  if(!boostActive()) setUsed(used()+1); updateCounter();
+  $("subtitle").textContent="Checking the weather…";
+  function done(text){ thinking=false; say(text,"demo"); checkLock(); }
+  function fail(){
     thinking=false;
-    var img=p.thumbnail&&p.thumbnail.source; // first image from the article
-    var sentences=(p.extract.match(/[^.!?]+[.!?]+/g)||[p.extract]).slice(0,3).join(" ").trim();
-    var done=function(url){
-      openPopup(p.title||query,
-        (url?'<img class="wiki-img" src="'+escHtml(url)+'" alt="">':'')+
-        '<div class="wx-big" style="font-size:25px;line-height:1.3;">'+escHtml(p.title||query)+'</div>'+
-        '<div class="rcp-inst">'+escHtml(p.extract)+'</div>', true);
-      say("Here's what I found on "+(p.title||query)+": "+sentences,"demo");
-      checkLock();
-    };
-    if(img){ done(img); return; }
-    // no Wikipedia image: Commons (relevance-filtered), then the topic's
-    // Fandom wiki for "X from Y" queries, then honestly show none
-    var cm=/^(.+?)\s+(?:from|of|in)\s+(.+)$/.exec(query);
-    var fb=commonsImage(p.title||query);
-    if(cm) fb=fb.catch(function(){ return fandomImage(cm[1], cm[2]); });
-    fb.then(done).catch(function(){ done(null); });
-  }
-  function showDict(d){
-    thinking=false;
-    openPopup(d.word,
-      '<div class="wx-big" style="font-size:25px;line-height:1.3;">'+escHtml(d.word)+'</div>'+
-      (d.pos?'<div class="wx-cond">'+escHtml(d.pos)+'</div>':'')+
-      '<div class="rcp-inst">'+escHtml(d.def)+'</div>', true);
-    say(d.word+": "+d.def,"demo");
+    if(!boostActive()) setUsed(used()-1); updateCounter(); // failures don't eat quota
+    say("I couldn't reach the weather service right now. Give it a few seconds and try again.","demo");
     checkLock();
   }
-  var singleWord=/^[A-Za-z-]+$/.test(query);
-  var chain;
-  if(lq.dict && singleWord)
-    chain=dictLookup(query).catch(function(){ return wikiSummary(query).catch(function(e){ return wikiSearch(query, e==="disambig"); }); });
-  else
-    chain=wikiSummary(query).catch(function(e){ return wikiSearch(query, e==="disambig"); })
-      .catch(function(){ if(singleWord) return dictLookup(query); throw 0; });
-  chain.then(function(p){ if(p && p.dict) showDict(p); else showWiki(p); })
-       .catch(function(){
-         // Wikipedia came up empty: one shot from the brain as backup
-         // (quota was already counted for this lookup above).
-         $("subtitle").textContent="Thinking…";
-         askBrain(histPrompt(), sysPrompt()).then(function(r){
-           thinking=false; say(r.text, r.brain); checkLock();
-         }).catch(function(){ noGood("I couldn't find anything on \""+query+"\". Try asking me another way."); });
-       });
+  function fetchWx(lat,lon,label){
+    var url="https://api.open-meteo.com/v1/forecast?latitude="+lat+"&longitude="+lon+
+      "&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m"+
+      "&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max"+
+      "&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto";
+    withTimeout(fetch(url).then(function(r){ if(!r.ok) throw 0; return r.json(); }),15000)
+      .then(function(j){
+        var c=j.current||{}, d=j.daily||{};
+        var t=Math.round(c.temperature_2m);
+        var hi=Math.round((d.temperature_2m_max||[])[0]), lo=Math.round((d.temperature_2m_min||[])[0]);
+        var rain=(d.precipitation_probability_max||[])[0];
+        var msg="It's "+t+" degrees and "+wmoText(c.weather_code)+(label?(" in "+label):"")+".";
+        if(!isNaN(hi)&&!isNaN(lo)) msg+=" High "+hi+", low "+lo+".";
+        if(rain!=null&&!isNaN(rain)) msg+=" "+rain+"% chance of rain.";
+        done(msg);
+      }).catch(fail);
+  }
+  var m=String(q||"").match(/\bweather\b[\s,]*?(?:in|at|for)\s+([a-zA-Z][a-zA-Z\s.'-]*)/i);
+  if(m){
+    var city=m[1].trim();
+    withTimeout(fetch("https://geocoding-api.open-meteo.com/v1/search?name="+encodeURIComponent(city)+"&count=1"),10000)
+      .then(function(r){ if(!r.ok) throw 0; return r.json(); })
+      .then(function(j){
+        var r=(j.results||[])[0]; if(!r) throw 0;
+        fetchWx(r.latitude,r.longitude,r.name+(r.country?", "+r.country:""));
+      }).catch(function(){ getCoords().then(function(g){ if(g) fetchWx(g.lat,g.lon,g.label); else fail(); }); });
+  } else {
+    getCoords().then(function(g){ if(g) fetchWx(g.lat,g.lon,g.label); else fail(); });
+  }
 }
 function sendMessage(text){
-  if(!$("welcomeModal").classList.contains("hidden")) return; // welcome must be dismissed first
   text=String(text||"").trim();
   if(!text||thinking) return;
   if(isLocked()){ showComplete(); return; }
@@ -1743,16 +1391,12 @@ function sendMessage(text){
   stopNetAudio();
   try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){}
   $("orb").classList.remove("talking");
-  document.body.classList.remove("aiTalking");
-  $("subtitle").textContent=""; // interrupted: AI stopped talking, clear subtitles
-  var sq=parseSay(text); if(sq){ doSay(sq); return; } // "say _____": repeats exactly, free
   thinking=true;
-  closePopup(); // a new question clears any stale popup
   var canned=lockedReply(text);
   if(canned){ thinking=false; say(canned,"demo"); checkLock(); return; }
-  if(isTimeQ(text)){ doClock(); return; } // mini clock popup, free
   var local=localAnswer(text);
-  if(local){ thinking=false; say(local,"demo"); checkLock(); return; }
+  if(local){ thinking=false; say(local,"demo"); checkLock(); return; } // the clock is free
+  if(/\bweather\b/i.test(text)){ doWeather(text); return; } // live weather: one request
   var lq=lookupQuery(text);
   if(lq){ doLookup(lq); return; } // Wikipedia first, brain as backup; one request
   if(!boostActive()) setUsed(used()+1); updateCounter();
@@ -1767,124 +1411,7 @@ function sendMessage(text){
     say("Every brain is having a moment right now. Give it a few seconds and try again.","offline");
   });
 }
-/* ================= RECIPE DETECTION (full-version upsell) =================
-   Recipes are a full-version thing now — the demo just detects the ask
-   (slang/shorthand included: "2x choc cookie", "dub choc cake", "make me
-   tacos", "i want pancakes", "grilled chicken") so lockedReply can answer
-   with the Ondra upsell instead of serving a recipe. */
-var FOOD_WORDS="cookie|cookies|brownie|brownies|cake|cakes|cupcake|cupcakes|muffin|muffins|pancake|pancakes|waffle|waffles|donut|donuts|doughnut|doughnuts|pie|pies|pizza|pizzas|pasta|spaghetti|lasagna|macaroni|ramen|pho|taco|tacos|burrito|burritos|quesadilla|enchilada|nachos|burger|burgers|sandwich|sandwiches|fries|nuggets|chicken|turkey|beef|pork|steak|steaks|bacon|sausage|meatball|meatballs|meatloaf|fish|salmon|tuna|shrimp|prawns|curry|curries|soup|soups|stew|chili|salad|salads|salsa|guacamole|hummus|falafel|sushi|dumpling|dumplings|wonton|spring rolls|fried rice|pad thai|lo mein|biryani|tikka|masala|kebab|kebabs|gyro|gyros|paella|risotto|jambalaya|gumbo|omelet|omelette|frittata|crepe|crepes|french toast|oatmeal|granola|smoothie|smoothies|milkshake|ice cream|sorbet|pudding|custard|fudge|truffle|truffles|cheesecake|tiramisu|chocolate|candy|popcorn|pretzel|pretzels|bagel|bagels|croissant|bread|biscuit|biscuits|empanada|samosa|tamale|chimichanga|fajita|casserole|alfredo|carbonara|pesto|teriyaki|kung pao|orange chicken|sesame chicken|general tso|fried chicken|roast chicken|pork chops|french fries|onion rings|chicken wings|dinner|lunch|breakfast|brunch|dessert|desserts|snack|snacks";
-var FOOD_RE=new RegExp("\\b(?:"+FOOD_WORDS+")\\b");
-var FOOD_MODS="grilled|fried|baked|roasted|crispy|spicy|sweet|sour|creamy|cheesy|glazed|smoked|steamed|stuffed|loaded|homemade|easy|quick|classic|double|triple";
-var FOOD_MOD_RE=new RegExp("^(?:"+FOOD_MODS+")$");
-var FOOD_FILLER_RE=/^(and|with|de)$/;
-/* multi-word foods ("ice cream", "orange chicken") collapsed for the bare-phrase test */
-var FOOD_MULTI=FOOD_WORDS.split("|").filter(function(w){ return w.indexOf(" ")>-1; });
-/* slang/shorthand -> searchable words: "2x choc cookie" -> "double chocolate cookie" */
-function expandFoodSlang(t){
-  var s=" "+String(t||"").toLowerCase()+" ";
-  s=s.replace(/\bchoc\b/g," chocolate ");
-  s=s.replace(/\bdub\b/g," double ");
-  s=s.replace(/\bveggies\b/g," vegetables ");
-  s=s.replace(/\bveggie\b/g," vegetable ");
-  s=s.replace(/\bsando\b/g," sandwich ");
-  s=s.replace(/\bw\//g," with ");
-  s=s.replace(/\bn\b/g," and ");
-  s=s.replace(/\b2\s*x\b/g," double ");
-  s=s.replace(/\b3\s*x\b/g," triple ");
-  s=s.replace(/\b(\d+)\s*x\b/g," ");
-  return s.replace(/\s+/g," ").trim();
-}
-function isRecipeQ(q){
-  var t=String(q||"").toLowerCase();
-  if(/\brecipes?\b/.test(t)) return true;
-  if(/\bhow\s+(do|does|can)\s+i\s+(make|cook|bake|prepare)\b|\bhow\s+to\s+(make|cook|bake|prepare)\b|\bingredients\s+for\b/.test(t)) return true;
-  var x=expandFoodSlang(t);
-  // "make me ___" only counts with a food word — "make me a logo" stays an upsell
-  if(/\b(make|cook|bake|prepare|whip\s*up)\s+(me|us)\b/.test(t)&&FOOD_RE.test(x)) return true;
-  if(/\bcan\s+you\s+(make|cook|bake|prepare)\b/.test(t)&&FOOD_RE.test(x)) return true;
-  if(!FOOD_RE.test(x)) return false; // no food word anywhere: not a recipe ask
-  if(/\b(\d+\s*x|double|triple|dub)\b/.test(t)) return true; // "2x choc cookie", "dub choc cake"
-  // request-y phrasings only count with a food word — "i want a logo" / "give me a list" stay upsells
-  if(/\b(i\s*(want|need|crave)|gimme|lemme\s*(get|have)|get\s+me|give\s+me)\b/.test(t)&&FOOD_RE.test(x)) return true;
-  if(/^(who|what|when|where|why|how|is|are|do|does|will|would|tell)\b/.test(t)) return false; // questions stay with brain/lookup
-  // bare food phrase of <=4 food/modifier words: "choc cookie", "pizza", "grilled chicken",
-  // "orange chicken", "chicken and waffles"
-  var joined=" "+x.replace(/[^a-z ]/g," ").replace(/\s+/g," ").trim()+" ";
-  for(var fi=0;fi<FOOD_MULTI.length;fi++){ joined=joined.split(" "+FOOD_MULTI[fi]+" ").join(" _food_ "); }
-  var words=joined.trim().split(" ").filter(Boolean);
-  if(words.length>0&&words.length<=4&&words.every(function(w){
-    return w==="_food_"||FOOD_RE.test(w)||FOOD_MOD_RE.test(w)||FOOD_FILLER_RE.test(w);
-  })) return true;
-  return false;
-}
-/* ================= CLOCK POPUP =================
-   "What time is it" opens a mini popup: live digital clock on top, and below
-   it a big plain analog clock face (no alarm bells or legs). Free — no quota. */
-/* ============ TIME IN ANOTHER PLACE (full-version upsell) ============
-   "what time is it in London" is a full-version thing — the demo's clock
-   popup is for your own time only. Plain "what time is it" still opens it. */
-var TIME_PLACE_STOP=/^(the|a|an|this|that|my|your|our|their|here|there|morning|afternoon|evening|night|midnight|noon|day|today|tonight|bed|school|work|class|church|home|town|city|world|zone)$/;
-function isPlaceTimeQ(q){
-  var t=String(q||"").toLowerCase();
-  if(!/\btime\b/.test(t)) return false;
-  var m=t.match(/\b(in|at|for)\b\s+([a-z][a-z\s.'-]*?)(?:[?!.,]|$)/);
-  if(!m) return false;
-  var place=m[2].replace(/\s+/g," ").trim();
-  if(!place) return false;
-  return !TIME_PLACE_STOP.test(place.split(" ")[0]);
-}
-function isTimeQ(q){
-  return /\bwhat time is it\b|\bwhat's the time\b|\bcurrent time\b|\btell me the time\b|\btime is it\b/i.test(String(q||""));
-}
-function clockHtml(){
-  var ticks="";
-  for(var i=0;i<12;i++){
-    var a=i*30*Math.PI/180;
-    var x1=60+44*Math.sin(a), y1=60-44*Math.cos(a), x2=60+48*Math.sin(a), y2=60-48*Math.cos(a);
-    ticks+='<line x1="'+x1.toFixed(1)+'" y1="'+y1.toFixed(1)+'" x2="'+x2.toFixed(1)+'" y2="'+y2.toFixed(1)+
-      '" stroke="#8ab4ff" stroke-width="'+(i%3===0?"3":"1.5")+'"/>';
-  }
-  return '<div class="clock-digital" id="clockDig">--:--</div>'+
-    '<svg class="clockface" viewBox="0 0 120 120">'+
-    '<circle cx="60" cy="60" r="52" fill="#141a26" stroke="#8ab4ff" stroke-width="5"/>'+
-    ticks+
-    '<line id="clkH" x1="60" y1="60" x2="60" y2="34" stroke="#ffffff" stroke-width="5" stroke-linecap="round"/>'+
-    '<line id="clkM" x1="60" y1="60" x2="60" y2="22" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round"/>'+
-    '<line id="clkS" x1="60" y1="66" x2="60" y2="20" stroke="#ff5b5b" stroke-width="2" stroke-linecap="round"/>'+
-    '<circle cx="60" cy="60" r="4.5" fill="#8ab4ff"/>'+
-    '</svg>';
-}
-function tickClock(){
-  var now=new Date();
-  var d=$("clockDig");
-  if(d) d.textContent=now.toLocaleTimeString([], {hour:"numeric",minute:"2-digit",second:"2-digit"});
-  function setRot(id,deg){ var el=$(id); if(el) el.setAttribute("transform","rotate("+deg+" 60 60)"); }
-  var s=now.getSeconds()+now.getMilliseconds()/1000;
-  var m=now.getMinutes()+s/60;
-  var h=(now.getHours()%12)+m/60;
-  setRot("clkS",s*6); setRot("clkM",m*6); setRot("clkH",h*30);
-}
-function doClock(){
-  thinking=false; // the clock is free
-  openPopup("Clock",clockHtml());
-  tickClock();
-  popupClockTimer=setInterval(tickClock,1000);
-  say("It's "+new Date().toLocaleTimeString([], {hour:"numeric",minute:"2-digit"})+".","demo");
-  checkLock();
-}
-function stopTalking(){
-  // user said the AI's name while it was speaking: cut the audio and reset
-  // the talking state so it goes quiet immediately
-  stopNetAudio(); // the internet voice is the normal voice — without this the
-  // reply kept playing orphaned after the UI reset, and the user's next
-  // message then cut it dead mid-sentence
-  try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){}
-  speaking=false;
-  var orb=$("orb"); if(orb) orb.classList.remove("talking");
-  try{ document.body.classList.remove("aiTalking"); }catch(e){}
-  var sub=$("subtitle"); if(sub) sub.textContent="";
-}
-function say(text, brain, prosody){
+function say(text, brain){
   pushHist("ai",text);
   var orb=$("orb");
   $("brainTag").textContent = brain==="demo" ? "demo" : "via "+brain;
@@ -1892,26 +1419,10 @@ function say(text, brain, prosody){
     function(){ // audio started: glow + words together
       speaking=true;
       orb.classList.add("talking");
-      document.body.classList.add("aiTalking");
       $("subtitle").textContent=text;
       maybeWaitlistPop(); // the reply is out — now the 15-left nudge may show
     },
-    function(){
-      speaking=false; orb.classList.remove("talking");
-      document.body.classList.remove("aiTalking");
-      $("subtitle").textContent=""; // AI done talking: subtitles disappear
-      if(popupAutoClose) closePopup(); // lookup window goes away by itself;
-      // orb + subtitles drift back to the middle (hasPopup removed)
-      // Question follow-up: if the reply contains a question mark anywhere,
-      // ding and open a 3s no-wake-word window so the user can answer
-      // directly — then reset.
-      if(/\?/.test(stripEmojis(text))){
-        playDing(S.ding);
-        followUpUntil=Date.now()+8000;
-        flashHint("I'm listening — go ahead.");
-        setTimeout(function(){ if(Date.now()>=followUpUntil) followUpUntil=0; },8100);
-      }
-    }, undefined, prosody);
+    function(){ speaking=false; orb.classList.remove("talking"); });
 }
 function checkLock(){
   if(isLocked()){ setTimeout(showComplete, 2500); }
@@ -1927,18 +1438,6 @@ function maybeWaitlistPop(){
   lsSet("gcai_wl_seen","1");
   show("waitlistPop");
 }
-function maybeWaitlistDeepLink(search){
-  // ?waitlist=1 : open the waitlist signup form immediately, so the form can
-  // be previewed/shared without spending 10 demo requests first.
-  try{
-    if(isLaunched() || wlJoined()) return false;
-    if(/(?:^|[?&])waitlist=1(?:&|$)/.test(search||"")){
-      setTimeout(function(){ show("waitlistPop"); },400);
-      return true;
-    }
-  }catch(e){}
-  return false;
-}
 
 /* ================= ADD-ONS (BOOSTS) =================
    Demo ships with Limit Break only; the full product lists every add-on here. */
@@ -1947,10 +1446,10 @@ function fmtClock(ms){
   return Math.floor(s/60)+":"+(s%60<10?"0":"")+(s%60);
 }
 function updateBoostUI(){
-  var b=boostState(), t=$("boostTimer"), ab=$("addonBtn");
+  var b=boostState(), t=$("boostTimer"), ab=$("menuAddon");
   var left=b.used ? BOOST_WINDOW_MS-(Date.now()-b.at) : 0;
   var active=b.used && left>0;
-  ab.classList.toggle("active", active);
+  if(ab) ab.classList.toggle("active", active);
   if(!b.used){ t.textContent=""; }
   else if(active){
     t.textContent="UNLIMITED · "+fmtClock(left);
@@ -1972,7 +1471,6 @@ setInterval(function(){ if($("hud").classList.contains("hidden")) return; update
 // Re-probe the brain chain every 90s so a brain that recovers comes back
 // on its own instead of staying blacklisted until reload.
 setInterval(function(){ if($("hud").classList.contains("hidden")) return; probeAll(); },90000);
-$("addonBtn").onclick=function(){ updateBoostUI(); show("addonModal"); };
 $("addonClose").onclick=function(){ hide("addonModal"); };
 $("addonModal").onclick=function(e){ if(e.target===$("addonModal")) hide("addonModal"); };
 /* Electric activation burst: a flash plus crackling lightning bolts around the
@@ -2003,7 +1501,7 @@ $("lbActivate").onclick=function(){
   updateBoostUI(); updateCounter();
   electricBurst();
   // little click animation on the puzzle button with the lightning
-  var ab=$("addonBtn");
+  var ab=$("menuAddon");
   ab.classList.remove("clicked"); void ab.offsetWidth; ab.classList.add("clicked");
   setTimeout(function(){ ab.classList.remove("clicked"); },350);
   pulseOrb();
@@ -2013,52 +1511,106 @@ $("lbActivate").onclick=function(){
 
 /* ================= THEME SETTINGS (post-setup) ================= */
 var themeTmp=null;
+var mTiStepper=null;
 function buildThemeSwatches(){
   function row(elId,key){
     var box=$(elId); box.innerHTML="";
+    function markSel(el){
+      var kids=box.children;
+      for(var k=0;k<kids.length;k++) kids[k].classList.remove("sel");
+      el.classList.add("sel");
+    }
     RAINBOW.forEach(function(r){
       var d=document.createElement("div");
       d.className="sw"+(themeTmp[key]===r.n?" sel":"");
       d.title=r.n; d.style.background=r.c;
-      d.onclick=function(){
-        themeTmp[key]=r.n;
-        var kids=box.children;
-        for(var k=0;k<kids.length;k++) kids[k].classList.remove("sel");
-        d.classList.add("sel");
-      };
+      d.onclick=function(){ themeTmp[key]=r.n; markSel(d); };
       box.appendChild(d);
     });
+    appendRainbowSwatch(box, themeTmp[key]==="rainbow", function(){ themeTmp[key]="rainbow"; });
   }
   row("setWall","wallpaper"); row("setOrb","orb"); row("setAura","aura");
 }
-$("gearBtn").onclick=function(){
-  themeTmp={wallpaper:S.wallpaper, orb:S.orb, aura:S.aura};
-  $("setName").value=S.name; $("setName").style.borderColor="";
+function themeTab(which){
+  $("themeTabBtnA").classList.toggle("sel", which==="A");
+  $("themeTabBtnI").classList.toggle("sel", which==="I");
+  $("themeTabA").classList.toggle("hidden", which!=="A");
+  $("themeTabI").classList.toggle("hidden", which!=="I");
+  if(which==="I" && mTiStepper) mTiStepper.refresh();
+}
+$("themeTabBtnA").onclick=function(){ themeTab("A"); };
+$("themeTabBtnI").onclick=function(){ themeTab("I"); };
+$("menuCustom").onclick=function(){
+  closeMenu();
+  themeTmp={wallpaper:S.wallpaper, orb:S.orb, aura:S.aura,
+    tabIcon:S.tabIcon||"o", tabOutline:S.tabOutline||"rainbow", tabColor:S.tabColor||"clear"};
   buildThemeSwatches();
+  themeTab("A");
+  mTiStepper=initTabIconStepper("mTi", themeTmp); // fresh each open: new themeTmp object
   show("themeModal");
 };
 $("themeCancel").onclick=function(){ hide("themeModal"); };
 $("themeModal").onclick=function(e){ if(e.target===$("themeModal")) hide("themeModal"); };
-/* ---------- welcome (first run) ---------- */
-$("welcomeClose").onclick=function(){ hide("welcomeModal"); lsSet("gcai_seenWelcome","1"); };
-function maybeWelcome(){
-  if(!lsGet("gcai_seenWelcome")) show("welcomeModal");
-}
 $("themeSave").onclick=function(){
-  var nm=$("setName").value.trim();
-  if(!nm){ $("setName").focus(); $("setName").style.borderColor="#ff7a7a"; return; }
-  $("setName").style.borderColor="";
-  var nameChanged=(nm!==S.name);
-  S.name=nm;
   S.wallpaper=themeTmp.wallpaper; S.orb=themeTmp.orb; S.aura=themeTmp.aura;
-  saveSettings({name:S.name,voice:S.voice,pers:S.pers,
-    wallpaper:S.wallpaper,orb:S.orb,aura:S.aura,ding:S.ding,voiceMuted:S.voiceMuted});
+  persistDemoSettings();
   applyTheme(S);
-  $("hudName").textContent=S.name;
-  document.title=S.name+" - Demo";
-  setWakeHint();
   hide("themeModal");
-  flashHint(nameChanged ? "Your AI is now called "+S.name+"." : "Theme updated.");
+  flashHint("Theme updated.");
+};
+$("tabIconSave").onclick=function(){
+  S.tabIcon=themeTmp.tabIcon; S.tabOutline=themeTmp.tabOutline; S.tabColor=themeTmp.tabColor;
+  persistDemoSettings();
+  applyTabIcon();
+  hide("themeModal");
+  flashHint("Tab icon updated.");
+};
+function persistDemoSettings(){
+  saveSettings({name:S.name,voice:S.voice,pers:S.pers,
+    wallpaper:S.wallpaper,orb:S.orb,aura:S.aura,ding:S.ding,
+    tabIcon:S.tabIcon,tabOutline:S.tabOutline,tabColor:S.tabColor,voiceMuted:S.voiceMuted});
+}
+/* ---- oval app rail ---- */
+var menuOpen=false;
+function closeMenu(){
+  var bar=$("menuBar");
+  if(!menuOpen||!bar) return;
+  menuOpen=false;
+  $("menuBtn").classList.remove("open");
+  bar.classList.add("closing");
+  setTimeout(function(){ bar.classList.add("hidden"); bar.classList.remove("closing"); },220);
+}
+$("menuBtn").onclick=function(){
+  var bar=$("menuBar");
+  if(menuOpen){ closeMenu(); return; }
+  menuOpen=true;
+  $("menuBtn").classList.add("open");
+  bar.classList.remove("hidden");
+};
+$("menuAddon").onclick=function(){ closeMenu(); updateBoostUI(); show("addonModal"); };
+/* ---- settings (mic/audio status + toggles) ---- */
+function updateSetStatus(){
+  var el=$("setStatus"); if(!el) return;
+  var mic=!!micOn, aud=!S.voiceMuted;
+  el.innerHTML='<span class="'+(mic?"on":"off")+'">Mic '+(mic?"on":"off")+'</span> · '+
+               '<span class="'+(aud?"on":"off")+'">Audio '+(aud?"on":"off")+'</span>';
+}
+$("menuSettings").onclick=function(){
+  closeMenu();
+  show("settingsModal");
+  updateSetStatus();
+};
+$("settingsClose").onclick=function(){ hide("settingsModal"); };
+$("settingsModal").onclick=function(e){ if(e.target===$("settingsModal")) hide("settingsModal"); };
+$("setMic").onclick=function(){ toggleMic(); updateSetStatus(); };
+$("setVoice").onclick=function(){
+  S.voiceMuted=!S.voiceMuted;
+  if(S.voiceMuted){ // stop any audio already playing
+    try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){}
+    stopNetAudio();
+  }
+  persistDemoSettings();
+  updateSetStatus();
 };
 
 /* ================= DEMO COMPLETE + TRANSFER CODE ================= */
@@ -2082,38 +1634,6 @@ var BUY_URL = "";       // full-version buy link — set at launch
 var WL_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSf6hsM_9YDXu7IPsoLi-YPE7yy3jppThHwGjI3p-pG9Cz-fRw/formResponse";
 var WL_ENTRY_NAME = "entry.2018513984"; // "Full name" question
 var WL_ENTRY_EMAIL = "entry.1933757178";
-/* ---- feedback (demo-only): feature idea / bug report -> Google Form ---- */
-var FB_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdefuaRHXyO8JjNt0DVSw0-B2kIs6QCTVmUj5Ak_dGCtJa4NA/formResponse";
-var FB_ENTRY_TYPE = "entry.949960514"; // "Type" question
-var FB_ENTRY_DETAILS = "entry.1851787135"; // "Details" question
-var FB_VERSION = "v34.5";
-function fbSetType(which){
-  $("fbTypeFeature").classList.toggle("sel", which==="feature");
-  $("fbTypeBug").classList.toggle("sel", which==="bug");
-}
-function fbType(){
-  return $("fbTypeBug").classList.contains("sel") ? "Bug report" : "Feature idea";
-}
-$("fbTypeFeature").onclick=function(){ fbSetType("feature"); };
-$("fbTypeBug").onclick=function(){ fbSetType("bug"); };
-$("fbBtn").onclick=function(){ show("fbModal"); };
-$("fbCancel").onclick=function(){ hide("fbModal"); };
-function fbSend(){
-  var msg=$("fbText").value.trim();
-  if(!msg){ $("fbErr").textContent="Tell us a little more first."; $("fbText").focus(); return false; }
-  $("fbErr").textContent="";
-  var p=new URLSearchParams();
-  p.append(FB_ENTRY_TYPE, fbType());
-  p.append(FB_ENTRY_DETAILS, msg+"\n\n— sent from Ondra Demo "+FB_VERSION);
-  try{
-    fetch(FB_FORM_URL,{method:"POST",mode:"no-cors",
-      headers:{"Content-Type":"application/x-www-form-urlencoded"},body:p.toString()});
-  }catch(e){}
-  hide("fbModal"); $("fbText").value="";
-  flashHint("Thanks! Your feedback was sent.");
-  return true;
-}
-$("fbSend").onclick=fbSend;
 function isLaunched(){
   if(!LAUNCH_DATE) return false;
   return Date.now() >= new Date(LAUNCH_DATE+"T00:00:00").getTime();
@@ -2148,7 +1668,7 @@ $("wlJoin2").onclick=function(){
 function showComplete(){
   stopMic();
   hide("wizard"); hide("hud"); hide("waitlistPop");
-  var st=settings()||{name:"Ondra",voice:"female",pers:"balanced",wallpaper:"blue",orb:"pink",aura:"blue"};
+  var st=settings()||{name:"Genie",voice:"female",pers:"balanced",wallpaper:"blue",orb:"pink",aura:"blue"};
   $("codeBox").textContent=genCode(st);
   if(isLaunched()){
     hide("wlFinalWrap"); hide("wlFinalDone"); show("buyWrap");
@@ -2176,70 +1696,55 @@ function applyTheme(st){
   var w=rainColor(st.wallpaper,RAINBOW[4]);
   var o=rainColor(st.orb,RAINBOW[6]);
   var a=rainColor(st.aura,o);
-  // the whole wallpaper is the chosen color, fading around the edges —
-  // dark wallpapers fade to black, light ones fade to white
-  var edge=wallLum(w.c)>0.6?"#ffffff":"#000000";
-  document.body.style.background =
-    "radial-gradient(125% 125% at 50% 40%, "+w.c+" 0%, "+w.c+" 42%, "+edge+" 100%)";
+  var wRain=isRainbow(st.wallpaper), oRain=isRainbow(st.orb), aRain=isRainbow(st.aura);
+  // the whole wallpaper is the chosen color, fading to white around the edges
+  document.body.style.background = wRain ? RB_CSS :
+    "radial-gradient(125% 125% at 50% 40%, "+w.c+" 0%, "+w.c+" 42%, #ffffff 100%)";
   // light wallpapers get dark HUD text so everything stays readable
-  document.body.classList.toggle("light-wall", wallLum(w.c)>0.6);
+  document.body.classList.toggle("light-wall", !wRain && wallLum(w.c)>0.6);
   var orb=$("orb");
-  orb.style.background =
+  orb.style.background = oRain ? RB_CONIC :
     "radial-gradient(circle at 35% 30%, "+rgba(o.c,0.95)+", "+o.c+" 55%, "+rgba(o.c,0.5)+")";
-  // thin outline so the orb stays visible when wallpaper/orb are the same color:
-  // white on black wallpaper, black on everything else
-  var outlineC=(st.wallpaper==="black")?"rgba(255,255,255,0.55)":"rgba(0,0,0,0.45)";
-  orb.style.border="1.5px solid "+outlineC;
   // the aura is its own selectable glow around the orb
-  orb.style.boxShadow="0 0 46px 12px "+rgba(a.c,0.4);
+  var auraShadow = aRain ?
+    "0 0 18px 4px rgba(255,59,48,.55), 0 0 36px 9px rgba(255,204,0,.45), 0 0 54px 14px rgba(10,132,255,.45)" :
+    "0 0 46px 12px "+rgba(a.c,0.4);
+  orb.style.boxShadow=auraShadow;
   var gs=$("orbGlowStyle");
   if(!gs){ gs=document.createElement("style"); gs.id="orbGlowStyle"; document.head.appendChild(gs); }
-  gs.textContent="#orb.talking{box-shadow:0 0 100px 30px "+rgba(a.c,0.8)+" !important;}";
+  gs.textContent="#orb.talking{box-shadow:"+(aRain ?
+    "0 0 40px 12px rgba(255,59,48,.8), 0 0 80px 24px rgba(255,204,0,.6), 0 0 120px 36px rgba(10,132,255,.6)" :
+    "0 0 100px 30px "+rgba(a.c,0.8))+" !important;}";
   var op=$("orbPreview");
-  if(op) op.style.background=orbBg(o.c);
+  if(op) op.style.background=oRain?RB_CONIC:orbBg(o.c);
 }
-function startHud(st, sayHi){
+function startHud(st){
   S.name=st.name; S.wake=st.wake||"hey"; S.voice=st.voice; S.pers=st.pers;
   S.wallpaper=st.wallpaper; S.orb=st.orb; S.aura=st.aura||st.orb||"blue";
-  S.ding=st.ding||"classic"; S.voiceMuted=!!st.voiceMuted;
-  updateVoiceBtn();
+  S.ding=st.ding||"classic";
+  S.tabIcon=st.tabIcon||"o"; S.tabOutline=st.tabOutline||"rainbow"; S.tabColor=st.tabColor||"clear";
+  S.voiceMuted=!!st.voiceMuted;
   applyTheme(st);
+  applyTabIcon();
   $("hudName").textContent=st.name;
-  document.title=st.name+" - Demo"; // tab shows their AI's name once it's made
-  $("hudSub").textContent="Ondra Demo · "+st.pers;
+  $("hudSub").textContent="GCAI demo · "+st.pers;
   setWakeHint();
   updateCounter(); updateBoostUI();
   show("hud");
-  if(sayHi) maybeWelcome(); // first run only: WELCOME! right after the wizard, never again
   probeAll();
-  startListening(true); // mic always on, like LUNA (quiet: no popup if unsupported)
-  if(sayHi){
-    // greeting only right after setup — a refresh stays silent
-    var greet = st.pers==="cheerful" ? "Hey! I'm "+st.name+", and I'm so glad you're here. Ask me anything — you've got 25 requests to play with."
-      : st.pers==="moody" ? "I'm "+st.name+". Twenty-five requests. Try not to waste them."
-      : "I'm "+st.name+". You have 25 demo requests — ask me anything.";
-    setTimeout(function(){ say(greet,"demo"); },600);
-  }
+  startListening(); // mic always on, like LUNA
+  var greet = st.pers==="cheerful" ? "Hey! I'm "+st.name+", and I'm so glad you're here. Ask me anything — you've got 25 requests to play with."
+    : st.pers==="moody" ? "I'm "+st.name+". Twenty-five requests. Try not to waste them."
+    : "I'm "+st.name+". You have 25 demo requests — ask me anything.";
+  setTimeout(function(){ say(greet,"demo"); },600);
 }
 $("micBtn").onclick=toggleMic;
-function updateVoiceBtn(){ $("voiceMuteBtn").classList.toggle("muted", !!S.voiceMuted); }
-$("voiceMuteBtn").onclick=function(){
-  S.voiceMuted=!S.voiceMuted;
-  if(S.voiceMuted){ // stop any speech already playing
-    try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){}
-    stopNetAudio();
-  }
-  var st=settings()||{}; st.voiceMuted=S.voiceMuted; saveSettings(st);
-  updateVoiceBtn();
-};
-updateVoiceBtn();
 $("sendBtn").onclick=function(){ var v=$("q").value; $("q").value=""; sendMessage(v); };
 $("q").addEventListener("keydown",function(e){ if(e.key==="Enter"){ var v=$("q").value; $("q").value=""; sendMessage(v); } });
 
 // boot: straight into the demo — no email gate at the start
 if(isLocked()){ showComplete(); }
-else { var _boot=settings(); if(_boot){ startHud(_boot, false); } else { startWizard(); } }
-maybeWaitlistDeepLink(location.search);
+else { var _boot=settings(); if(_boot){ startHud(_boot); } else { startWizard(); } }
 
 })();
 </script>
